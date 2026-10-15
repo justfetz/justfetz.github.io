@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>micrograd and backprop — Jason Fetzer</title>
+<meta name="description" content="Notes from Karpathy's Neural Networks: Zero to Hero. A scalar autograd engine built from scratch, backprop worked by hand, and what each video in the series taught me.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.graph{font-family:var(--mono);font-size:13px;line-height:1.8;background:var(--code-bg);border:1px solid var(--rule);border-radius:8px;padding:14px 18px;overflow-x:auto;white-space:pre;margin:0 0 20px}
+.vid{border-top:1px solid var(--rule);padding:22px 0 6px}
+.vid h3{margin:0 0 6px;font-family:var(--sans);font-size:18px;font-weight:500;letter-spacing:-.2px;text-transform:none;color:var(--ink)}
+.vid .m{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin:0 0 10px}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-15 · neural networks · notes</p>
+<h1>Backprop in 90 lines: what micrograd taught me</h1>
+<p class="lede">Notes from Andrej Karpathy's <em>Neural Networks: Zero to Hero</em>. The first video builds an entire automatic-differentiation engine from scratch, and once you've done that, PyTorch stops being magic. Here's the engine, every piece explained, and then what each video in the series added.</p>
+
+<p>Everything below is code I wrote following along and then rewrote from memory to make sure it stuck. Every number shown is the output of running it.</p>
+
+<h2>The idea in one sentence</h2>
+<p>A neural network is a big expression. Training it means nudging every parameter in the direction that makes the loss go down. The direction is the gradient. Backpropagation is just the chain rule applied to that expression, mechanically, from the output back to the inputs.</p>
+<p>micrograd makes that literal: each number in the expression is an object that remembers how it was made, so the chain rule can walk backward through the history.</p>
+
+<h2>Part 1 — a Value that remembers its parents</h2>
+<pre><code>class Value:
+    def __init__(self, data, _children=(), _op=''):
+        self.data = data          # the number
+        self.grad = 0.0           # dL/d(this), filled in by backward()
+        self._backward = lambda: None
+        self._prev = set(_children)
+        self._op = _op</code></pre>
+<p>Two fields matter. <code>data</code> is the forward value. <code>grad</code> will hold "how much does the final loss change if this number changes" — the derivative of the loss with respect to this node. It starts at zero because nothing has been computed yet.</p>
+
+<h2>Part 2 — each operation knows its own local derivative</h2>
+<p>This is the whole trick. When you build <code>out = a + b</code>, you also attach a tiny function to <code>out</code> that knows how to push a gradient back to <code>a</code> and <code>b</code>.</p>
+<pre><code>    def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data + other.data, (self, other), '+')
+        def _backward():
+            self.grad  += out.grad      # d(a+b)/da = 1
+            other.grad += out.grad      # d(a+b)/db = 1
+        out._backward = _backward
+        return out
+
+    def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data * other.data, (self, other), '*')
+        def _backward():
+            self.grad  += other.data * out.grad   # d(a*b)/da = b
+            other.grad += self.data  * out.grad   # d(a*b)/db = a
+        out._backward = _backward
+        return out
+
+    def tanh(self):
+        t = math.tanh(self.data)
+        out = Value(t, (self,), 'tanh')
+        def _backward():
+            self.grad += (1 - t**2) * out.grad    # d tanh(x)/dx = 1 - tanh²(x)
+        out._backward = _backward
+        return out
+
+    def __pow__(self, k):
+        out = Value(self.data ** k, (self,), f'**{k}')
+        def _backward():
+            self.grad += k * self.data ** (k-1) * out.grad
+        out._backward = _backward
+        return out</code></pre>
+<p>Read the <code>_backward</code> closures as the chain rule: <em>(local derivative) × (gradient flowing in from above)</em>. <code>out.grad</code> is the upstream gradient; the local derivative is whatever calculus says for that one operation. That's it. Addition routes the gradient through unchanged. Multiplication swaps in the other operand. <code>tanh</code> scales by <code>1 − t²</code>.</p>
+<div class="callout"><b>Why <code>+=</code> and not <code>=</code>.</b> This was the bug I hit first. If the same Value is used twice in an expression — <code>a*a</code>, or <code>b</code> feeding two different neurons — gradients arrive from two paths and must be summed. Overwriting with <code>=</code> silently drops one path and the gradient is wrong. Accumulate, and zero the grads before each backward pass.</div>
+
+<h2>Part 3 — backward() walks the graph in the right order</h2>
+<p>You can only compute a node's gradient after every node that depends on it has computed theirs. That's a topological sort: list the nodes so every node comes after all of its children, then walk the list in reverse.</p>
+<pre><code>    def backward(self):
+        order, seen = [], set()
+        def visit(v):
+            if v not in seen:
+                seen.add(v)
+                for c in v._prev:
+                    visit(c)
+                order.append(v)
+        visit(self)
+        self.grad = 1.0               # dL/dL = 1
+        for v in reversed(order):
+            v._backward()</code></pre>
+<p>Set the output's gradient to 1 (the loss with respect to itself), then call each node's <code>_backward</code> from the output down. Each call fills in its parents' grads, which are then ready when their turn comes.</p>
+
+<h2>Part 4 — check it by hand</h2>
+<pre><code>a = Value(2.0); b = Value(-3.0); c = Value(10.0); f = Value(-2.0)
+e = a * b          # -6
+d = e + c          #  4
+L = d * f          # -8
+L.backward()</code></pre>
+<div class="graph">L = d·f = -8.0
+dL/dd = f = -2       dL/df = d = 4
+dL/de = dL/dd · 1 = -2     dL/dc = dL/dd · 1 = -2
+dL/da = dL/de · b = (-2)(-3) = 6
+dL/db = dL/de · a = (-2)(2) = -4
+
+engine says:  a.grad=6.0  b.grad=-4.0  c.grad=-2.0  f.grad=4.0   ✓</div>
+<p>And the numeric check — nudge <code>a</code> by a tiny <code>h</code> and see how much <code>L</code> moves:</p>
+<pre><code>h = 1e-6
+(L(a=2+h) - L(a=2)) / h    # → 6.0000</code></pre>
+<p>This check is the habit to keep. Any time you write a new <code>_backward</code>, compare it against the finite difference. It catches sign errors and forgotten terms instantly.</p>
+
+<h2>Part 5 — a single neuron</h2>
+<p>A neuron is <code>tanh(Σ wᵢxᵢ + b)</code>. Nothing new; just the ops above composed.</p>
+<pre><code>x1, x2 = Value(2.0), Value(0.0)
+w1, w2 = Value(-3.0), Value(1.0)
+b = Value(6.8813735870195432)        # chosen so n = 0.8814 → tanh = 0.7071
+n = x1*w1 + x2*w2 + b
+o = n.tanh()
+o.backward()
+# o = 0.7071   w1.grad = 1.0   w2.grad = 0.0   x1.grad = -1.5</code></pre>
+<p>Walk <code>w1.grad</code> by hand: <code>do/dn = 1 − 0.7071² = 0.5</code>; <code>dn/dw1 = x1 = 2</code>; product <code>1.0</code>. ✓ And <code>w2.grad = 0</code> because <code>x2 = 0</code> — a weight attached to a zero input gets no learning signal. That's a real thing you'll see in real networks.</p>
+
+<h2>Part 6 — layers, an MLP, and a training loop</h2>
+<pre><code>class Neuron:
+    def __init__(self, nin, nonlin=True):
+        self.w = [Value(random.uniform(-1, 1)) for _ in range(nin)]
+        self.b = Value(0.0)
+        self.nonlin = nonlin
+    def __call__(self, x):
+        act = sum((wi*xi for wi, xi in zip(self.w, x)), self.b)
+        return act.tanh() if self.nonlin else act
+    def parameters(self):
+        return self.w + [self.b]
+
+class Layer:
+    def __init__(self, nin, nout, **kw):
+        self.neurons = [Neuron(nin, **kw) for _ in range(nout)]
+    def __call__(self, x):
+        out = [n(x) for n in self.neurons]
+        return out[0] if len(out) == 1 else out
+    def parameters(self):
+        return [p for n in self.neurons for p in n.parameters()]
+
+class MLP:
+    def __init__(self, nin, nouts):
+        sz = [nin] + nouts
+        self.layers = [Layer(sz[i], sz[i+1], nonlin=(i != len(nouts)-1))
+                       for i in range(len(nouts))]
+    def __call__(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+    def parameters(self):
+        return [p for l in self.layers for p in l.parameters()]</code></pre>
+<p>A 3→4→4→1 network has 41 parameters. Train it on four examples with a squared-error loss:</p>
+<pre><code>model = MLP(3, [4, 4, 1])
+xs = [[2.0, 3.0, -1.0], [3.0, -1.0, 0.5], [0.5, 1.0, 1.0], [1.0, 1.0, -1.0]]
+ys = [1.0, -1.0, -1.0, 1.0]
+
+for step in range(50):
+    ypred = [model(x) for x in xs]                          # forward
+    loss = sum((yp - yt)**2 for yp, yt in zip(ypred, ys))   # loss
+    for p in model.parameters(): p.grad = 0.0               # zero grads  ← don't skip
+    loss.backward()                                         # backward
+    for p in model.parameters(): p.data -= 0.05 * p.grad    # step</code></pre>
+<div class="graph">step  0  loss 3.0929
+step  1  loss 0.3651
+step  2  loss 0.0383
+step  3  loss 0.0061
+step  5  loss 0.0006
+step 10  loss 0.0002
+step 49  loss 0.0000
+
+preds: [1.001, -1.0, -1.0, 0.999]   targets: [1, -1, -1, 1]</div>
+<p>Those five lines in the loop are the entire training procedure for every neural network you've heard of. PyTorch's <code>loss.backward()</code> and <code>optimizer.step()</code> are this, vectorized and on a GPU. The minus sign in the update is the part people forget: the gradient points uphill, so you step against it.</p>
+
+<h2>What stuck</h2>
+<ul>
+  <li><strong>Backprop is bookkeeping.</strong> There's no insight inside it — just the chain rule, applied in reverse topological order. The insight is that it's cheap: one backward pass gives you the gradient with respect to every parameter at once.</li>
+  <li><strong>Gradients accumulate.</strong> <code>+=</code>, and zero them every step. Half of my early bugs were this.</li>
+  <li><strong>Check against finite differences.</strong> It's the unit test for calculus.</li>
+  <li><strong>The non-linearity is load-bearing.</strong> Without <code>tanh</code>, stacked layers collapse into one linear map — a bigger affine function, which can't bend.</li>
+  <li><strong>Learning rate is a real decision.</strong> Too small and nothing moves; too large and the loss bounces. Later videos spend serious time on this.</li>
+</ul>
+
+<hr>
+
+<h2>The rest of the series</h2>
+<p>Each video builds on the last. These are my notes on what each one added, not summaries of the videos.</p>
+
+<div class="vid">
+  <h3>1 · micrograd — building an autograd engine</h3>
+  <p class="m">scalars · chain rule · topological sort · MLP from scratch</p>
+  <p>Everything above. The thing to take away is that autograd is small. The entire engine is under a hundred lines, and the only math is the derivative of each primitive op.</p>
+</div>
+
+<div class="vid">
+  <h3>2 · makemore, part 1 — bigram language model</h3>
+  <p class="m">counts → probabilities · negative log-likelihood · a 27×27 weight matrix is "a neural net"</p>
+  <p>Predict the next character from the current one. First by counting pairs in a table and normalizing rows; then by training a single linear layer with softmax to do the same thing. The punchline is that the trained weights converge to the log of the count table. The loss — average negative log-likelihood — is introduced here and never leaves. Also the first appearance of one-hot encoding, and why smoothing counts and L2 regularization are the same idea.</p>
+</div>
+
+<div class="vid">
+  <h3>3 · makemore, part 2 — MLP</h3>
+  <p class="m">embeddings · context window · minibatches · learning rate sweep · train/dev/test</p>
+  <p>Following the Bengio et al. 2003 paper. Each character gets a learned low-dimensional embedding; the previous three characters' embeddings are concatenated and fed through a hidden layer. New ideas: minibatching (gradient on a subset is a noisy but good-enough estimate), finding a learning rate by sweeping it exponentially and watching the loss, decaying it late in training, and splitting data into train/dev/test so you can tune hyperparameters without fooling yourself.</p>
+</div>
+
+<div class="vid">
+  <h3>4 · makemore, part 3 — activations, gradients, BatchNorm</h3>
+  <p class="m">initialization · saturated tanh · dead neurons · Kaiming init · BatchNorm · diagnostic plots</p>
+  <p>The video about why deep networks are fragile. If the initial weights are too large, <code>tanh</code> saturates at ±1, its local derivative <code>1 − t²</code> goes to zero, and gradients die — the neuron stops learning. If the logits at init are too confident, the first loss is huge for no reason. The fix is principled initialization (scale weights by <code>1/√fan_in</code>, with a gain for the non-linearity) and then BatchNorm, which normalizes each layer's pre-activations per batch and makes the network far less sensitive to init. Also the diagnostic habit: histograms of activations and gradients per layer, and the update-to-data ratio (should be around 1e-3). Those plots are how you know whether a network is healthy before you waste a day training it.</p>
+</div>
+
+<div class="vid">
+  <h3>5 · makemore, part 4 — becoming a backprop ninja</h3>
+  <p class="m">manual backprop through cross-entropy, BatchNorm, and a full MLP · tensor-level chain rule</p>
+  <p>The whole MLP from part 3, with <code>loss.backward()</code> deleted, and every gradient derived by hand at the tensor level — through softmax and cross-entropy, through BatchNorm, through the embedding lookup. Brutal and worth it. The main lesson is that broadcasting in the forward pass becomes summation in the backward pass, and vice versa: wherever a tensor was expanded to match another's shape, its gradient has to be summed back down. Once you've done this, shape errors in real code stop being mysterious.</p>
+</div>
+
+<div class="vid">
+  <h3>6 · makemore, part 5 — building a WaveNet</h3>
+  <p class="m">hierarchical context · tree-structured layers · PyTorch-style module containers</p>
+  <p>Instead of flattening eight characters of context into one wide layer, fuse pairs of characters progressively — a tree, like WaveNet's dilated convolutions. Also where the code gets reorganized into <code>Linear</code>, <code>BatchNorm1d</code>, <code>Tanh</code>, <code>Embedding</code>, <code>Sequential</code> classes that mirror <code>torch.nn</code>, so you understand what the PyTorch versions are doing. A real bug in BatchNorm over the new tensor shapes gets found and fixed on camera, which is the most honest part of the series.</p>
+</div>
+
+<div class="vid">
+  <h3>7 · Let's build GPT — from scratch, in code, spelled out</h3>
+  <p class="m">self-attention · queries, keys, values · causal masking · multi-head · residuals · LayerNorm · Transformer block</p>
+  <p>Trains a character-level Transformer on Shakespeare. Attention is built up in stages: first "average the previous tokens" with a lower-triangular matrix, then make the averaging weights learned (query·key), then add a value projection, then scale by <code>1/√d</code> so softmax doesn't saturate, then run several heads in parallel. Residual connections and LayerNorm are added to make it trainable at depth. The block structure — attention for communication between positions, MLP for computation at each position — is the one that scales to every modern LLM. Nothing in the architecture is unmotivated once you've watched the problems appear.</p>
+</div>
+
+<div class="vid">
+  <h3>8 · Let's build the GPT tokenizer</h3>
+  <p class="m">byte-pair encoding · why tokenization causes weird LLM behavior · regex pre-splitting · special tokens</p>
+  <p>Text doesn't go into a model as characters; it goes in as tokens from a learned vocabulary. BPE starts from raw bytes and repeatedly merges the most frequent adjacent pair until the vocabulary is the target size. This video explains a long list of LLM oddities — trouble with spelling, arithmetic on digits, non-English text, and trailing whitespace — as tokenization artifacts rather than model failures. Worth watching if you've ever been confused by why a model counts letters wrong.</p>
+</div>
+
+<hr>
+<p class="meta">Series: Andrej Karpathy, <em>Neural Networks: Zero to Hero</em> (YouTube). The engine above is my own implementation following the micrograd design; notes are mine.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="../assets/theme.js"></script>
+</body>
+</html>
