@@ -94,46 +94,58 @@ footer{margin-top:72px;padding-top:20px;border-top:1px solid var(--rule);font-fa
 <section>
   <h2>Work</h2>
 
+  <h3 style="font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:8px 0 0">Industrial AI</h3>
   <div class="item">
     <span class="tag">In development · private</span>
     <div class="t"><a href="https://github.com/justfetz/talk-to-my-machine-site">Talk to My Machine</a><span>optimization + agent layers</span></div>
-    <p>An industrial AI and optimization platform for corrugator and paper mill operations. A deterministic layer handles scheduling and feasibility; an agent layer lets operators ask questions and get grounded answers. Core app is private while it matures; landing site and architecture notes are public. Write-up coming.</p>
+    <p>An industrial AI and optimization platform for corrugator and paper mill operations. A deterministic layer handles scheduling and feasibility; an agent layer lets operators ask questions and get grounded answers. Core app is private while it matures; landing site and architecture notes are public.</p>
   </div>
-
   <div class="item">
     <span class="tag">Public · runnable</span>
     <div class="t"><a href="https://github.com/justfetz/corrugator-shift-investigator">corrugator-shift-investigator</a><span>Python · SQL · agent</span></div>
     <p>A bounded investigation agent for a corrugator line. A superintendent asks why a shift was bad; the model chooses which validated tools to call, application code owns every calculation, and the output is an evidence-linked report with charts. Synthetic data, seeded and reproducible. <a href="posts/corrugator-shift-investigator.html">Write-up →</a></p>
   </div>
 
+  <h3 style="font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:28px 0 0">Security</h3>
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/elite-lab">elite-lab</a><span>Python · cyber range</span></div>
+    <p>A terminal cyber range that teaches offensive and defensive security by making you do it: missions with real artifacts, flags, and checkers, in break-then-fix pairs. Includes <em>live-lab</em>, a fictional paper company you host and attack — an intentionally vulnerable customer portal with a simulated paper-machine moisture scanner on the front page, so the same domain as the industrial work gets exploited, then fixed.</p>
+  </div>
+
+  <h3 style="font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:28px 0 0">Scheduling &amp; load planning</h3>
   <div class="item">
     <div class="t"><a href="https://github.com/justfetz/multi-machine-interval-scheduling">multi-machine-interval-scheduling</a><span>Java · Python · OR-Tools</span></div>
-    <p>Assign fixed-interval jobs across parallel machines. Three runnable solvers with sample CSV inputs and outputs so results are reproducible.</p>
+    <p>Assign fixed-interval jobs across parallel machines. Three runnable solvers with sample CSV inputs and outputs so results are reproducible. Grew out of an <a href="https://github.com/justfetz/iit-cs-525-n-machine-m-jobs-project">n-machine / m-jobs course project</a> at IIT.</p>
   </div>
-
-  <div class="item">
-    <div class="t"><a href="https://github.com/justfetz/transportation-and-transshipment-models">transportation-and-transshipment-models</a><span>Java · Python · OR-Tools</span></div>
-    <p>Network-flow formulations for moving goods through intermediate nodes at minimum cost — a hand-rolled solver beside a solver-backed one.</p>
-  </div>
-
   <div class="item">
     <div class="t"><a href="https://github.com/justfetz/truck-cubing-bin-packing">truck-cubing-bin-packing</a><span>bin packing</span></div>
     <p>Load-building by cube and weight. Heuristic and optimization variants, built for the way dispatchers actually think about a load.</p>
   </div>
-
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/network-capacity-transport-planner">network-capacity-transport-planner</a><span>network flow</span></div>
+    <p>Transport planning under network capacity constraints — which lanes, which trucks, within what the network can carry.</p>
+  </div>
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/transportation-and-transshipment-models">transportation-and-transshipment-models</a><span>Java · Python · OR-Tools</span></div>
+    <p>Network-flow formulations for moving goods through intermediate nodes at minimum cost — a hand-rolled solver beside a solver-backed one.</p>
+  </div>
   <div class="item">
     <div class="t"><a href="https://github.com/justfetz/python-cutting-stock-operations-research">python-cutting-stock-operations-research</a><span>Python · OR-Tools</span></div>
     <p>Heuristic and solver-based cutting stock with tests. The problem a corrugator faces every shift: minimize trim loss across a roll.</p>
   </div>
-
-  <div class="item">
-    <div class="t"><a href="https://github.com/justfetz/felix-august">felix-august</a><span>JavaScript · RAG</span></div>
-    <p>Feedback loops and retrieval-augmented generation over a personal investment journal — RAG grounded in a single trusted corpus.</p>
-  </div>
-
   <div class="item">
     <div class="t"><a href="https://github.com/justfetz/operations-research-algorithms">operations-research-algorithms</a><span>index</span></div>
     <p>The hub: OR, optimization, and algorithm implementations across the other repos, including knapsack, greedy, and DP examples.</p>
+  </div>
+
+  <h3 style="font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:28px 0 0">Personal</h3>
+  <div class="item">
+    <div class="t"><a href="https://justfetz.github.io/iverson-d3/">The Answer, Every Game</a><span>d3.js</span></div>
+    <p>Every one of Allen Iverson's 985 NBA games drawn as a basketball — seasons left to right, months top to bottom, size is points, filled is a win. Hover for the box score. Comparisons against other greats, the fourteen 50-point nights, all-time ranks. One page, no build step; the game logs reconcile to the official career line. <a href="https://github.com/justfetz/iverson-d3">Source →</a></p>
+  </div>
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/felix-august">felix-august</a><span>JavaScript · RAG</span></div>
+    <p>Feedback loops and retrieval-augmented generation over a personal investment journal — RAG grounded in a single trusted corpus.</p>
   </div>
 </section>
 
