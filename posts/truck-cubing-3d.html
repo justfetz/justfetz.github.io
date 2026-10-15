@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Truck cubing in 3D — Jason Fetzer</title>
+<meta name="description" content="Loading corrugated units into a 53-foot trailer with a forklift, in 3D: footprint, stacking, roof, and weight constraints, and an algorithm that maximizes MSF on the truck.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:820px}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+#stage{width:100%;aspect-ratio:16/9;border-radius:8px;background:#0f1412;overflow:hidden;position:relative;cursor:grab}
+#stage canvas{display:block;width:100%!important;height:100%!important}
+#hud{position:absolute;left:12px;top:10px;font-family:var(--mono);font-size:12px;color:#cfd6d2;line-height:1.7;pointer-events:none}
+#hud b{color:#fff;font-weight:600}
+#hint{position:absolute;right:12px;bottom:10px;font-family:var(--mono);font-size:11px;color:#7f8a85;pointer-events:none}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
+.stats div{border:1px solid var(--rule);border-radius:8px;padding:10px 12px}
+.stats b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.stats em{font-style:normal;font-family:var(--mono);font-size:18px;color:var(--ink)}
+.legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+table.cmd td:first-child{white-space:normal}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-15 · operations research · corrugated · 3d</p>
+<h1>Loading the most MSF onto a 53-foot trailer</h1>
+<p class="lede">Truck cubing the way a corrugated plant actually does it: units of bundled board, placed by forklift through the rear door, stacked where the footprint and weight allow. The objective isn't boxes or pallets. It's thousand square feet of board on the truck.</p>
+
+<p>The <a href="knapsack-four-ways.html">knapsack post</a> showed a side view with pallets. This is the real thing in three dimensions, with the constraints a shipping supervisor would recognize. Drag to rotate.</p>
+
+<h2>What a unit is</h2>
+<p>Board comes off the corrugator as sheets, gets bundled, and bundles get stacked into a <em>unit</em> on a 48×40 footprint — three 16-inch bundles across. A unit is 36, 48, or 60 inches tall depending on the order. The amount of board in it depends on the flute: C-flute is about 0.16" thick, so a 48" stack is 300 sheets; BC double-wall is about 0.28", so the same height is only 170 sheets. Each sheet is 48×40 = 13.3 sq ft. So:</p>
+<pre><code>MSF per unit = (48 × 40 / 144) × (height / caliper) / 1000
+48" of C-flute   → 13.33 × 300 / 1000 = 4.0 MSF
+48" of BC        → 13.33 × 171 / 1000 = 2.3 MSF</code></pre>
+<p>Weight follows from the board grade — roughly 120 lb per MSF for single wall, 190 for double wall. That matters because a 53' van is limited to about 44,000 lb of payload, and double wall hits the weight limit before the roof.</p>
+
+<h2>The constraints</h2>
+<ul>
+  <li><strong>Forklift loads from the rear.</strong> The nose fills first; you can't place a unit behind one that's already in. Load order is the reverse of unload order, so stop sequence matters too (left out here).</li>
+  <li><strong>Two across.</strong> 48" + 48" = 96" in a 100" interior. With units oriented 40" along the length, 630" gives 15 rows. 30 floor positions.</li>
+  <li><strong>Stacking.</strong> A unit can go on top of another if the stack stays under the 110" roof and the top unit is no heavier than the one below — double wall doesn't ride on single wall.</li>
+  <li><strong>Weight.</strong> 44,000 lb total, and in practice distributed so neither axle group is over.</li>
+</ul>
+
+<h2>The load</h2>
+<div class="viz">
+  <div class="bar">
+    <button id="bDock" aria-pressed="true">dock order (next fit)</button>
+    <button id="bOpt" aria-pressed="false">MSF-max (pair stacks, then place)</button>
+    <button id="bReplay">▶ replay</button>
+    <button id="bInstant">skip to end</button>
+  </div>
+  <div id="stage"><div id="hud"></div><div id="hint">drag to rotate · scroll to zoom</div></div>
+  <div class="stats">
+    <div><b>Units loaded</b><em id="sUnits">—</em></div>
+    <div><b>MSF on truck</b><em id="sMsf">—</em></div>
+    <div><b>Weight</b><em id="sWt">—</em></div>
+    <div><b>Cube used</b><em id="sCube">—</em></div>
+    <div><b>Left on dock</b><em id="sLeft">—</em></div>
+  </div>
+  <div class="legend"><span><i style="background:#c9a06a"></i>B-flute single wall</span><span><i style="background:#a97a45"></i>C-flute single wall</span><span><i style="background:#6e4a26"></i>BC double wall</span><span>height = unit height</span></div>
+</div>
+
+<h2>The two strategies</h2>
+<p><strong>Dock order</strong> is what happens without a plan: units come to the door in the order they were staged, each goes to the next open floor spot nose-first, and a unit gets stacked only if it happens to fit on the one just placed. It's fast and it's what a rushed shift does.</p>
+<p><strong>MSF-max</strong> plans the stacks before anything moves:</p>
+<ol>
+  <li>Sort every unit on the dock by height, tallest first.</li>
+  <li>For each unit not yet assigned, find the <em>tallest</em> remaining unit that can legally go on top of it (fits under the roof, not heavier). Pair them into a stack. This is first-fit-decreasing bin packing where the bins are 110" columns — the same heuristic from the trailer side view, now with a weight rule.</li>
+  <li>You now have more stacks than the 30 floor positions. Rank them by MSF and take the top 30.</li>
+  <li>Check total weight. If over 44,000 lb, swap out the stack with the worst MSF-per-pound for the best unplaced one that fits, until it's under.</li>
+  <li>Place heavy stacks toward the front-middle of the trailer and light ones at the tail, for axle balance; load them nose-first in that order.</li>
+</ol>
+<p>Still a heuristic — nothing above is provably optimal — but every step has a reason, and it beats dock order by a margin you can see. The exact version is a MILP: binary variables for unit-to-position assignment, stacking pairs, with roof, footprint, weight, and sequence constraints, solved with OR-Tools. On a real order book of 60–80 units it solves in seconds and the heuristic becomes the warm start. That's what <a href="https://github.com/justfetz/truck-cubing-bin-packing">truck-cubing-bin-packing</a> is working toward.</p>
+
+<h2>Where MSF changes the answer</h2>
+<p>If you maximize units, you'd fill the floor with short 36" stacks and double them up — lots of units, lots of air above them. If you maximize weight, you'd load double wall until the axles complain, with half the trailer empty. Maximizing MSF forces the actual trade: tall single-wall stacks that use the roof, enough double wall to use the weight, and a plan for which goes where. It's a two-constraint knapsack (cube and weight) with a packing problem inside it, and the objective is the one the plant gets paid on.</p>
+
+<h2>The Java</h2>
+<pre><code>record Unit(int id, int height, String flute, double msf, double lb) {}
+record Stack(List&lt;Unit&gt; units) {
+    int height() { return units.stream().mapToInt(Unit::height).sum(); }
+    double msf()  { return units.stream().mapToDouble(Unit::msf).sum(); }
+    double lb()   { return units.stream().mapToDouble(Unit::lb).sum(); }
+}
+
+static final int ROOF = 110, SPOTS = 30; static final double MAX_LB = 44_000;
+
+static List&lt;Stack&gt; plan(List&lt;Unit&gt; dock) {
+    List&lt;Unit&gt; byHeight = new ArrayList&lt;&gt;(dock);
+    byHeight.sort(Comparator.comparingInt(Unit::height).reversed());
+    Set&lt;Unit&gt; used = new HashSet&lt;&gt;();
+    List&lt;Stack&gt; stacks = new ArrayList&lt;&gt;();
+
+    for (Unit base : byHeight) {                       // 1–2: pair stacks, FFD by height
+        if (used.contains(base)) continue;
+        used.add(base);
+        List&lt;Unit&gt; col = new ArrayList&lt;&gt;(List.of(base));
+        for (Unit top : byHeight) {
+            if (used.contains(top)) continue;
+            if (base.height() + top.height() &lt;= ROOF &amp;&amp; top.lb() &lt;= base.lb()) {
+                col.add(top); used.add(top); break;    // tallest legal partner
+            }
+        }
+        stacks.add(new Stack(col));
+    }
+
+    stacks.sort(Comparator.comparingDouble(Stack::msf).reversed());   // 3: best 30 by MSF
+    List&lt;Stack&gt; load = new ArrayList&lt;&gt;(stacks.subList(0, Math.min(SPOTS, stacks.size())));
+    List&lt;Stack&gt; rest = new ArrayList&lt;&gt;(stacks.subList(load.size(), stacks.size()));
+
+    while (load.stream().mapToDouble(Stack::lb).sum() &gt; MAX_LB) {     // 4: weight repair
+        Stack worst = Collections.min(load, Comparator.comparingDouble(s -&gt; s.msf() / s.lb()));
+        load.remove(worst); rest.add(worst);
+        rest.sort(Comparator.comparingDouble(Stack::msf).reversed());
+        double room = MAX_LB - load.stream().mapToDouble(Stack::lb).sum();
+        rest.stream().filter(s -&gt; s.lb() &lt;= room).findFirst().ifPresent(s -&gt; { load.add(s); rest.remove(s); });
+    }
+    load.sort(Comparator.comparingDouble(Stack::lb).reversed());       // 5: heavy toward the nose
+    return load;
+}</code></pre>
+
+<hr>
+<p class="meta">Dimensions and board properties are representative, not a specific plant's. Instance, heuristics, and the 3D scene are mine; three.js for rendering.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script>
+(function(){
+// ---------- model
+const TL=630, TW=100, TH=110, MAXLB=44000, ROWS=15, COLS=2;
+const FL=40, FW=48; // unit footprint along length / across width
+const FLUTE={B:{cal:0.12,lbmsf:115,col:0xc9a06a},C:{cal:0.16,lbmsf:125,col:0xa97a45},BC:{cal:0.28,lbmsf:190,col:0x6e4a26}};
+// deterministic order book
+let seed=20261015; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+const DOCK=[]; const hs=[36,48,60], fs=['B','C','C','BC'];
+for(let i=0;i<72;i++){
+  const h=hs[Math.floor(rnd()*3)], f=fs[Math.floor(rnd()*4)];
+  const sheets=Math.round(h/FLUTE[f].cal), msf=(48*40/144)*sheets/1000, lb=msf*FLUTE[f].lbmsf;
+  DOCK.push({id:i+1,h,f,msf:+msf.toFixed(2),lb:Math.round(lb)});
+}
+const hud=document.getElementById('hud');
+const S=id=>document.getElementById(id);
+
+// ---------- strategies → list of placements {unit,row,col,level(z offset)}
+function dockOrder(){
+  const placements=[];let spot=0;let last=null;let left=[];
+  for(const u of DOCK){
+    if(last&&last.z+last.u.h+u.h<=TH&&u.lb<=last.u.lb&&!last.stacked){
+      placements.push({u,row:last.row,col:last.col,z:last.z+last.u.h});last.stacked=true;last={u,row:last.row,col:last.col,z:last.z+last.u.h,stacked:true};continue;}
+    if(spot>=ROWS*COLS){left.push(u);continue;}
+    const row=Math.floor(spot/COLS),col=spot%COLS;spot++;
+    const p={u,row,col,z:0,stacked:false};placements.push(p);last=p;
+  }
+  return {placements,left};
+}
+function msfMax(){
+  const by=[...DOCK].sort((a,b)=>b.h-a.h);const used=new Set();const stacks=[];
+  for(const base of by){if(used.has(base))continue;used.add(base);const col=[base];
+    for(const top of by){if(used.has(top))continue;if(base.h+top.h<=TH&&top.lb<=base.lb){col.push(top);used.add(top);break;}}
+    stacks.push({units:col,msf:col.reduce((a,u)=>a+u.msf,0),lb:col.reduce((a,u)=>a+u.lb,0)});}
+  stacks.sort((a,b)=>b.msf-a.msf);
+  let load=stacks.slice(0,ROWS*COLS),rest=stacks.slice(ROWS*COLS);
+  const wt=()=>load.reduce((a,s)=>a+s.lb,0);
+  let guard=0;
+  while(wt()>MAXLB&&guard++<100){
+    let worst=load.reduce((m,s)=>(s.msf/s.lb<m.msf/m.lb?s:m),load[0]);
+    load=load.filter(s=>s!==worst);rest.push(worst);rest.sort((a,b)=>b.msf-a.msf);
+    const room=MAXLB-wt();const pick=rest.find(s=>s.lb<=room);
+    if(pick){load.push(pick);rest=rest.filter(s=>s!==pick);}
+  }
+  load.sort((a,b)=>b.lb-a.lb);
+  // heavy toward front-middle: assign rows 0..14 in order heavy→light, alternating columns
+  const placements=[];load.forEach((s,i)=>{const row=Math.floor(i/COLS),col=i%COLS;let z=0;s.units.forEach(u=>{placements.push({u,row,col,z});z+=u.h;});});
+  const loadedIds=new Set(placements.map(p=>p.u.id));
+  return {placements,left:DOCK.filter(u=>!loadedIds.has(u.id))};
+}
+
+// ---------- three.js scene
+const stage=S('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0f1412);
+const camera=new THREE.PerspectiveCamera(38,16/9,10,5000);
+const sc=0.1; // inches → units
+const center=new THREE.Vector3(TL*sc/2,TH*sc/2,TW*sc/2);
+let theta=-0.75,phi=1.08,dist=80;
+function placeCam(){camera.position.set(center.x+dist*Math.sin(phi)*Math.cos(theta),center.y+dist*Math.cos(phi),center.z+dist*Math.sin(phi)*Math.sin(theta));camera.lookAt(center);}
+placeCam();
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const sun=new THREE.DirectionalLight(0xffffff,0.8);sun.position.set(40,80,30);scene.add(sun);
+const sun2=new THREE.DirectionalLight(0xbfd4ff,0.3);sun2.position.set(-40,30,-50);scene.add(sun2);
+// trailer: floor + wire box + door marker
+const floor=new THREE.Mesh(new THREE.BoxGeometry(TL*sc,0.4,TW*sc),new THREE.MeshStandardMaterial({color:0x2a2f2c,roughness:.9}));floor.position.set(TL*sc/2,-0.2,TW*sc/2);scene.add(floor);
+const box=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TL*sc,TH*sc,TW*sc)),new THREE.LineBasicMaterial({color:0x5b6b64}));box.position.copy(center);scene.add(box);
+const wallMat=new THREE.MeshStandardMaterial({color:0x1b2320,transparent:true,opacity:.35,side:THREE.DoubleSide});
+const nose=new THREE.Mesh(new THREE.PlaneGeometry(TW*sc,TH*sc),wallMat);nose.rotation.y=Math.PI/2;nose.position.set(0,TH*sc/2,TW*sc/2);scene.add(nose);
+const side=new THREE.Mesh(new THREE.PlaneGeometry(TL*sc,TH*sc),wallMat);side.position.set(TL*sc/2,TH*sc/2,0);scene.add(side);
+// row ticks
+for(let r=0;r<=ROWS;r++){const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(r*FL*sc,0.05,0),new THREE.Vector3(r*FL*sc,0.05,TW*sc)]);scene.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x3a443f})));}
+// door label (sprite-free: a small bright frame at the rear)
+const door=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(TW*sc,TH*sc)),new THREE.LineBasicMaterial({color:0x7fd1b9}));door.rotation.y=Math.PI/2;door.position.set(TL*sc,TH*sc/2,TW*sc/2);scene.add(door);
+
+const group=new THREE.Group();scene.add(group);
+function unitMesh(u){
+  const g=new THREE.BoxGeometry(FL*sc-0.15,u.h*sc-0.15,FW*sc-0.15);
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:FLUTE[u.f].col,roughness:.85}));
+  const e=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x2a1d10}));m.add(e);
+  // bundle seams: two lines across the top at 16" intervals
+  for(const off of [-FW/6,FW/6]){const lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-FL*sc/2,u.h*sc/2+0.01,off*sc),new THREE.Vector3(FL*sc/2,u.h*sc/2+0.01,off*sc)]);m.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x4a3520})));}
+  return m;
+}
+const target=p=>new THREE.Vector3((p.row+0.5)*FL*sc,(p.z+p.u.h/2)*sc,(2+p.col*(FW+2)+FW/2)*sc);
+
+let anim=[],timer=null,current='dock';
+function setStats(placements,left,upto){
+  const ps=placements.slice(0,upto);
+  const msf=ps.reduce((a,p)=>a+p.u.msf,0),lb=ps.reduce((a,p)=>a+p.u.lb,0),vol=ps.reduce((a,p)=>a+FL*FW*p.u.h,0);
+  S('sUnits').textContent=ps.length;S('sMsf').textContent=msf.toFixed(1);S('sWt').textContent=lb.toLocaleString()+' lb';
+  S('sCube').textContent=(100*vol/(TL*TW*TH)).toFixed(1)+'%';S('sLeft').textContent=upto>=placements.length?left.length:'…';
+  const last=ps[ps.length-1];
+  hud.innerHTML=last?`unit <b>#${last.u.id}</b> · ${last.u.h}" ${last.u.f} · ${last.u.msf} MSF · ${last.u.lb} lb → row ${last.row+1}, ${last.col?'curb':'driver'} side${last.z?', stacked':''}`:'';
+}
+function run(strategy,instant){
+  current=strategy;clearTimeout(timer);
+  while(group.children.length)group.remove(group.children[0]);
+  const res=strategy==='dock'?dockOrder():msfMax();
+  const {placements,left}=res;
+  S('bDock').setAttribute('aria-pressed',strategy==='dock');S('bOpt').setAttribute('aria-pressed',strategy!=='dock');
+  let i=0;
+  function place(k,animate){
+    const p=placements[k],m=unitMesh(p.u);const t=target(p);
+    if(animate){m.position.set(TL*sc+12,t.y+3,t.z);group.add(m);
+      const start=performance.now(),from=m.position.clone();
+      (function tick(){const e=Math.min(1,(performance.now()-start)/420);const s=e<.5?2*e*e:-1+(4-2*e)*e;m.position.lerpVectors(from,t,s);if(e<1)requestAnimationFrame(tick);})();
+    } else {m.position.copy(t);group.add(m);}
+  }
+  if(instant){placements.forEach((p,k)=>place(k,false));setStats(placements,left,placements.length);return;}
+  (function step(){if(i>=placements.length){setStats(placements,left,placements.length);return;}place(i,true);i++;setStats(placements,left,i);timer=setTimeout(step,190);})();
+}
+S('bDock').onclick=()=>run('dock');S('bOpt').onclick=()=>run('opt');S('bReplay').onclick=()=>run(current);S('bInstant').onclick=()=>run(current,true);
+
+// ---------- controls
+let drag=false,lx=0,ly=0;
+stage.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;stage.setPointerCapture(e.pointerId);});
+stage.addEventListener('pointermove',e=>{if(!drag)return;theta-=(e.clientX-lx)*0.006;phi=Math.max(0.2,Math.min(1.45,phi-(e.clientY-ly)*0.005));lx=e.clientX;ly=e.clientY;placeCam();});
+stage.addEventListener('pointerup',()=>drag=false);stage.addEventListener('pointercancel',()=>drag=false);
+stage.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(40,Math.min(200,dist+e.deltaY*0.08));placeCam();},{passive:false});
+function resize(){const w=stage.clientWidth,h=stage.clientHeight||w*9/16;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+window.addEventListener('resize',resize);resize();
+(function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
+run('dock');
+window.__truck={dockOrder,msfMax,DOCK};
+})();
+</script>
+</body>
+</html>
