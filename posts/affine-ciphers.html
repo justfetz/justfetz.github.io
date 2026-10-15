@@ -36,7 +36,7 @@
 <h1>A cipher you can break with two equations</h1>
 <p class="lede">What "one-to-one" and "onto" actually buy you, why <code>f(x) = ax + b mod 26</code> is a cipher only when <code>a</code> is chosen carefully, and why the same mistake still shows up in production code.</p>
 
-<p>I'm working through the mappings chapter of <em>Elements of Modern Algebra</em> (Gilbert &amp; Gilbert), and the affine cipher is the first place the abstract definitions turn into something you can hold. Not the cipher wheel — the map itself, and what has to be true about it before it's usable.</p>
+<p>I'm working through chapter 2 of <em>Elements of Modern Algebra</em> (Gilbert &amp; Gilbert) — the integers, divisibility, congruences, and the cryptography section at the end — and the affine cipher is the first place the abstract definitions of one-to-one and onto turn into something you can hold. Not the cipher wheel — the map itself, and what has to be true about it before it's usable.</p>
 
 <h2>Two properties, one job</h2>
 <p>A function <code>f: A → B</code> is <strong>one-to-one</strong> (injective) if different inputs always land on different outputs. It's <strong>onto</strong> (surjective) if every element of <code>B</code> gets hit by something. A function that is both is a <strong>bijection</strong>, and a bijection is exactly a function you can undo: every output points back to one and only one input.</p>
@@ -127,7 +127,39 @@ def crack(ct, p1="E", p2="T"):
 <p>The <code>inv</code> function raising on a bad <code>a</code> is the one-to-one check, enforced at the boundary. That's the habit worth taking from this chapter: when a function has to be invertible, make the code refuse to run when it isn't.</p>
 
 <hr>
-<p class="meta">Source: Gilbert &amp; Gilbert, <em>Elements of Modern Algebra</em>, chapter 2 (mappings). Worked examples and code are my own.</p>
+
+<h2>The engine underneath: Euclid</h2>
+<p>Everything above leaned on two facts — "does <code>a</code> have an inverse mod 26?" and "what is it?" — and both come from the same 2,300-year-old algorithm.</p>
+<p><strong>Euclid's algorithm</strong> finds <code>gcd(a, b)</code> by repeated division: replace the pair <code>(a, b)</code> with <code>(b, a mod b)</code> until the remainder is zero. The last nonzero remainder is the gcd.</p>
+<pre><code>gcd(26, 5):  26 = 5·5 + 1
+              5 = 1·5 + 0     → gcd = 1</code></pre>
+<p><strong>The extended version</strong> runs the same steps but keeps track of how each remainder was built from the original <code>a</code> and <code>b</code>. The result is Bézout's identity: integers <code>x, y</code> with <code>ax + by = gcd(a, b)</code>. When the gcd is 1, that reads <code>ax ≡ 1 (mod b)</code> — so <code>x</code> is the inverse of <code>a</code> mod <code>b</code>. That's what <code>egcd()</code> in the code above computes, and it's why the function doubles as the one-to-one test: no inverse, no bijection.</p>
+<pre><code>From 26 = 5·5 + 1:   1 = 26 − 5·5
+So 5·(−5) ≡ 1 (mod 26), and −5 ≡ 21.   Inverse of 5 is 21.  ✓</code></pre>
+<p>It runs in a number of steps proportional to the number of digits, not the size of the numbers — which is why it still works when the numbers are 600 digits long. That's about to matter.</p>
+
+<h2>From one key to two: RSA</h2>
+<p>The affine cipher is <em>symmetric</em>: whoever can encrypt can decrypt, because the key is shared and the inverse is cheap to compute. Public-key cryptography asks a stranger question: can we build a bijection where computing the forward direction is easy for everyone, but computing the inverse is easy only for one person?</p>
+<p>RSA does it by changing what's hard. In the affine cipher, finding the inverse of <code>a</code> mod 26 is trivial because 26 is small and its factors are known. RSA picks a modulus whose factors are <em>secret</em>, and makes the inverse depend on knowing them.</p>
+<ol>
+  <li>Pick two large primes <code>p</code> and <code>q</code>. Let <code>n = p·q</code>. Publish <code>n</code>. Keep <code>p</code> and <code>q</code> secret.</li>
+  <li>Compute <code>φ(n) = (p−1)(q−1)</code> — the count of numbers below <code>n</code> coprime to it. You can only do this if you know <code>p</code> and <code>q</code>.</li>
+  <li>Pick a public exponent <code>e</code> with <code>gcd(e, φ(n)) = 1</code>. Use the extended Euclidean algorithm to find <code>d</code> with <code>e·d ≡ 1 (mod φ(n))</code>. Publish <code>e</code>; keep <code>d</code>.</li>
+  <li>Encrypt: <code>c = mᵉ mod n</code>. Decrypt: <code>m = cᵈ mod n</code>.</li>
+</ol>
+<p>Same shape as before: a map (<code>m ↦ mᵉ</code>), an inverse (<code>c ↦ cᵈ</code>), and Euclid producing the inverse exponent. The difference is <em>where the secret sits</em>. Anyone can compute <code>mᵉ mod n</code>. Computing <code>d</code> requires <code>φ(n)</code>, which requires <code>p</code> and <code>q</code>, which requires factoring <code>n</code> — and nobody knows how to do that efficiently for a 2048-bit <code>n</code>.</p>
+<p>Toy numbers, so you can check it by hand:</p>
+<pre><code>p = 5, q = 11  →  n = 55,  φ(n) = 4·10 = 40
+e = 3  (gcd(3, 40) = 1)
+d = 3⁻¹ mod 40 = 27     (3·27 = 81 = 2·40 + 1)   ← extended Euclid
+
+m = 7:   c = 7³ mod 55 = 343 mod 55 = 13
+         m = 13²⁷ mod 55 = 7   ✓</code></pre>
+<p>The known-plaintext attack from earlier doesn't apply: knowing <code>(m, c)</code> pairs tells you nothing about <code>d</code>, because the relationship runs through <code>φ(n)</code>, not through a solvable linear system. That's the whole trick.</p>
+<div class="callout"><b>Why the book puts these together.</b> Affine cipher: bijection, inverse via Euclid, secret shared. RSA: bijection, inverse via Euclid, secret <em>asymmetric</em> because the inverse depends on a factorization only one party has. Same chapter, same tools, one extra idea.</div>
+
+<hr>
+<p class="meta">Source: Gilbert &amp; Gilbert, <em>Elements of Modern Algebra</em>, chapter 2 (the integers; §2.8 cryptography). Worked examples and code are my own.</p>
 
 <footer>
   <span>© 2026 Jason Fetzer</span>
