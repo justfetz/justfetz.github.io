@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jason Fetzer</title>
+<meta name="description" content="Jason Fetzer — optimization solvers, operations research, and AI systems for real-world operations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fcfcfa; --ink:#161616; --ink-2:#4a4a46; --ink-3:#8a8a84; --rule:#e4e4df; --accent:#1f5f4e;
+  --sans:'Inter Tight',system-ui,-apple-system,Segoe UI,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#121212; --ink:#ecece8; --ink-2:#b5b5af; --ink-3:#7a7a74; --rule:#2a2a28; --accent:#8fd1bb}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:4px;text-decoration-thickness:1px}
+a:hover{text-decoration-color:var(--accent)}
+.page{max-width:640px;margin:0 auto;padding:72px 20px 96px}
+header{margin-bottom:64px}
+.name{font-size:17px;font-weight:600;margin:0 0 4px}
+.sub{font-family:var(--mono);font-size:13px;color:var(--ink-3);margin:0}
+h1{font-size:clamp(26px,4.2vw,34px);line-height:1.25;font-weight:500;letter-spacing:-.4px;margin:40px 0 20px}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{color:var(--ink-2);margin:0 0 28px}
+.links{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:13px}
+.links a{text-decoration:none;color:var(--ink-2);min-height:44px;display:inline-flex;align-items:center}
+.links a:hover{color:var(--accent)}
+
+h2{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:56px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+
+.item{display:grid;grid-template-columns:1fr;gap:4px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.item:last-child{border-bottom:0}
+.item .t{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.item .t a{font-weight:500;text-decoration:none}
+.item .t a:hover{color:var(--accent)}
+.item .t span{font-family:var(--mono);font-size:12px;color:var(--ink-3);white-space:nowrap}
+.item p{margin:0;color:var(--ink-2);font-size:15.5px}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+
+.focus p{margin:0 0 12px;color:var(--ink-2)}
+.focus b{color:var(--ink);font-weight:500}
+
+.posts .item .t span{order:-1;flex-basis:100%}
+
+.about p{margin:0 0 14px;color:var(--ink-2)}
+.about p:first-child{color:var(--ink)}
+
+footer{margin-top:72px;padding-top:20px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<main class="page">
+
+<header>
+  <p class="name">Jason Fetzer</p>
+  <p class="sub">optimization · operations research · applied AI — Chicago</p>
+  <h1>I build <em>optimization solvers</em> and <em>AI systems</em> for operations that can't afford to be wrong.</h1>
+  <p class="lede">Combinatorial optimization and grounded AI agents, shipped as runnable code against real constraints: capacity, time, feasibility, trust.</p>
+  <nav class="links">
+    <a href="https://github.com/justfetz">github</a>
+    <a href="https://www.linkedin.com/in/YOUR-LINKEDIN">linkedin</a>
+    <a href="mailto:YOUR@EMAIL">email</a>
+  </nav>
+</header>
+
+<section class="focus">
+  <h2>Focus</h2>
+  <p><b>Combinatorial optimization.</b> Scheduling, packing, cutting stock, network flow. Exact where it's tractable, heuristic where it isn't, honest about which is which.</p>
+  <p><b>AI for operations.</b> Agents and retrieval on top of deterministic solvers — the model explains and proposes; the solver decides feasibility.</p>
+  <p><b>Trustworthy interfaces.</b> Decision tools people will use on a plant floor: constrained inputs, visible assumptions, auditable outputs.</p>
+  <p><b>Security and systems.</b> Local-first deployments and least-privilege tooling — the plumbing that makes AI safe to run near production.</p>
+</section>
+
+<section>
+  <h2>Work</h2>
+
+  <div class="item">
+    <span class="tag">In development · private</span>
+    <div class="t"><a href="https://github.com/justfetz/talk-to-my-machine-site">Talk to My Machine</a><span>optimization + agent layers</span></div>
+    <p>An industrial AI and optimization platform for corrugator and paper mill operations. A deterministic layer handles scheduling and feasibility; an agent layer lets operators ask questions and get grounded answers. Core app is private while it matures; landing site and architecture notes are public. Write-up coming.</p>
+  </div>
+
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/multi-machine-interval-scheduling">multi-machine-interval-scheduling</a><span>Java · Python · OR-Tools</span></div>
+    <p>Assign fixed-interval jobs across parallel machines. Three runnable solvers with sample CSV inputs and outputs so results are reproducible.</p>
+  </div>
+
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/transportation-and-transshipment-models">transportation-and-transshipment-models</a><span>Java · Python · OR-Tools</span></div>
+    <p>Network-flow formulations for moving goods through intermediate nodes at minimum cost — a hand-rolled solver beside a solver-backed one.</p>
+  </div>
+
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/truck-cubing-bin-packing">truck-cubing-bin-packing</a><span>bin packing</span></div>
+    <p>Load-building by cube and weight. Heuristic and optimization variants, built for the way dispatchers actually think about a load.</p>
+  </div>
+
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/python-cutting-stock-operations-research">python-cutting-stock-operations-research</a><span>Python · OR-Tools</span></div>
+    <p>Heuristic and solver-based cutting stock with tests. The problem a corrugator faces every shift: minimize trim loss across a roll.</p>
+  </div>
+
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/felix-august">felix-august</a><span>JavaScript · RAG</span></div>
+    <p>Feedback loops and retrieval-augmented generation over a personal investment journal — RAG grounded in a single trusted corpus.</p>
+  </div>
+
+  <div class="item">
+    <div class="t"><a href="https://github.com/justfetz/operations-research-algorithms">operations-research-algorithms</a><span>index</span></div>
+    <p>The hub: OR, optimization, and algorithm implementations across the other repos, including knapsack, greedy, and DP examples.</p>
+  </div>
+</section>
+
+<section class="posts">
+  <h2>Writing</h2>
+  <div class="item">
+    <div class="t"><a href="https://www.linkedin.com/in/YOUR-LINKEDIN">The Windows side: Select-String and Invoke-RestMethod</a><span>2026-10-15</span></div>
+    <p>PowerShell pipes objects, not text — and why that's an advantage for AI coding agents.</p>
+  </div>
+  <div class="item">
+    <div class="t"><a href="https://www.linkedin.com/in/YOUR-LINKEDIN">grep and curl: the two commands every engineer and every AI agent leans on</a><span>2026-10-14</span></div>
+    <p>Why the Unix philosophy turned out to be the ideal interface for machines that think in language.</p>
+  </div>
+</section>
+
+<section class="about">
+  <h2>About</h2>
+  <p>I build algorithmic systems, operations research tools, data platforms, and AI software for real-world operations.</p>
+  <p>Most of my work starts with a constraint someone on a floor already knows about and a spreadsheet that can't hold it anymore. I care about feasibility first, interfaces people trust, and decisions that hold up under real limits on time, capacity, and information.</p>
+  <p>Father, husband, veteran, student.</p>
+</section>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <span>justfetz.github.io</span>
+</footer>
+
+</main>
+</body>
+</html>
