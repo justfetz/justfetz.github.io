@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Affine ciphers — Jason Fetzer</title>
+<meta name="description" content="One-to-one, onto, and the affine map f(x) = ax + b mod 26: breaking a cipher with two equations, and where the same math shows up in real systems.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.lab{border:1px solid var(--rule);border-radius:10px;padding:18px;margin:0 0 24px;display:grid;gap:12px}
+.lab label{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;flex-direction:column;gap:6px}
+.lab input,.lab select{font-family:var(--mono);font-size:15px;padding:10px 12px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink);min-height:44px}
+.lab .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lab .out{font-family:var(--mono);font-size:16px;letter-spacing:.08em;padding:12px;background:var(--code-bg);border-radius:6px;word-break:break-all;min-height:44px}
+.lab .note{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.lab .bad{color:#b4472f}
+.map{font-family:var(--mono);font-size:13px;line-height:1.9;letter-spacing:.06em;background:var(--code-bg);border-radius:6px;padding:10px 12px;overflow-x:auto;white-space:pre}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-15 · algebra · cryptography</p>
+<h1>A cipher you can break with two equations</h1>
+<p class="lede">What "one-to-one" and "onto" actually buy you, why <code>f(x) = ax + b mod 26</code> is a cipher only when <code>a</code> is chosen carefully, and why the same mistake still shows up in production code.</p>
+
+<p>I'm working through the mappings chapter of <em>Elements of Modern Algebra</em> (Gilbert &amp; Gilbert), and the affine cipher is the first place the abstract definitions turn into something you can hold. Not the cipher wheel — the map itself, and what has to be true about it before it's usable.</p>
+
+<h2>Two properties, one job</h2>
+<p>A function <code>f: A → B</code> is <strong>one-to-one</strong> (injective) if different inputs always land on different outputs. It's <strong>onto</strong> (surjective) if every element of <code>B</code> gets hit by something. A function that is both is a <strong>bijection</strong>, and a bijection is exactly a function you can undo: every output points back to one and only one input.</p>
+<p>That's the whole requirement for encryption. If two plaintext letters could map to the same ciphertext letter, the receiver has no way to know which one you meant. One-to-one isn't a nicety; it's the difference between a cipher and a hash.</p>
+<div class="callout"><b>Useful shortcut.</b> On a finite set mapped to itself — like the 26 letters to the 26 letters — one-to-one and onto imply each other. If 26 inputs land on 26 distinct outputs, you've used every output. So you only have to check one of them.</div>
+
+<h2>The affine map</h2>
+<p>Number the alphabet <code>A=0 … Z=25</code>. An affine cipher is</p>
+<pre><code>E(x) = (a·x + b) mod 26</code></pre>
+<p>Two integers are the key: <code>a</code> is a multiplier, <code>b</code> is a shift. (The Caesar shift is the special case <code>a = 1</code>.)</p>
+<p>Here's the catch. Try <code>a = 2, b = 0</code>:</p>
+<div class="map">A(0) → 0 → A
+N(13) → 26 mod 26 → 0 → A</div>
+<p><code>A</code> and <code>N</code> both encrypt to <code>A</code>. The map is not one-to-one, so it can't be decrypted. The reason is that <code>2</code> shares a factor with <code>26</code>. In general:</p>
+<blockquote><code>E(x) = ax + b mod 26</code> is a bijection if and only if <code>gcd(a, 26) = 1</code>.</blockquote>
+<p>The valid multipliers are <code>a ∈ {1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25}</code> — twelve of them. Times 26 choices of <code>b</code> gives <strong>312 possible keys</strong>. Remember that number.</p>
+
+<h2>Try it</h2>
+<div class="lab">
+  <div class="row">
+    <label>a (multiplier)<select id="a"></select></label>
+    <label>b (shift)<input id="b" type="number" min="0" max="25" value="8"></label>
+  </div>
+  <label>plaintext<input id="pt" type="text" value="HELLO WORLD" autocomplete="off"></label>
+  <div class="out" id="ct"></div>
+  <div class="note" id="inv"></div>
+</div>
+
+<h2>Decrypting with the key</h2>
+<p>To undo <code>E</code>, solve for <code>x</code>. Subtracting <code>b</code> is easy. Dividing by <code>a</code> isn't — there's no division mod 26 — but because <code>gcd(a, 26) = 1</code> there is a number <code>a⁻¹</code> with <code>a · a⁻¹ ≡ 1 (mod 26)</code>. Then:</p>
+<pre><code>D(y) = a⁻¹ · (y − b) mod 26</code></pre>
+<p>With <code>a = 5, b = 8</code>: <code>5 × 21 = 105 = 4·26 + 1</code>, so <code>a⁻¹ = 21</code>. Encrypting <code>H</code> (7): <code>5·7 + 8 = 43 ≡ 17 = R</code>. Decrypting <code>R</code>: <code>21 · (17 − 8) = 189 ≡ 7 = H</code>. Round trip.</p>
+<p>That inverse exists <em>because</em> the map is one-to-one. The algebra and the security requirement are the same fact.</p>
+
+<h2>Decrypting without the key</h2>
+<p>This is the fun part. Suppose you intercept ciphertext and have no idea what <code>a</code> and <code>b</code> are. Two observations finish it:</p>
+<ol>
+  <li>English has a lopsided letter distribution. <code>E</code> is the most common letter; <code>T</code> is usually second. In any affine ciphertext longer than a sentence or two, the most frequent ciphertext letter is almost certainly <code>E</code>'s image.</li>
+  <li>Two plaintext/ciphertext pairs give two linear equations in two unknowns.</li>
+</ol>
+<p>Say the most common ciphertext letter is <code>C</code> and the second is <code>Z</code>. Guess <code>E → C</code> and <code>T → Z</code>:</p>
+<pre><code>4a + b ≡ 2    (E=4, C=2)
+19a + b ≡ 25  (T=19, Z=25)</code></pre>
+<p>Subtract the first from the second: <code>15a ≡ 23 (mod 26)</code>. The inverse of 15 mod 26 is 7 (since <code>15·7 = 105 ≡ 1</code>), so <code>a ≡ 23·7 = 161 ≡ 5</code>. Back-substitute: <code>b ≡ 2 − 20 ≡ 8</code>. Key recovered: <code>(5, 8)</code>. Two frequency counts, one subtraction, one multiplication.</p>
+<p>If the guess was wrong, the decrypted text is gibberish and you try the next pair. With only 312 keys, even brute force takes a laptop no measurable time. A cipher with a keyspace you can enumerate on a napkin is a puzzle, not a lock.</p>
+
+<h2>Where this actually shows up</h2>
+<p>The affine map is weak as a cipher, but the structure is everywhere.</p>
+<ul>
+  <li><strong>Random number generators.</strong> A linear congruential generator is <code>xₙ₊₁ = (a·xₙ + c) mod m</code> — the exact same map, iterated. It's fast, it's in <code>rand()</code> in a lot of C libraries, and it's predictable for precisely the reason the cipher is: a couple of outputs let you solve for the parameters. That's why "I used rand() for the session token" is a finding, not a design.</li>
+  <li><strong>Hashing and table probing.</strong> Multiply-and-add mod a table size is a standard hash step. The <code>gcd</code> condition reappears as "pick a multiplier coprime to the table size so the probe sequence visits every slot" — onto, in other words.</li>
+  <li><strong>Modern block ciphers.</strong> AES is also a bijection — on 128-bit blocks instead of single letters, with a keyspace of 2¹²⁸ instead of 312, and built so that no small number of known plaintext/ciphertext pairs yields a solvable system. The known-plaintext attack above is the threat model the entire design exists to defeat. Same requirement (invertible), same attack class (solve for the key), wildly different scale.</li>
+  <li><strong>Sanity-checking an ID scheme.</strong> If someone obfuscates sequential IDs with "multiply by a constant and mod," you now know how to recover the constant from two IDs. Obfuscation isn't encryption, and this is the two-line proof.</li>
+</ul>
+
+<h2>The code</h2>
+<pre><code>def egcd(a, b):
+    if b == 0:
+        return a, 1, 0
+    g, x, y = egcd(b, a % b)
+    return g, y, x - (a // b) * y
+
+def inv(a, m=26):
+    g, x, _ = egcd(a, m)
+    if g != 1:
+        raise ValueError(f"{a} has no inverse mod {m}: not one-to-one")
+    return x % m
+
+def encrypt(text, a, b):
+    inv(a)  # fail fast if the key isn't a bijection
+    return "".join(chr((a * (ord(c) - 65) + b) % 26 + 65) if c.isalpha() else c
+                   for c in text.upper())
+
+def decrypt(text, a, b):
+    ai = inv(a)
+    return "".join(chr((ai * (ord(c) - 65 - b)) % 26 + 65) if c.isalpha() else c
+                   for c in text.upper())
+
+def crack(ct, p1="E", p2="T"):
+    """Recover (a, b) from the two most frequent ciphertext letters."""
+    from collections import Counter
+    top = [c for c, _ in Counter(ch for ch in ct.upper() if ch.isalpha()).most_common(2)]
+    x1, x2 = ord(p1) - 65, ord(p2) - 65
+    y1, y2 = ord(top[0]) - 65, ord(top[1]) - 65
+    a = ((y2 - y1) * inv((x2 - x1) % 26)) % 26
+    b = (y1 - a * x1) % 26
+    return a, b</code></pre>
+<p>The <code>inv</code> function raising on a bad <code>a</code> is the one-to-one check, enforced at the boundary. That's the habit worth taking from this chapter: when a function has to be invertible, make the code refuse to run when it isn't.</p>
+
+<hr>
+<p class="meta">Source: Gilbert &amp; Gilbert, <em>Elements of Modern Algebra</em>, chapter 2 (mappings). Worked examples and code are my own.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="../assets/theme.js"></script>
+<script>
+(function(){
+  var A=[1,3,5,7,9,11,15,17,19,21,23,25], sel=document.getElementById('a'), bI=document.getElementById('b'), pt=document.getElementById('pt'), ct=document.getElementById('ct'), inv=document.getElementById('inv');
+  A.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;if(v===5)o.selected=true;sel.appendChild(o);});
+  function modinv(a){for(var i=1;i<26;i++){if((a*i)%26===1)return i;}return null;}
+  function run(){
+    var a=+sel.value, b=((+bI.value%26)+26)%26, s=pt.value.toUpperCase(), out='';
+    for(var i=0;i<s.length;i++){var c=s.charCodeAt(i); out+= (c>=65&&c<=90)? String.fromCharCode((a*(c-65)+b)%26+65) : s[i];}
+    ct.textContent=out||' ';
+    inv.textContent='E(x) = '+a+'x + '+b+' mod 26   ·   a⁻¹ = '+modinv(a)+'   ·   D(y) = '+modinv(a)+'(y − '+b+') mod 26';
+  }
+  [sel,bI,pt].forEach(function(el){el.addEventListener('input',run);});
+  run();
+})();
+</script>
+</body>
+</html>

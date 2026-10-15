@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Select-String and Invoke-RestMethod — Jason Fetzer</title>
+<meta name="description" content="The Windows side of grep and curl: PowerShell pipes objects, not text, and why that's an advantage for AI coding agents.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-15 · powershell · ai engineering</p>
+<h1>The Windows side of the same story: Select-String and Invoke-RestMethod</h1>
+<p class="lede">PowerShell pipes objects, not text. For a code model that is a real advantage.</p>
+
+<figure>
+<div class="info ps">
+  <div class="pr"><i style="background:#2f6fd1;width:18px;height:13px;border-radius:3px"></i><span>PS C:\Users\you&gt; _</span></div>
+  <h2>The PowerShell cmdlets worth knowing cold</h2>
+  <p class="sub">Same idea as the Unix toolkit, one big difference: you filter on properties instead of parsing columns.</p>
+  <div class="two">
+    <div class="box">
+      <div class="n">Select-String<small>the grep</small></div>
+<pre>Select-String "TODO" -Path src\* -Recurse
+sls "api_key" . -Recurse -List
+sls "error|warn" app.log
+(sls "GET /" access.log).Count
+sls "^#" config.ini -NotMatch</pre>
+      <div class="f">alias sls · -Recurse · -List filenames only · -NotMatch invert · -CaseSensitive · regex by default</div>
+    </div>
+    <div class="box">
+      <div class="n">Invoke-RestMethod<small>the curl</small></div>
+<pre>irm https://api.example.com/v1
+(iwr https://example.com).Headers
+iwr -Uri https://host/a.zip -OutFile a.zip
+irm -Method Post -ContentType "application/json" `
+  -Body '{"q":"hi"}' https://api.example.com</pre>
+      <div class="f">irm parses JSON into objects · iwr returns the raw response · -Method · -Headers @{} · -Body · -OutFile</div>
+    </div>
+  </div>
+  <div class="kicker">Everyday toolkit<i></i></div>
+  <div class="grid">
+    <div class="cell"><b>gci -Recurse -Filter *.log</b><span>find files (Get-ChildItem)</span></div>
+    <div class="cell"><b>(gc f.txt) -replace 'old','new' | sc f.txt</b><span>find and replace in a file</span></div>
+    <div class="cell"><b>… | Select-Object Name, Length</b><span>pick the properties you want</span></div>
+    <div class="cell"><b>gc app.log -Wait -Tail 20</b><span>watch a log live</span></div>
+    <div class="cell"><b>… | Group-Object | Sort Count -Desc</b><span>count the most common values</span></div>
+    <div class="cell"><b>(gc data.json | ConvertFrom-Json).items.id</b><span>query JSON, no jq needed</span></div>
+    <div class="cell"><b>… | ForEach-Object { cmd $_ }</b><span>run a command per item</span></div>
+    <div class="cell"><b>… | Where-Object Status -eq "Running"</b><span>filter on a property</span></div>
+    <div class="cell"><b>Compare-Object (gc a.txt) (gc b.txt)</b><span>see what changed</span></div>
+    <div class="cell"><b>Get-Process node | Stop-Process</b><span>find and kill a process</span></div>
+    <div class="cell"><b>Get-NetTCPConnection -LocalPort 3000</b><span>who is holding a port</span></div>
+    <div class="cell"><b>gci -Recurse | Measure-Object Length -Sum</b><span>how big is this folder</span></div>
+    <div class="cell"><b>Compress-Archive dir\ out.zip</b><span>zip a folder</span></div>
+    <div class="cell"><b>Get-Command *-Service*</b><span>discover cmdlets by name</span></div>
+    <div class="cell"><b>cmd *&gt;&amp;1 | Tee-Object run.log</b><span>capture output and still see it</span></div>
+  </div>
+  <div class="pipe">
+    <span class="k">One pipeline to remember</span>
+    <span class="c">irm $url | ? message -match "error" | group level | sort Count -Desc | select -First 10</span>
+    <span class="e">Fetch → filter → group → rank. Objects the whole way, so no column counting.</span>
+  </div>
+</div>
+<figcaption>The cheat sheet. Everything below expands on it.</figcaption>
+</figure>
+
+<h2>Why these two</h2>
+<p><strong>Select-String</strong> (alias <code>sls</code>) is PowerShell's grep. Regex by default, recurses with <code>-Recurse</code>, inverts with <code>-NotMatch</code>. When an AI coding agent is working on a Windows box and needs to find every reference to a function, this is what it runs.</p>
+<p><strong>Invoke-RestMethod</strong> (alias <code>irm</code>) is PowerShell's curl — except it doesn't hand you a wall of JSON. It parses the response into a live object. <code>irm $url</code> then <code>.items[0].id</code>, and you're done. No jq required.</p>
+
+<h2>The twist: objects, not text</h2>
+<p>In Bash you pipe strings and parse columns with awk. In PowerShell you pipe <code>[FileInfo]</code> or <code>[Process]</code> objects and filter on properties: <code>Where-Object Status -eq "Running"</code>. For a code model that is a real advantage — it reasons about fields by name instead of guessing which column holds what.</p>
+<ul>
+  <li><strong>Discoverable.</strong> <code>Get-Command *-Service*</code> tells the agent what exists before it guesses.</li>
+  <li><strong>Consistent.</strong> Every cmdlet is Verb-Noun. Learn one, predict the rest.</li>
+  <li><strong>Composable.</strong> One pipeline, five tiny steps, no script file.</li>
+  <li><strong>Honest about failure.</strong> Typed errors, not just "exit 1."</li>
+</ul>
+<p>Different philosophy, same lesson: small tools with clear contracts are the interface language models were waiting for.</p>
+
+<hr>
+
+<h2>The full reference</h2>
+<p>PowerShell first, then the Bash equivalents so you can translate in either direction.</p>
+
+<h3>Select-String</h3>
+<table class="cmd">
+<tr><th>command</th><th>what it does</th></tr>
+<tr><td>sls "pattern" -Path src\* -Recurse</td><td>recursive search; output shows file:line:text</td></tr>
+<tr><td>sls "pattern" . -Recurse -List</td><td>first match per file only — filenames, effectively</td></tr>
+<tr><td>sls "pattern" file -CaseSensitive</td><td>case-sensitive (default is insensitive)</td></tr>
+<tr><td>sls "pattern" file -SimpleMatch</td><td>literal string, no regex</td></tr>
+<tr><td>sls "pattern" file -NotMatch</td><td>invert</td></tr>
+<tr><td>sls "pattern" file -Context 1,3</td><td>1 line before, 3 after</td></tr>
+<tr><td>(sls "pattern" file).Count</td><td>count matching lines</td></tr>
+<tr><td>sls "pattern" file | select -Expand Line</td><td>just the matching text</td></tr>
+<tr><td>(sls "(\d+)" file).Matches.Groups[1].Value</td><td>capture-group extraction</td></tr>
+<tr><td>gci -Recurse -Include *.py | sls "def "</td><td>restrict by file type via the pipeline</td></tr>
+</table>
+
+<h3>Invoke-RestMethod and Invoke-WebRequest</h3>
+<table class="cmd">
+<tr><th>command</th><th>what it does</th></tr>
+<tr><td>irm $url</td><td>GET, JSON auto-parsed into objects</td></tr>
+<tr><td>(iwr $url).StatusCode</td><td>status code (iwr = raw response object)</td></tr>
+<tr><td>(iwr $url -Method Head).Headers</td><td>headers only</td></tr>
+<tr><td>iwr $url -OutFile a.zip</td><td>download to a file</td></tr>
+<tr><td>irm $url -Method Post -Body ($obj | ConvertTo-Json) -ContentType "application/json"</td><td>JSON POST from a PowerShell object</td></tr>
+<tr><td>irm $url -Headers @{Authorization="Bearer $t"}</td><td>auth header</td></tr>
+<tr><td>irm $url -Credential (Get-Credential)</td><td>prompted basic auth</td></tr>
+<tr><td>irm $url -Form @{file=Get-Item report.pdf}</td><td>multipart upload (PS 7+)</td></tr>
+<tr><td>irm $url -MaximumRetryCount 3 -TimeoutSec 10</td><td>retries and timeout (PS 7+)</td></tr>
+<tr><td>irm $url -SkipHttpErrorCheck</td><td>don't throw on 4xx/5xx; inspect instead (PS 7+)</td></tr>
+<tr><td>iwr $url -Verbose</td><td>see the request/response details</td></tr>
+</table>
+
+<h3>Files and folders</h3>
+<table class="cmd">
+<tr><th>command</th><th>what it does</th></tr>
+<tr><td>gci -Recurse -Filter *.log</td><td>find by name (Get-ChildItem; alias ls, dir)</td></tr>
+<tr><td>gci -Recurse | ? LastWriteTime -gt (Get-Date).AddDays(-1)</td><td>modified in the last day</td></tr>
+<tr><td>gci -Recurse | ? Length -gt 100MB</td><td>larger than 100 MB</td></tr>
+<tr><td>gci *.tmp -Recurse | Remove-Item -WhatIf</td><td>preview a delete; drop -WhatIf to do it</td></tr>
+<tr><td>gc file -Head 20 / gc file -Tail 20</td><td>first / last 20 lines (Get-Content)</td></tr>
+<tr><td>gc app.log -Wait -Tail 20</td><td>follow a growing file</td></tr>
+<tr><td>(gc file).Count</td><td>line count</td></tr>
+<tr><td>gc a, b | sc c</td><td>concatenate (Set-Content)</td></tr>
+<tr><td>Test-Path file</td><td>does it exist</td></tr>
+<tr><td>Resolve-Path .\x</td><td>absolute path</td></tr>
+</table>
+
+<h3>Transforming data</h3>
+<table class="cmd">
+<tr><th>command</th><th>what it does</th></tr>
+<tr><td>(gc f) -replace 'old','new' | sc f</td><td>replace in a file (regex)</td></tr>
+<tr><td>gc f | select -Skip 9 -First 11</td><td>lines 10–20</td></tr>
+<tr><td>… | % { ($_ -split '\s+')[0] }</td><td>first whitespace column</td></tr>
+<tr><td>Import-Csv f.csv | select col3</td><td>CSV column by header name</td></tr>
+<tr><td>Import-Csv f.csv | ? { [int]$_.qty -gt 100 }</td><td>rows where a column exceeds 100</td></tr>
+<tr><td>… | sort col2 | Export-Csv out.csv -NoTypeInformation</td><td>sort and write CSV</td></tr>
+<tr><td>"abc".ToUpper()</td><td>string methods are right there</td></tr>
+<tr><td>… | group | sort Count -Desc</td><td>frequency count (Group-Object)</td></tr>
+<tr><td>gc d.json | ConvertFrom-Json | % items | select id, name</td><td>reshape JSON</td></tr>
+<tr><td>$obj | ConvertTo-Json -Depth 5</td><td>object back to JSON</td></tr>
+<tr><td>… | % { cmd $_ }</td><td>run cmd once per item (ForEach-Object)</td></tr>
+<tr><td>… | Tee-Object out.log</td><td>write to file and still print</td></tr>
+<tr><td>… | Format-Table -Auto / Format-List</td><td>render as table / list (display only — keep it last)</td></tr>
+</table>
+
+<h3>Processes, ports, disk, services</h3>
+<table class="cmd">
+<tr><th>command</th><th>what it does</th></tr>
+<tr><td>Get-Process node</td><td>find a process (alias ps)</td></tr>
+<tr><td>Get-Process | ? CommandLine -match "app.py"</td><td>match on full command line (PS 7+)</td></tr>
+<tr><td>Stop-Process -Id PID -Force</td><td>kill</td></tr>
+<tr><td>Get-NetTCPConnection -LocalPort 3000</td><td>what's on port 3000 (Windows)</td></tr>
+<tr><td>Get-NetTCPConnection -State Listen | select LocalPort, OwningProcess</td><td>all listeners with PIDs</td></tr>
+<tr><td>Get-Service | ? Status -eq Running</td><td>running services</td></tr>
+<tr><td>Restart-Service name</td><td>restart one</td></tr>
+<tr><td>Get-PSDrive -PSProvider FileSystem</td><td>disk free per drive</td></tr>
+<tr><td>gci | % { "{0,-30} {1,10:N1} MB" -f $_.Name, ((gci $_ -Recurse -File | measure Length -Sum).Sum/1MB) }</td><td>size of each folder here</td></tr>
+<tr><td>Start-Job { cmd } / Receive-Job</td><td>run in the background</td></tr>
+<tr><td>cmd *&gt;&amp;1 | Tee-Object run.log</td><td>capture every stream together</td></tr>
+</table>
+
+<h3>Archives, help, history</h3>
+<table class="cmd">
+<tr><th>command</th><th>what it does</th></tr>
+<tr><td>Compress-Archive dir\ out.zip</td><td>zip a folder</td></tr>
+<tr><td>Expand-Archive in.zip -DestinationPath out\</td><td>unzip</td></tr>
+<tr><td>Get-Command *-Service*</td><td>discover cmdlets by name</td></tr>
+<tr><td>Get-Help cmd -Examples</td><td>worked examples for any cmdlet</td></tr>
+<tr><td>cmd | Get-Member</td><td>what properties and methods does this object have — the single most useful habit</td></tr>
+<tr><td>Get-Alias sls</td><td>what an alias expands to</td></tr>
+<tr><td>Get-History | ? CommandLine -match ssh</td><td>find that command you ran last week</td></tr>
+<tr><td>ctrl-r</td><td>reverse history search (PSReadLine)</td></tr>
+<tr><td>$PSVersionTable</td><td>which PowerShell am I on</td></tr>
+</table>
+
+<h3>Bash ↔ PowerShell translation table</h3>
+<table class="cmd">
+<tr><th>bash</th><th>powershell</th></tr>
+<tr><td>grep -rn x .</td><td>sls x . -Recurse</td></tr>
+<tr><td>curl -s url | jq .a</td><td>(irm url).a</td></tr>
+<tr><td>find . -name "*.log"</td><td>gci -Recurse -Filter *.log</td></tr>
+<tr><td>sed -i 's/a/b/g' f</td><td>(gc f) -replace 'a','b' | sc f</td></tr>
+<tr><td>awk '{print $1}'</td><td>% { ($_ -split '\s+')[0] }</td></tr>
+<tr><td>tail -f f</td><td>gc f -Wait -Tail 10</td></tr>
+<tr><td>sort | uniq -c | sort -rn</td><td>group | sort Count -Desc</td></tr>
+<tr><td>xargs -n1 cmd</td><td>% { cmd $_ }</td></tr>
+<tr><td>ps aux | grep x</td><td>Get-Process x</td></tr>
+<tr><td>lsof -i :3000</td><td>Get-NetTCPConnection -LocalPort 3000</td></tr>
+<tr><td>du -sh *</td><td>gci | measure Length -Sum (per folder, see above)</td></tr>
+<tr><td>tar -czf o.tgz d/</td><td>Compress-Archive d\ o.zip</td></tr>
+<tr><td>chmod +x s.sh</td><td>(not needed — execution policy instead: Set-ExecutionPolicy RemoteSigned)</td></tr>
+<tr><td>which cmd</td><td>Get-Command cmd</td></tr>
+<tr><td>man cmd</td><td>Get-Help cmd</td></tr>
+<tr><td>2&gt;&amp;1 | tee f</td><td>*&gt;&amp;1 | Tee-Object f</td></tr>
+</table>
+
+<div class="callout"><b>Portability note.</b> <code>Get-NetTCPConnection</code>, <code>Get-Service</code>, and <code>Get-PSDrive</code> details are Windows-specific. On PowerShell 7 for macOS/Linux, the file, text, JSON, and web cmdlets all work the same; for ports and services, fall back to the native tools (<code>lsof</code>, <code>systemctl</code>).</div>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="../assets/theme.js"></script>
+</body>
+</html>
