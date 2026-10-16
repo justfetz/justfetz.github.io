@@ -213,7 +213,7 @@ viz('bf',function(){
     const {dist,passes,neg}=bellman();let t=0;const dd={};NODES.forEach(n=>dd[n]=Infinity);dd[SRC]=0;showD(dd);
     passes.forEach((ch,p)=>{setTimeout(()=>{E.attr('stroke',rule()).attr('stroke-width',1.4);st.html(`pass ${p+1} of ${NODES.length-1}: relax all ${E2.length} edges · ${ch.length} improved`);},t);t+=500;
       ch.forEach(c=>{setTimeout(()=>{dd[c.v]=c.d;showD(dd);E.filter(e=>e===c.e).attr('stroke',accent()).attr('stroke-width',2.5);},t);t+=150;});t+=400;});
-    setTimeout(()=>st.html(`converged after ${passes.length} passes · Aurora <b>${dist.Aurora}</b> via Joliet’s backhaul · negative cycle: <b>${neg?'yes':'none'}</b>`),t);}
+    setTimeout(()=>st.html(`converged after ${passes.length} passes · Aurora <b>${dist.Aurora}</b> via Naperville’s backhaul · negative cycle: <b>${neg?'yes':'none'}</b>`),t);}
   bD.on('click',runD);bB.on('click',runB);runB();
   el.append('div').attr('class','legend').html(`<span style="color:#c0392b">Naperville→Aurora = −20 (backhaul credit)</span><span><i style="background:${accent()}"></i>edge relaxed this step</span>`);
 },[drawNet]);
