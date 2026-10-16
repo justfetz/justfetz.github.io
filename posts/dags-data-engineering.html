@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAGs in data engineering — Jason Fetzer</title>
+<meta name="description" content="Why every pipeline is a DAG: topological sort as the scheduler, critical path as the wall-clock bound, cycle detection as the guardrail, and minimum spanning trees for the graph-theory nod — with d3 animations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:800px}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.viz svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.bar .st{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:auto}
+.bar .st b{color:var(--ink);font-weight:500}
+.legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-16 · graphs · data engineering · d3</p>
+<h1>Every pipeline is a DAG. Here's what that buys you.</h1>
+<p class="lede">Airflow, Dagster, dbt, Spark's planner, Make, Bazel — they all run the same three algorithms from the graph chapter of your algorithms book. Topological sort decides what can run. The longest path tells you how long the pipeline will take. Cycle detection is why the scheduler refuses your graph before it runs. Then, because no graph post is complete without it, the minimum spanning tree.</p>
+
+<p>Everything below runs on a real pipeline: the one that would feed the <a href="corrugator-shift-investigator.html">shift investigator</a> from raw events. Durations are illustrative; the structure is the point.</p>
+
+<h2>The pipeline</h2>
+<p>Twelve tasks. Raw events land (bronze), get cleaned and typed (silver), get aggregated into the tables the agent queries (gold), and a few quality checks gate the publish step. Each edge is "must finish before." The scheduler's whole job is to respect those edges while running as much as possible in parallel.</p>
+
+<h2>1 · Topological sort: what can run now</h2>
+<p>Kahn's algorithm (CLRS §22.4, Kleinberg–Tardos §3.6): count each task's incoming edges, start with every task whose count is zero, run them, decrement their downstream counts, and repeat. The tasks that hit zero together are a <em>layer</em> — they can run in parallel. That's the scheduler's main loop, and it's about twelve lines.</p>
+<div class="viz" id="topo"></div>
+<p>The sort is <code>O(V + E)</code>: each task and each dependency is touched once. The ordering within a layer is arbitrary — which is exactly why two runs of the same DAG can execute tasks in different orders, and why every task needs to be correct regardless of what else ran beside it. That's the first place idempotency shows up.</p>
+
+<h2>2 · Critical path: how long it will take</h2>
+<p>If you have unlimited workers, the pipeline's wall time isn't the sum of task durations — it's the longest path through the DAG, counting duration. Longest path is NP-hard on general graphs, but on a DAG it's a single pass in topological order (CLRS §24.2 flips the sign and runs the shortest-path DAG algorithm): for each task, its earliest finish is its duration plus the latest earliest-finish of its predecessors.</p>
+<div class="viz" id="crit"></div>
+<p>The highlighted chain is the critical path. Speeding up any task <em>off</em> it changes nothing. Speeding up a task <em>on</em> it shortens the pipeline — until a different path becomes critical. This is PERT from the 1950s, it's the same recurrence as rod cutting, and it's the first thing to compute when someone asks why the nightly run takes four hours.</p>
+
+<h2>3 · Cycle detection: why the scheduler says no</h2>
+<p>A dependency cycle means a task is waiting on something that is, transitively, waiting on it. Nothing ever runs. Every scheduler checks for this when it loads the graph, with the depth-first search coloring scheme from CLRS §22.3: white = unvisited, grey = on the current DFS path, black = finished. An edge into a grey node is a back edge, and a back edge is a cycle.</p>
+<div class="viz" id="cycle"></div>
+<p>Click the bad edge on and off. A DAG is precisely a directed graph with no back edges under DFS — that's the definition and the test in one. It's also why "DAG" is in the name: Airflow raises on load if DFS finds grey.</p>
+
+<h2>What this means for the pipeline you're running</h2>
+<ul>
+  <li><strong>Retries re-run a sub-DAG.</strong> When a task fails, the scheduler reruns it and everything <em>reachable</em> from it — a DFS from the failed node. Everything upstream stays done. This only works if rerunning a task is safe, which is why idempotent writes (overwrite-by-partition, <code>MERGE</code> on a key) aren't optional: the graph structure assumes them.</li>
+  <li><strong>Lineage is reverse reachability.</strong> "Which raw sources does this gold table depend on?" is DFS on the reversed graph. Data catalogs that show lineage are drawing that traversal.</li>
+  <li><strong>Backfills are the DAG times a date range.</strong> Rerunning March is the same DAG instantiated 31 times, with the date as a parameter. If tasks write to date-partitioned locations, the 31 instances don't collide. If they append, you get March twice.</li>
+  <li><strong>Spark is a DAG under your DataFrame.</strong> <code>df.explain()</code> shows it: the lazy transformations become a DAG of stages split at shuffles, and the scheduler runs independent stages in parallel. Narrow transformations stay in one stage; wide ones (groupBy, join) cut the graph. Reading that plan is reading a DAG.</li>
+  <li><strong>Fan-in is where the bugs live.</strong> A task with several parents runs when the <em>last</em> one finishes. If one parent is late, the task silently reads a stale version of the others unless each parent's output is versioned. Watch the nodes with in-degree ≥ 2 in the animation above; those are the ones to instrument.</li>
+</ul>
+
+<h2>A pipeline as code</h2>
+<p>Here's the same DAG as plain Python — no framework — with the three algorithms. This is what a scheduler does, minus the retries, logging, and UI. Run it and it prints the layers and the critical path from the chart.</p>
+<pre><code>from collections import defaultdict, deque
+
+TASKS = {   # name: (duration_min, [upstream])
+    "land_events":     (8,  []),
+    "land_orders":     (5,  []),
+    "land_downtime":   (4,  []),
+    "clean_events":    (20, ["land_events"]),
+    "clean_orders":    (6,  ["land_orders"]),
+    "clean_downtime":  (5,  ["land_downtime"]),
+    "run_timeline":    (25, ["clean_events", "clean_orders"]),
+    "loss_breakdown":  (15, ["clean_events", "clean_downtime"]),
+    "shift_kpis":      (12, ["run_timeline", "loss_breakdown"]),
+    "dq_checks":       (7,  ["run_timeline", "loss_breakdown"]),
+    "publish_gold":    (3,  ["shift_kpis", "dq_checks"]),
+    "notify":          (1,  ["publish_gold"]),
+}
+
+def layers(tasks):                     # Kahn's algorithm
+    indeg = {t: len(up) for t, (_, up) in tasks.items()}
+    down = defaultdict(list)
+    for t, (_, up) in tasks.items():
+        for u in up: down[u].append(t)
+    ready = deque(t for t, d in indeg.items() if d == 0)
+    out = []
+    while ready:
+        layer = sorted(ready); ready.clear(); out.append(layer)
+        for t in layer:
+            for v in down[t]:
+                indeg[v] -= 1
+                if indeg[v] == 0: ready.append(v)
+    if sum(map(len, out)) != len(tasks):
+        raise ValueError("cycle: some tasks never became ready")
+    return out
+
+def critical_path(tasks):              # longest path on a DAG, in topological order
+    finish, via = {}, {}
+    for layer in layers(tasks):
+        for t in layer:
+            dur, up = tasks[t]
+            prev = max(up, key=lambda u: finish[u], default=None)
+            finish[t] = dur + (finish[prev] if prev else 0)
+            via[t] = prev
+    end = max(finish, key=finish.get)
+    path = []
+    while end: path.append(end); end = via[end]
+    return finish[path[0]], path[::-1]
+
+def has_cycle(tasks):                  # DFS with white/grey/black
+    WHITE, GREY, BLACK = 0, 1, 2
+    color = {t: WHITE for t in tasks}
+    def dfs(t):
+        color[t] = GREY
+        for u in tasks[t][1]:
+            if color[u] == GREY or (color[u] == WHITE and dfs(u)): return True
+        color[t] = BLACK
+        return False
+    return any(color[t] == WHITE and dfs(t) for t in tasks)</code></pre>
+
+<hr>
+
+<h2>4 · And the spanning tree</h2>
+<p>Different problem, same chapter. You have plants and a distribution center and you want to connect them all with the least total cable, or lane-miles, or whatever the edge cost is, with no redundant links. That's a minimum spanning tree, and it's the cleanest example of a greedy algorithm that is <em>provably</em> optimal — Kleinberg–Tardos §4.5 proves it with the cut property: the cheapest edge crossing any cut is in some MST. Abdul Bari's lecture 44 covers Prim and Kruskal side by side; here's Kruskal, because union-find is the data structure worth seeing.</p>
+<div class="viz" id="mst"></div>
+<p>Sort the edges by cost. Take each one unless it would close a cycle — and "would it close a cycle" is a union-find query: are both endpoints already in the same component? Accept, merge the components; reject otherwise. With path compression and union by rank, each query is effectively constant time, so Kruskal is <code>O(E log E)</code> and the log is the sort.</p>
+<p>Where it shows up in data work: clustering (single-linkage is an MST with the longest edges cut), network design, approximating the traveling salesman (the MST is within a factor of two of the optimal tour — KT §11.1), and the "connect these N data sources with the fewest cross-region links" question that comes up in every platform design review.</p>
+
+<hr>
+<p class="meta">Theory: CLRS §22.3–22.4 (DFS, topological sort), §24.2 (DAG shortest paths), ch. 23 (MST); Kleinberg &amp; Tardos §3.6 (topological ordering), §4.5–4.6 (MST, union-find), §11.1 (MST-based TSP approximation); Abdul Bari lectures 44 (Prim/Kruskal), 61–62 (BFS/DFS). Pipeline and visuals are mine.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script>
+(function(){
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const ink=()=>css('--ink'),ink2=()=>css('--ink-2'),ink3=()=>css('--ink-3'),rule=()=>css('--rule'),accent=()=>css('--accent');
+
+// The pipeline: name → [duration, upstream]
+const TASKS={
+  land_events:[8,[]], land_orders:[5,[]], land_downtime:[4,[]],
+  clean_events:[20,['land_events']], clean_orders:[6,['land_orders']], clean_downtime:[5,['land_downtime']],
+  run_timeline:[25,['clean_events','clean_orders']], loss_breakdown:[15,['clean_events','clean_downtime']],
+  shift_kpis:[12,['run_timeline','loss_breakdown']], dq_checks:[7,['run_timeline','loss_breakdown']],
+  publish_gold:[3,['shift_kpis','dq_checks']], notify:[1,['publish_gold']],
+};
+const TIER={land_events:'bronze',land_orders:'bronze',land_downtime:'bronze',clean_events:'silver',clean_orders:'silver',clean_downtime:'silver',run_timeline:'gold',loss_breakdown:'gold',shift_kpis:'gold',dq_checks:'check',publish_gold:'publish',notify:'publish'};
+const TCOL={bronze:'#b07a3f',silver:'#8fa3b0',gold:'#d4a62a',check:'#8e7cc3',publish:'#2fb38a'};
+
+// Kahn's algorithm → layers (array of arrays), plus the step log for animation
+function kahn(tasks){
+  const indeg={},down={};Object.keys(tasks).forEach(t=>{indeg[t]=tasks[t][1].length;down[t]=[];});
+  Object.keys(tasks).forEach(t=>tasks[t][1].forEach(u=>down[u].push(t)));
+  let ready=Object.keys(tasks).filter(t=>indeg[t]===0);const layers=[];
+  while(ready.length){const layer=ready.slice().sort();ready=[];layers.push(layer);
+    layer.forEach(t=>down[t].forEach(v=>{indeg[v]--;if(indeg[v]===0)ready.push(v);}));}
+  return layers;
+}
+// longest path by duration, in topological order
+function criticalPath(tasks){
+  const finish={},via={};
+  kahn(tasks).flat().forEach(t=>{const [dur,up]=tasks[t];let prev=null;up.forEach(u=>{if(prev===null||finish[u]>finish[prev])prev=u;});finish[t]=dur+(prev?finish[prev]:0);via[t]=prev;});
+  let end=Object.keys(finish).reduce((a,b)=>finish[a]>finish[b]?a:b);const path=[];while(end){path.push(end);end=via[end];}
+  return {length:finish[path[0]],path:path.reverse(),finish};
+}
+// layout: x by layer, y spread within layer
+function layout(tasks,W,H){
+  const layers=kahn(tasks);const pos={};
+  layers.forEach((L,i)=>L.forEach((t,j)=>{pos[t]={x:60+i*(W-120)/(layers.length-1),y:40+(j+0.5)*(H-80)/L.length,layer:i};}));
+  return pos;
+}
+function drawGraph(svg,tasks,pos,opts){
+  const edges=[];Object.keys(tasks).forEach(t=>tasks[t][1].forEach(u=>edges.push({u,v:t})));
+  svg.append('defs').append('marker').attr('id',opts.marker).attr('viewBox','0 0 10 10').attr('refX',22).attr('refY',5).attr('markerWidth',7).attr('markerHeight',7).attr('orient','auto').append('path').attr('d','M0,0L10,5L0,10z').attr('fill',ink3());
+  const E=svg.append('g').selectAll('line').data(edges).join('line').attr('x1',d=>pos[d.u].x).attr('y1',d=>pos[d.u].y).attr('x2',d=>pos[d.v].x).attr('y2',d=>pos[d.v].y).attr('stroke',ink3()).attr('stroke-width',1.3).attr('marker-end',`url(#${opts.marker})`);
+  const N=svg.append('g').selectAll('g').data(Object.keys(tasks)).join('g').attr('transform',t=>`translate(${pos[t].x},${pos[t].y})`);
+  N.append('circle').attr('r',16).attr('fill',t=>TCOL[TIER[t]]).attr('stroke',css('--bg')).attr('stroke-width',2);
+  N.append('text').attr('y',4).attr('text-anchor','middle').attr('fill','#fff').attr('font-size',10).attr('font-weight',600).text(t=>tasks[t][0]);
+  N.append('text').attr('y',30).attr('text-anchor','middle').attr('fill',ink2()).attr('font-size',10).text(t=>t);
+  return {E,N,edges};
+}
+
+// ---------- 1. topological sort
+viz('topo',function(){
+  const el=d3.select('#topo'),W=760,H=300;
+  const bar=el.append('div').attr('class','bar');const btn=bar.append('button').text('▶ run Kahn’s algorithm');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const pos=layout(TASKS,W,H);const {E,N}=drawGraph(svg,TASKS,pos,{marker:'m1'});
+  const layers=kahn(TASKS);
+  const bands=svg.insert('g',':first-child');
+  function run(){
+    N.selectAll('circle').attr('opacity',.25).attr('stroke',css('--bg'));bands.selectAll('*').remove();
+    layers.forEach((L,i)=>{setTimeout(()=>{
+      const x=pos[L[0]].x;bands.append('rect').attr('x',x-30).attr('y',8).attr('width',60).attr('height',H-16).attr('rx',8).attr('fill',accent()).attr('fill-opacity',.08);
+      bands.append('text').attr('x',x).attr('y',H-4).attr('text-anchor','middle').attr('fill',accent()).attr('font-size',10).text('layer '+(i+1));
+      N.filter(t=>L.includes(t)).selectAll('circle').transition().attr('opacity',1).attr('stroke',accent());
+      st.html(`layer ${i+1}: <b>${L.join(', ')}</b>${i===layers.length-1?` · ${layers.length} layers, in-degree counts reached zero in this order`:''}`);
+    },600*i);});
+  }
+  btn.on('click',run);run();
+  el.append('div').attr('class','legend').html(Object.keys(TCOL).map(k=>`<span><i style="background:${TCOL[k]}"></i>${k}</span>`).join('')+'<span>number = minutes</span>');
+},[kahn,layout,drawGraph]);
+
+// ---------- 2. critical path
+viz('crit',function(){
+  const el=d3.select('#crit'),W=760,H=300;
+  const bar=el.append('div').attr('class','bar');const btn=bar.append('button').text('▶ compute earliest finish');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const pos=layout(TASKS,W,H);const {E,N,edges}=drawGraph(svg,TASKS,pos,{marker:'m2'});
+  const cp=criticalPath(TASKS);const order=kahn(TASKS).flat();
+  const lbl=N.append('text').attr('y',-22).attr('text-anchor','middle').attr('fill',accent()).attr('font-size',11).attr('font-weight',600).attr('opacity',0);
+  function run(){
+    lbl.attr('opacity',0);E.attr('stroke',ink3()).attr('stroke-width',1.3);
+    order.forEach((t,i)=>setTimeout(()=>{lbl.filter(x=>x===t).text('ef '+cp.finish[t]).attr('opacity',1);st.html(`${t}: ${TASKS[t][0]} + max(upstream) = <b>${cp.finish[t]}</b>`);},220*i));
+    setTimeout(()=>{
+      const onPath=new Set();for(let i=1;i<cp.path.length;i++)onPath.add(cp.path[i-1]+'>'+cp.path[i]);
+      E.filter(d=>onPath.has(d.u+'>'+d.v)).transition().attr('stroke',accent()).attr('stroke-width',3.5);
+      st.html(`critical path <b>${cp.length} min</b>: ${cp.path.join(' → ')} · sum of all tasks: ${Object.values(TASKS).reduce((a,v)=>a+v[0],0)} min`);
+    },220*order.length+200);
+  }
+  btn.on('click',run);run();
+  el.append('div').attr('class','legend').html(`<span>ef = earliest finish (minutes from start)</span><span><i style="background:${accent()}"></i>critical path</span>`);
+},[kahn,criticalPath,layout,drawGraph]);
+
+// ---------- 3. cycle detection
+viz('cycle',function(){
+  const el=d3.select('#cycle'),W=760,H=300;
+  const bar=el.append('div').attr('class','bar');
+  const tog=bar.append('button').text('add edge: publish_gold → clean_events').attr('aria-pressed','false');
+  const btn=bar.append('button').text('▶ run DFS');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const pos=layout(TASKS,W,H);const {E,N}=drawGraph(svg,TASKS,pos,{marker:'m3'});
+  let bad=false;
+  const badEdge=svg.append('path').attr('fill','none').attr('stroke','#c0392b').attr('stroke-width',2).attr('stroke-dasharray','6,4').attr('marker-end','url(#m3)').attr('opacity',0);
+  const a=pos.publish_gold,b=pos.clean_events;badEdge.attr('d',`M${a.x},${a.y} Q${(a.x+b.x)/2},${H+40} ${b.x},${b.y}`);
+  function graph(){const g={};Object.keys(TASKS).forEach(t=>g[t]=TASKS[t][1].slice());if(bad)g.clean_events.push('publish_gold');return g;}
+  function run(){
+    const g=graph(),color={},log=[];Object.keys(g).forEach(t=>color[t]=0);
+    let found=null;
+    function dfs(t){color[t]=1;log.push({t,c:1});for(const u of g[t]){if(color[u]===1){found=[t,u];log.push({t:u,c:3});return true;}if(color[u]===0&&dfs(u))return true;}color[t]=2;log.push({t,c:2});return false;}
+    for(const t of Object.keys(g)){if(color[t]===0&&dfs(t))break;}
+    N.selectAll('circle').attr('stroke',css('--bg')).attr('stroke-width',2).attr('opacity',1);
+    log.forEach((s,i)=>setTimeout(()=>{N.filter(x=>x===s.t).select('circle').attr('stroke',s.c===1?'#999':s.c===2?ink():'#c0392b').attr('stroke-width',s.c===3?5:3);
+      st.html(s.c===3?`<b style="color:#c0392b">back edge into grey node ${s.t} — cycle, DAG rejected</b>`:`${s.t}: ${s.c===1?'grey (on the path)':'black (done)'}`);},160*i));
+    if(!found)setTimeout(()=>st.html('every node black, no back edge → <b>it’s a DAG</b>'),160*log.length);
+  }
+  tog.on('click',()=>{bad=!bad;tog.attr('aria-pressed',bad);badEdge.attr('opacity',bad?1:0);run();});
+  btn.on('click',run);run();
+  el.append('div').attr('class','legend').html('<span><i style="border:2px solid #999;background:none"></i>grey: on the DFS path</span><span><i style="border:2px solid currentColor;background:none"></i>black: finished</span><span><i style="background:#c0392b"></i>back edge = cycle</span>');
+},[layout,drawGraph]);
+
+// ---------- 4. Kruskal
+viz('mst',function(){
+  const el=d3.select('#mst'),W=760,H=330;
+  const bar=el.append('div').attr('class','bar');const btn=bar.append('button').text('▶ run Kruskal');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const P={Rockford:[110,70],Elgin:[250,120],Aurora:[260,230],Joliet:[400,270],Naperville:[380,160],Chicago_DC:[520,100],Gary:[640,230],Kenosha:[540,30],Peoria:[90,260]};
+  const EDGES=[['Rockford','Elgin',44],['Rockford','Peoria',80],['Elgin','Aurora',32],['Elgin','Naperville',38],['Elgin','Kenosha',70],['Aurora','Joliet',30],['Aurora','Naperville',22],['Aurora','Peoria',96],['Naperville','Joliet',28],['Naperville','Chicago_DC',35],['Joliet','Gary',58],['Chicago_DC','Gary',40],['Chicago_DC','Kenosha',55],['Kenosha','Rockford',88],['Peoria','Joliet',130]];
+  // union-find
+  const parent={};Object.keys(P).forEach(k=>parent[k]=k);
+  const find=x=>parent[x]===x?x:(parent[x]=find(parent[x]));
+  const union=(a,b)=>{parent[find(a)]=find(b);};
+  const E=svg.append('g').selectAll('line').data(EDGES).join('line').attr('x1',d=>P[d[0]][0]).attr('y1',d=>P[d[0]][1]).attr('x2',d=>P[d[1]][0]).attr('y2',d=>P[d[1]][1]).attr('stroke',rule()).attr('stroke-width',1.5);
+  svg.append('g').selectAll('text').data(EDGES).join('text').attr('x',d=>(P[d[0]][0]+P[d[1]][0])/2).attr('y',d=>(P[d[0]][1]+P[d[1]][1])/2-4).attr('text-anchor','middle').attr('fill',ink3()).attr('font-size',10).text(d=>d[2]);
+  const N=svg.append('g').selectAll('g').data(Object.keys(P)).join('g').attr('transform',k=>`translate(${P[k][0]},${P[k][1]})`);
+  N.append('circle').attr('r',7).attr('fill',k=>k==='Chicago_DC'?accent():ink2());
+  N.append('text').attr('y',-11).attr('text-anchor','middle').attr('fill',ink()).attr('font-size',11).text(k=>k.replace('_',' '));
+  function run(){
+    Object.keys(P).forEach(k=>parent[k]=k);E.attr('stroke',rule()).attr('stroke-width',1.5);
+    const sorted=EDGES.slice().sort((a,b)=>a[2]-b[2]);let total=0,taken=0;
+    sorted.forEach((e,i)=>setTimeout(()=>{
+      const sel=E.filter(d=>d===e);
+      if(find(e[0])!==find(e[1])){union(e[0],e[1]);total+=e[2];taken++;sel.attr('stroke',accent()).attr('stroke-width',3.5);st.html(`${e[0]}–${e[1]} (${e[2]}): different components → <b>take</b> · total ${total}`);}
+      else{sel.attr('stroke','#c0392b').attr('stroke-dasharray','4,4');st.html(`${e[0]}–${e[1]} (${e[2]}): same component → <b>skip</b> (would close a cycle)`);}
+      if(i===sorted.length-1)setTimeout(()=>st.html(`MST: <b>${taken} edges, total ${total}</b> · ${Object.keys(P).length} nodes need exactly ${Object.keys(P).length-1} edges`),500);
+    },420*i));
+  }
+  btn.on('click',run);run();
+  el.append('div').attr('class','legend').html(`<span><i style="background:${accent()}"></i>taken</span><span><i style="background:#c0392b"></i>skipped: would close a cycle</span><span>edge numbers = cost (lane-miles, say)</span>`);
+});
+})();
+</script>
+</body>
+</html>
