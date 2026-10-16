@@ -8,6 +8,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<style>
+.live{position:relative;left:50%;transform:translateX(-50%);width:min(1180px,calc(100vw - 40px));margin:8px 0 28px}
+.live iframe{width:100%;height:960px;border:1px solid var(--rule);border-radius:10px;background:var(--bg)}
+.live .cap{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:8px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media (max-width:720px){.live iframe{height:1100px}}
+</style>
 </head>
 <body>
 <main class="page">
@@ -27,6 +33,13 @@
 <p class="lede">The corrugator shift investigator is a worked example of how I think an industrial AI agent should be built: the model decides where to look, the application decides what the numbers are.</p>
 
 <p>Repo: <a href="https://github.com/justfetz/corrugator-shift-investigator">justfetz/corrugator-shift-investigator</a>. Python, SQL, synthetic XML data, an optional model adapter, and a workbench UI. Everything below is public and runnable offline.</p>
+
+<h2>Try it</h2>
+<p>This is the actual workbench from the repo, running on Cloud Run with the free offline planner — no model, no key, synthetic September 2026 data. Pick a day and shift, ask <em>"Why was second shift slow? Chart downtime by reason."</em>, then open <em>How the agent got here</em> to see every tool call, its SQL, the bound values, and the rows that produced each number. It scales to zero between visitors, so the first load can take a few seconds.</p>
+<div class="live">
+  <iframe src="https://corrugator-shift-investigator-4s5ogdb7lq-uc.a.run.app/" title="Corrugator shift investigator: live workbench on synthetic data" loading="lazy"></iframe>
+  <div class="cap"><span>live · synthetic data · offline planner · nothing here is a real plant</span><a href="https://corrugator-shift-investigator-4s5ogdb7lq-uc.a.run.app/">open as its own page →</a></div>
+</div>
 
 <h2>The question</h2>
 <p>A corrugator superintendent comes in and asks: <em>why was third shift bad?</em></p>
