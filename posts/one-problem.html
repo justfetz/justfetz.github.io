@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>It's all one problem — Jason Fetzer</title>
+<meta name="description" content="Eleven years of corrugator scheduling, from an Excel Solver to a solver of my own: the floor, the mill, the math, and what I'd tell a data engineer who wants in.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:720px}
+.open{font-size:clamp(26px,4.6vw,40px);line-height:1.15;font-weight:500;letter-spacing:-.5px;margin:0 0 24px}
+.sect{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:48px 0 14px;display:flex;align-items:center;gap:12px}
+.sect::after{content:'';flex:1;height:1px;background:var(--rule)}
+.pull{border-left:2px solid var(--accent);padding:4px 0 4px 18px;margin:24px 0;font-size:19px;line-height:1.45;color:var(--ink)}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.viz svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar .st{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:auto;text-align:right}
+.bar .st b{color:var(--ink);font-weight:500}
+.legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.embed{margin:0 0 24px}
+.embed iframe{width:100%;height:1120px;border:1px solid var(--rule);border-radius:10px;background:var(--bg)}
+.embed .cap{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:8px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media (max-width:720px){.embed iframe{height:1600px}}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-16 · corrugated · optimization · essay</p>
+<h1 class="open">It's all one problem. Eleven years of learning that.</h1>
+
+<p>Really? People study this?</p>
+<p>That was my reaction, eleven years ago, to the first research paper I found on trim loss. I had been sitting with corrugator schedulers for a few months, asking about the math, trying to see if there were ways to improve. I didn't understand how the knives and slitters worked. I understood even less of the paper. But the question it raised stuck and never left: why wouldn't you just run it as a one-dimensional problem and only cut the sheets you need?</p>
+<p>I'd started with the part I could hold — cutting stock, one dimension, in Excel. First-fit decreasing by hand, then the Solver add-in, reading the help page on GRG versus simplex versus evolutionary to figure out which one gave a global minimum. That spreadsheet taught me what a global minimum was. It also taught me I was doing geometry without knowing it.</p>
+<p>The answer to the question took years to land. If you cut exactly what you need, you leave partial bales all over the plant. A unit is a physical thing. Nobody wants it on their floor, nobody wants to store it, nobody wants to absorb the cost, and if you're early or late with it the logistics are a nightmare. So you cut inside a window — ten percent either way — and you build the schedule so an order finishes close together, on two patterns at most. That window is where the math meets the forklift.</p>
+<p>Mostly I watched. I kept thinking, isn't this just math? It is. But planners had customers to call and a plant to answer to. There were hot orders, elevated cases, somebody on the phone asking "can we move this up?" The math doesn't go away when that happens. It stops being the only thing in the room.</p>
+
+<div class="sect">the floor</div>
+<p>Later I installed OMP as a forward-deployed engineer and trained front-line staff. The install was fine. The thing I actually learned was that manufacturing teams are hard to win over, and they should be. You develop trust before anyone reads your report. Then you operate next to them and listen to the complaints, because the complaints are where the model is wrong.</p>
+<p>Trim is generally a corrugator's largest waste percentage. When it came down a quarter of a point, people were happy. That's when "cost of board" became a number to me — not from a book, from a waste committee and the supply chain team.</p>
+<p>I got to suggest mill roll widths. The decision belonged to supply chain, but I could propose, and when I gave the mill widths that fit the corrugators, the mill's trim went down. A sales guy had told me early on: in this business, the mill is king. He meant that's where the money is. What I eventually saw was that the mill cuts reels into roll widths and the plants cut roll widths into orders, and the width catalog is the hinge between two cutting problems. Most people only ever stand on one side of it.</p>
+<p>What I got wrong first was the waste. I thought trim was the schedule's problem. It's the whole chain's.</p>
+
+<div class="sect">the math, as I understand it now</div>
+<p>A pattern is a web width, up to three orders on the three knives, and the outs of each. A CI is a pattern plus a run length. A schedule is a list of CIs. That's the whole object. For fifteen orders of one grade there are somewhere between a hundred thousand and a million feasible patterns before a single run length is chosen. You prune in order: the cheap physics first — used width can't exceed the web; trim can't exceed seven inches a side or the chute jams — and the expensive checks, like whether the score lines fit on three shafts two inches apart, only on what survives.</p>
+
+<div class="embed">
+  <iframe src="corrugator-search-space.html" title="Corrugator search space explorer: the pruning ladder, the web-width by used-width map, and the run schedule" loading="lazy"></iframe>
+  <div class="cap"><span>live: one grade partition on a 110" machine, every gate counted, the schedule run sheet by sheet</span><a href="corrugator-search-space.html">open full page →</a></div>
+</div>
+
+<p>Every rule is one of two kinds. Physics: one grade per CI, the chute, the shafts, one order per knife. Those are removed from the space, never penalized. Liberties: the window, setups, short cutoffs. Those are priced or bounded, never forbidden. I used to call the second kind slack, which isn't quite it — slack is what's left in a constraint at a solution; a liberty is the decision you make up front about which rules are walls and which are prices. When a planner says "we can't run that," the first thing to find out is which kind of can't. Score depth sounds like physics and is usually a customer preference. Whether die-cuts get scored on the corrugator sounds like a fact and is, as far as I can tell, an open question.</p>
+
+<div class="pull">The inventory isn't a loop.</div>
+<p>The part that changed how I see it. In Excel I picked a pattern, ran it, subtracted the sheets, picked the next. That can never prove it's optimal, because each choice was made before the later ones were known. The master problem subtracts nothing. Every run length is an unknown, and every order is one row — feet run on every pattern that carries it, times sheets per foot, inside the window. All at once. A pattern that helps one order and overfills another is pushed and pulled by both rows at the same time. A loop can't see that. It's all one problem.</p>
+<p>And the solver knows when it's done. It carries the best plan found and a bound on the best possible, and when they meet, that's proof. When the clock runs out first, it tells you the gap. No loop can say "within two percent of the best possible." That sentence is the reason to leave the spreadsheet.</p>
+
+<div class="viz" id="bnb"></div>
+
+<p>The objective is useful MSF per hour, and the ratio was the part I struggled with most. A linear solver maximizes sums of constant-times-variable. MSF is one. Hours is one. Their ratio isn't — double every run length and the ratio doesn't move, which nothing linear can do. So you hand the solver "MSF minus λ times hours" for a guessed λ, set λ to the rate you got, and go again. Three or four rounds. Which is what a scheduler does: "I think this pool can do 280." Build it. It did 290. "Okay, 290." Can't beat it. Done.</p>
+<p>The ratio is why ten or fifteen feet a minute matters. A short cutoff haircuts a whole pattern's speed by a quarter. An extra inch of trim on a 110-inch web is under one percent of the paper. A fixed-MSF objective packs the web and eats the slow cutoff. The ratio sees the hours and takes the inch. You sometimes eat an inch of trim to keep the gator humming between orders. Nobody wrote that rule. It's what the ratio does.</p>
+
+<div class="sect">sequencing, where on-time delivery lives</div>
+<p>The master hands you a bag of CIs, not an order. A CI change is a dry-end setup — the shear, the knives, the scorer. A web change means new rolls on the stands. A flute change means a module facer swap and the only transition that actually stops the machine. So: minimize changes. Group by web. Wide to narrow, because stepping up costs about three times stepping down. Sequence the flute transitions in and out so one facer preps while the other runs. Everyone wants wide. The order mix doesn't always allow it.</p>
+<p>If you can run a full roll, you run it. If not, half and splice to the other arm. What you're really doing is bringing the rolls that cause the fewest trips on a clamp truck, because every butt roll is a trip back, a storage spot, and a roll handled twice. The sequence that's right for the wet end is usually the one that's right for the forklift.</p>
+<p>Due dates fight all of it. Earliest deadline first is provably optimal for one machine with no setup cost, and the moment setups cost something, it's at war with web grouping. A hot order on the narrow web wants to run now; the web wants to run last. So you price both — speed lost at boundaries plus weighted lateness — and let the solver say whether the step-up is worth it for this order. Sometimes it is. Sometimes you call the customer. The point is to say yes when the number says yes, and to be able to show the number.</p>
+<p>On-time delivery is by order. If you're behind, and it happens, the customer comes first and there's probably overtime. Monday morning it's downtime, waste, speed. None of the three proves anything alone. Together they're directionally accurate, and that's enough to know where to walk.</p>
+<p>One thing my engine gets different from the plant: a released schedule is an immutable record in the engine. In a plant you just insert the order — downloads are dry-end setups; the wet end only changes at a quality change. The plant is right. The engine should let you insert, and keep the record of what was released versus what ran. It's on the list.</p>
+
+<div class="sect">what I'd tell a data engineer</div>
+<p>If a 25-year-old data engineer asked me what to learn, I'd still say SQL. Data structures matter, and SQL is the step anyone can take to shape and clean what's in front of them — and you'll be shaping and cleaning before any of the above is possible. Excel is a tool. Good for some things, not for others. You'll run into it regardless.</p>
+<p>And I'd tell them it's going to take longer than they think, and that's not a failure. The papers are right that it's math. The floor is right that it isn't only math. You'll spend a while not understanding either one, and then a while understanding one and not the other. The people on the floor will be patient with you if you're honest about which stage you're in. That's most of it.</p>
+
+<hr>
+<p class="meta">Written by Jason Fetzer, edited with Claude. The explorer and the branch-and-bound replay run live on this page; the tree is a real GLOP trace on a six-pattern master. Machine constants follow the plant-truth ledger of the engine described; plant specifics are generalized.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script>
+(function(){
+const T={"orders":{"A":{"w":36,"L":48,"q":12000},"B":{"w":24,"L":30,"q":20000},"C":{"w":48,"L":60,"q":6000}},"patterns":[{"web":110,"outs":{"A":3},"used":108,"speed":589,"rbar":17600},{"web":104,"outs":{"B":4},"used":96,"speed":617,"rbar":13750},{"web":98,"outs":{"C":2},"used":96,"speed":617,"rbar":16500},{"web":110,"outs":{"A":2,"B":1},"used":96,"speed":589,"rbar":26400},{"web":110,"outs":{"A":1,"C":1,"B":1},"used":108,"speed":589,"rbar":33000},{"web":104,"outs":{"B":2,"C":1},"used":96,"speed":617,"rbar":27500}],"lam":240.0,"setup":6.0,"nodes":[{"id":0,"parent":null,"label":"root","depth":0,"fixed":{},"bound":53.78,"z":{"0":0.375,"1":0.218,"2":-0.0,"3":-0.0,"4":1.0,"5":-0.0},"r":{"0":6600,"1":3000,"2":0,"3":0,"4":33000,"5":0},"status":"branched","branch_on":0},{"id":1,"parent":0,"label":"z0=1","depth":1,"fixed":{"0":1},"bound":38.78,"z":{"0":1.0,"1":0.218,"2":0.0,"3":0.0,"4":1.0,"5":0.0},"r":{"0":6600,"1":3000,"2":0,"3":0,"4":33000,"5":0},"status":"branched","branch_on":1},{"id":2,"parent":1,"label":"z1=1","depth":2,"fixed":{"0":1,"1":1},"bound":23.81,"z":{"0":1.0,"1":1.0,"2":0.0,"3":0.0,"4":1.0,"5":0.0},"r":{"0":6600,"1":5500,"2":0,"3":0,"4":33000,"5":0},"status":"integer","new_incumbent":true},{"id":3,"parent":1,"label":"z1=0","depth":2,"fixed":{"0":1,"1":0},"bound":38.26,"z":{"0":1.0,"1":0.0,"2":0.0,"3":0.0,"4":0.636,"5":0.436},"r":{"0":10600,"1":0,"2":0,"3":0,"4":21000,"5":12000},"status":"branched","branch_on":5},{"id":4,"parent":3,"label":"z5=1","depth":3,"fixed":{"0":1,"1":0,"5":1},"bound":32.77,"z":{"0":1.0,"1":0.0,"2":0.167,"3":0.0,"4":0.0,"5":1.0},"r":{"0":17600,"1":0,"2":2750,"3":0,"4":0,"5":27500},"status":"branched","branch_on":2},{"id":5,"parent":4,"label":"z2=1","depth":4,"fixed":{"0":1,"1":0,"5":1,"2":1},"bound":12.77,"z":{"0":1.0,"1":0.0,"2":1.0,"3":0.0,"4":0.0,"5":1.0},"r":{"0":17600,"1":0,"2":2750,"3":0,"4":0,"5":27500},"status":"pruned_bound","incumbent":23.81},{"id":6,"parent":4,"label":"z2=0","depth":4,"fixed":{"0":1,"1":0,"5":1,"2":0},"bound":32.59,"z":{"0":1.0,"1":0.0,"2":0.0,"3":0.0,"4":0.0,"5":1.0},"r":{"0":17600,"1":0,"2":0,"3":0,"4":0,"5":27500},"status":"integer","new_incumbent":true},{"id":7,"parent":3,"label":"z5=0","depth":3,"fixed":{"0":1,"1":0,"5":0},"status":"infeasible"},{"id":8,"parent":0,"label":"z0=0","depth":1,"fixed":{"0":0},"bound":51.74,"z":{"0":0.0,"1":0.038,"2":-0.0,"3":0.375,"4":1.0,"5":-0.0},"r":{"0":0,"1":525,"2":0,"3":9900,"4":33000,"5":0},"status":"branched","branch_on":3},{"id":9,"parent":8,"label":"z3=1","depth":2,"fixed":{"0":0,"3":1},"bound":36.74,"z":{"0":0.0,"1":0.038,"2":0.0,"3":1.0,"4":1.0,"5":0.0},"r":{"0":0,"1":525,"2":0,"3":9900,"4":33000,"5":0},"status":"branched","branch_on":1},{"id":10,"parent":9,"label":"z1=1","depth":3,"fixed":{"0":0,"3":1,"1":1},"bound":17.45,"z":{"0":0.0,"1":1.0,"2":0.0,"3":1.0,"4":1.0,"5":0.0},"r":{"0":0,"1":3025,"2":0,"3":9900,"4":33000,"5":0},"status":"pruned_bound","incumbent":32.59},{"id":11,"parent":9,"label":"z1=0","depth":3,"fixed":{"0":0,"3":1,"1":0},"bound":36.53,"z":{"0":0.0,"1":0.0,"2":0.0,"3":1.0,"4":0.958,"5":0.051},"r":{"0":0,"1":0,"2":0,"3":10600,"4":31600,"5":1400},"status":"branched","branch_on":5},{"id":12,"parent":11,"label":"z5=1","depth":4,"fixed":{"0":0,"3":1,"1":0,"5":1},"bound":18.02,"z":{"0":0.0,"1":0.0,"2":0.0,"3":1.0,"4":0.756,"5":1.0},"r":{"0":0,"1":0,"2":0,"3":13933,"4":24933,"5":8067},"status":"pruned_bound","incumbent":32.59},{"id":13,"parent":11,"label":"z5=0","depth":4,"fixed":{"0":0,"3":1,"1":0,"5":0},"status":"infeasible"},{"id":14,"parent":8,"label":"z3=0","depth":2,"fixed":{"0":0,"3":0},"status":"infeasible"}],"best":6,"best_obj":32.59};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// Branch and bound replay: nodes in the order the solver visited them, LP bound at each, incumbent line rising.
+viz('bnb',function(){
+  const el=d3.select('#bnb');
+  el.append('h3').style('margin','0 0 2px').style('font-family','var(--sans)').style('font-size','14px').style('font-weight','600').style('text-transform','none').style('letter-spacing','0').style('color','var(--ink)').text('Branch and bound on a six-pattern master');
+  el.append('div').style('font-family','var(--mono)').style('font-size','11px').style('color','var(--ink-3)').style('margin-bottom','8px').html(`three orders, six feasible patterns, λ = ${T.lam} MSF/hr · each node is one GLOP relaxation · branch on the most fractional z (use the pattern or not)`);
+  const bar=el.append('div').attr('class','bar');const btn=bar.append('button').text('▶ replay the search');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const W=720,H=330;const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const byId=new Map(T.nodes.map(n=>[n.id,n]));
+  const root=d3.stratify().id(d=>String(d.id)).parentId(d=>d.parent===null?null:String(d.parent))(T.nodes);
+  d3.tree().size([W-40,H-90])(root);const g=svg.append('g').attr('transform','translate(20,30)');
+  const ink=css('--ink'),ink2=css('--ink-2'),ink3=css('--ink-3'),rule=css('--rule'),accent=css('--accent');
+  g.selectAll('path').data(root.links()).join('path').attr('d',d=>`M${d.source.x},${d.source.y}L${d.target.x},${d.target.y}`).attr('fill','none').attr('stroke',rule);
+  g.selectAll('.lk').data(root.links()).join('text').attr('class','lk').attr('x',d=>d.source.x+(d.target.x-d.source.x)*0.6).attr('y',d=>d.source.y+(d.target.y-d.source.y)*0.6-4).attr('text-anchor','middle').attr('fill',ink3).attr('font-size',9).text(d=>d.target.data.label);
+  const N=g.selectAll('g.n').data(root.descendants()).join('g').attr('class','n').attr('transform',d=>`translate(${d.x},${d.y})`);
+  const col=d=>{const s=d.data.status;return s==='infeasible'?'#c0392b':s==='pruned_bound'?'#8e7cc3':s==='integer'?accent:css('--code-bg');};
+  N.append('circle').attr('r',13).attr('fill',col).attr('stroke',d=>d.data.status==='branched'?ink3:col(d)).attr('stroke-width',1.5).attr('opacity',0);
+  N.append('text').attr('y',4).attr('text-anchor','middle').attr('font-size',9.5).attr('fill',d=>d.data.status==='branched'?ink:'#fff').text(d=>d.data.bound!==undefined?d.data.bound.toFixed(0):'✕').attr('opacity',0);
+  N.append('text').attr('y',26).attr('text-anchor','middle').attr('font-size',8.5).attr('fill',ink3).text(d=>d.data.status==='integer'?'plan':d.data.status==='pruned_bound'?'≤ '+d.data.incumbent:'').attr('opacity',0);
+  function run(){
+    N.selectAll('circle,text').attr('opacity',0);let inc=-Infinity;
+    T.nodes.forEach((n,k)=>setTimeout(()=>{N.filter(d=>d.data.id===n.id).selectAll('circle,text').transition().duration(200).attr('opacity',1);
+      if(n.status==='integer'){inc=Math.max(inc,n.bound);}
+      const msg=n.status==='branched'?`node ${n.id}: bound <b>${n.bound}</b>, z${n.branch_on} is fractional (${n.z[String(n.branch_on)]}) → branch`:n.status==='integer'?`node ${n.id}: every z is 0 or 1 → a real plan worth <b>${n.bound}</b>${n.new_incumbent?' · <b>new incumbent</b>':''}`:n.status==='pruned_bound'?`node ${n.id}: bound ${n.bound} ≤ incumbent ${n.incumbent} → <b>pruned</b>, nothing below can win`:`node ${n.id}: the window can't be met with these fixed → <b>infeasible</b>`;
+      st.html(msg);
+      if(k===T.nodes.length-1)setTimeout(()=>st.html(`${T.nodes.length} relaxations · best plan <b>${T.best_obj}</b> at node ${T.best} · proven: no open node has a bound above it`),700);},650*k));
+  }
+  btn.on('click',run);run();
+  const best=byId.get(T.best);
+  el.append('div').attr('class','legend').html(`<span><i style="background:${accent}"></i>integer plan</span><span><i style="background:#8e7cc3"></i>pruned by bound</span><span><i style="background:#c0392b"></i>infeasible</span><span>number = LP bound (MSF − λ·hours, per release)</span>`);
+  el.append('div').style('font-family','var(--mono)').style('font-size','11.5px').style('color','var(--ink-2)').style('margin-top','8px').html('best plan: '+Object.entries(best.r).filter(([i,r])=>r>0).map(([i,r])=>{const p=T.patterns[+i];return `${p.web}" ${Object.entries(p.outs).map(([o,k])=>o+'×'+k).join('+')} for ${r.toLocaleString()} ft`;}).join(' · '));
+});
+})();
+</script>
+</body>
+</html>
