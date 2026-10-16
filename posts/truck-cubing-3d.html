@@ -71,7 +71,7 @@ table.cmd td:first-child{white-space:normal}
     <button id="bReplay">▶ replay</button>
     <button id="bInstant">skip to end</button>
   </div>
-  <div id="stage"><div id="hud"></div><div id="hint">drag to rotate · scroll to zoom</div></div>
+  <div id="truckviz"><div id="stage"><div id="hud"></div><div id="hint">drag to rotate · scroll to zoom</div></div></div>
   <div class="stats">
     <div><b>Units loaded</b><em id="sUnits">—</em></div>
     <div><b>MSF on truck</b><em id="sMsf">—</em></div>
@@ -152,6 +152,7 @@ static List&lt;Stack&gt; plan(List&lt;Unit&gt; dock) {
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
 <script>
 (function(){
 // ---------- model
@@ -275,7 +276,7 @@ stage.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(40,Math.min(
 function resize(){const w=stage.clientWidth,h=stage.clientHeight||w*9/16;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 window.addEventListener('resize',resize);resize();
 (function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
-run('dock');
+viz('truckviz',function(){ run('dock'); },[dockOrder,msfMax]);
 window.__truck={dockOrder,msfMax,DOCK};
 })();
 </script>

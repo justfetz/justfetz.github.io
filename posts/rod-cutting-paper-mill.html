@@ -137,6 +137,7 @@ static List&lt;Integer&gt; plan(int n) {
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
 <script>
 (function(){
 const N=10, P=[0,1,5,8,9,10,17,17,20,24,26];
@@ -145,7 +146,7 @@ const ink=()=>css('--ink'),ink2=()=>css('--ink-2'),ink3=()=>css('--ink-3'),rule=
 const KRAFT=d3.scaleSequential(d3.interpolateRgb('#e9d5b4','#8a5a2b')).domain([1,10]);
 
 // ---------- prices
-(function(){
+viz('prices',function(){
   const W=720,H=150,pad=10,cw=(W-2*pad)/N;
   const svg=d3.select('#prices').append('svg').attr('viewBox',`0 0 ${W} ${H}`);
   const y=d3.scaleLinear().domain([0,30]).range([100,14]);
@@ -157,7 +158,7 @@ const KRAFT=d3.scaleSequential(d3.interpolateRgb('#e9d5b4','#8a5a2b')).domain([1
     svg.append('text').attr('x',x+cw/2).attr('y',134).attr('text-anchor','middle').attr('fill',ink3()).attr('font-size',10).text((P[w]/w).toFixed(1)+'/unit');
   }
   svg.append('text').attr('x',pad).attr('y',H-2).attr('fill',ink3()).attr('font-size',11).text('price p[w] for a slit roll of width w · per-unit price underneath');
-})();
+});
 
 // ---------- recursion tree (naive vs memo)
 function callTree(n,memo,cache,counter){
@@ -196,13 +197,13 @@ function drawCalls(sel,memo,resId){
   btn.on('click',run);run();
   el.append('div').attr('class','legend').html('<span>color = subproblem size</span>'+(memo?`<span><i style="border:1.5px dashed ${accent()};background:none"></i>cache hit, no recursion</span>`:'<span>same color appearing again = recomputed</span>'));
 }
-drawCalls('#naive',false,'rNaive');
-drawCalls('#memo',true,'rMemo');
+viz('naive',function(){ drawCalls('#naive',false,'rNaive'); },[callTree,drawCalls]);
+viz('memo',function(){ drawCalls('#memo',true,'rMemo'); },[callTree,drawCalls]);
 
 // ---------- bottom-up table
 const R=Array(N+1).fill(0),CUT=Array(N+1).fill(0);
 for(let k=1;k<=N;k++)for(let i=1;i<=k;i++)if(P[i]+R[k-i]>R[k]){R[k]=P[i]+R[k-i];CUT[k]=i;}
-(function(){
+viz('dp',function(){
   const el=d3.select('#dp');
   const bar=el.append('div').attr('class','bar');
   const btn=bar.append('button').text('▶ fill table');
@@ -236,10 +237,10 @@ for(let k=1;k<=N;k++)for(let i=1;i<=k;i++)if(P[i]+R[k-i]>R[k]){R[k]=P[i]+R[k-i];
     })();
   }
   btn.on('click',run);run();
-})();
+});
 
 // ---------- plan
-(function(){
+viz('plan',function(){
   const plan=[];let n=N;while(n>0){plan.push(CUT[n]);n-=CUT[n];}
   const el=d3.select('#plan');
   const bar=el.append('div').attr('class','bar');
@@ -264,10 +265,10 @@ for(let k=1;k<=N;k++)for(let i=1;i<=k;i++)if(P[i]+R[k-i]>R[k]){R[k]=P[i]+R[k-i];
     })();
   }
   btn.on('click',run);run();
-})();
+});
 
 // ---------- cutting stock
-(function(){
+viz('stock',function(){
   const PARENT=98;
   const ORDERS=[{w:42,q:5},{w:36,q:6},{w:30,q:7},{w:24,q:8}];
   const COLW={42:'#8a5a2b',36:'#b07a3f',30:'#cfa06a',24:'#e9d5b4'};
@@ -329,7 +330,7 @@ for(let k=1;k<=N;k++)for(let i=1;i<=k;i++)if(P[i]+R[k-i]>R[k]){R[k]=P[i]+R[k-i];
   }
   b1.on('click',()=>run(false));b2.on('click',()=>run(true));run(false);
   el.append('div').attr('class','legend').html(Object.keys(COLW).sort((a,b)=>b-a).map(w=>`<span><i style="background:${COLW[w]}"></i>${w}"</span>`).join('')+'<span><i style="background:#c0392b"></i>trim</span>');
-})();
+});
 })();
 </script>
 </body>

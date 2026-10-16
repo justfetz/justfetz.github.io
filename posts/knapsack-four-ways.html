@@ -146,6 +146,7 @@ static void branchAndBound(int[] w, int[] v, int cap, int i, int used, int val) 
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
 <script>
 (function(){
 const CAP = 10;
@@ -160,7 +161,7 @@ const COL = {A:'#5b8def', B:'#2fb38a', C:'#e39a2f', D:'#c25fb0'};
 const ink = ()=>css('--ink'), ink2=()=>css('--ink-2'), ink3=()=>css('--ink-3'), rule=()=>css('--rule'), accent=()=>css('--accent');
 
 // ---------- items
-(function(){
+viz('items',function(){
   const W=720,H=110, pad=10, unit=(W-2*pad)/CAP;
   const svg=d3.select('#items').append('svg').attr('viewBox',`0 0 ${W} ${H}`);
   let x=pad;
@@ -172,10 +173,10 @@ const ink = ()=>css('--ink'), ink2=()=>css('--ink-2'), ink3=()=>css('--ink-3'), 
     x+=it.w*unit+6;
   });
   svg.append('text').attr('x',pad).attr('y',H-12).attr('fill',ink3()).attr('font-size',12).text(`capacity ${CAP}  ·  widths are to scale with weight`);
-})();
+});
 
 // ---------- greedy
-(function(){
+viz('greedy',function(){
   const W=720,H=120,pad=10,unit=(W-2*pad)/CAP;
   const order=[...ITEMS].sort((a,b)=>b.v/b.w-a.v/a.w);
   const el=d3.select('#greedy');
@@ -205,10 +206,10 @@ const ink = ()=>css('--ink'), ink2=()=>css('--ink-2'), ink3=()=>css('--ink-3'), 
     })();
   }
   btn.on('click',run); run();
-})();
+});
 
 // ---------- DP
-(function(){
+viz('dp',function(){
   const n=ITEMS.length, V=Array.from({length:n+1},()=>Array(CAP+1).fill(0));
   for(let i=1;i<=n;i++)for(let c=0;c<=CAP;c++){V[i][c]=V[i-1][c];const it=ITEMS[i-1];if(it.w<=c)V[i][c]=Math.max(V[i][c],V[i-1][c-it.w]+it.v);}
   // traceback
@@ -248,7 +249,7 @@ const ink = ()=>css('--ink'), ink2=()=>css('--ink-2'), ink3=()=>css('--ink-3'), 
   }
   btn.on('click',run);run();
   el.append('div').attr('class','legend').html('<span><i style="background:rgba(127,127,127,.3)"></i>tinted = the item was taken for that cell</span><span><i style="background:'+accent()+'"></i>traceback path</span>');
-})();
+});
 
 // ---------- trees (backtracking + B&B)
 function buildTree(useBound){
@@ -296,11 +297,11 @@ function drawTree(sel,useBound,resId){
   btn.on('click',run);run();
   el.append('div').attr('class','legend').html(`<span><i style="background:${accent()}"></i>new incumbent</span><span><i style="background:#c0392b"></i>pruned: over capacity</span>`+(useBound?`<span><i style="background:#8e7cc3"></i>pruned: bound ≤ incumbent</span>`:'')+`<span>number = value · w = weight${useBound?' · b = upper bound':''}</span>`);
 }
-drawTree('#bt',false,'rBt');
-drawTree('#bb',true,'rBb');
+viz('bt',function(){ drawTree('#bt',false,'rBt'); },[buildTree,drawTree]);
+viz('bb',function(){ drawTree('#bb',true,'rBb'); },[buildTree,drawTree]);
 
 // ---------- truck cubing
-(function(){
+viz('truck',function(){
   const L=636,Hh=110; // inside inches, 53' trailer
   const PAL=[ // length (in), height (in), label
     {l:48,h:40,id:1},{l:40,h:22,id:2},{l:48,h:33,id:3},{l:48,h:26,id:4},{l:40,h:46,id:5},{l:48,h:20,id:6},
@@ -351,7 +352,7 @@ drawTree('#bb',true,'rBb');
   }
   b1.on('click',()=>run(false));b2.on('click',()=>run(true));run(false);
   el.append('div').attr('class','legend').html('<span><i style="background:#9ec5ff"></i>short pallet</span><span><i style="background:#1f4fb0"></i>tall pallet</span><span>numbers are dock order</span>');
-})();
+});
 })();
 </script>
 </body>

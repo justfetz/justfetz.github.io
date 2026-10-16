@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear optimization for a box plant — Jason Fetzer</title>
+<meta name="description" content="LP, MILP, and CP-SAT explained with a corrugated plant: a product-mix LP with shadow prices, and an OR-Tools job shop that schedules the corrugator, printer-slotters, and die cutter — solved to proven optimality, with the Gantt chart.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:800px}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.viz svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.bar .st{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:auto}
+.bar .st b{color:var(--ink);font-weight:500}
+.legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.when{width:100%;border-collapse:collapse;font-size:14.5px;margin:0 0 24px}
+.when th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);vertical-align:bottom}
+.when td{padding:10px 10px 10px 0;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+.when td:first-child{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:12px;padding:6px 9px;border-radius:5px;opacity:0;white-space:nowrap}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-16 · operations research · or-tools · corrugated</p>
+<h1>Linear optimization for a box plant: what the solvers are for, and a job shop that proves it</h1>
+<p class="lede">Three kinds of solver, when each one fits, and when none of them is the right tool. Then two real models for a corrugated plant: a product-mix LP that tells you what an hour of the corrugator is worth, and a CP-SAT job shop that schedules eight orders across four machines to proven optimality — in a hundredth of a second.</p>
+
+<p>The algorithms posts so far have been about <em>writing</em> the search: knapsack by hand, rod cutting by hand, a truck-loading heuristic by hand. This one is about when to stop writing it and hand the problem to a solver. Every number below comes from running the code at the bottom.</p>
+
+<h2>What "linear" buys you</h2>
+<p>A linear program is: maximize (or minimize) a linear function of some decision variables, subject to linear inequalities. CLRS chapter 29 opens with the two-variable picture, and it's still the right way to see it: each constraint is a half-plane, the feasible region is the polygon where they all overlap, and the objective is a family of parallel lines sliding across it. The optimum is always at a corner.</p>
+<div class="viz" id="lp2d"></div>
+<p>That picture is the whole theory. Because the region is convex and the objective is linear, a local optimum is the global optimum, and you can find it by walking corner to corner (simplex) or cutting through the interior (barrier methods). Both are polynomial in practice, and modern solvers handle millions of variables. <strong>If your problem is linear and your variables are continuous, it's solved.</strong></p>
+
+<h2>The three solvers and what breaks the picture</h2>
+<table class="when">
+<tr><th>Solver</th><th>Variables</th><th>What it's for</th><th>What breaks it</th></tr>
+<tr><td>LP (GLOP, HiGHS)</td><td>continuous</td><td>Product mix, blending, flows, capacity planning. "How much of each?" Shadow prices come free.</td><td>Anything that has to be whole: you can't run 2.4 trucks.</td></tr>
+<tr><td>MILP (SCIP, CBC, HiGHS, Gurobi)</td><td>continuous + integer</td><td>Fixed costs, yes/no decisions, cutting stock patterns, facility location, lot sizing. The LP with "whole" enforced.</td><td>Integrality destroys convexity — the solver branches on every integer, and the tree is where the exponential hides. Tight formulations and good bounds decide whether it's seconds or days.</td></tr>
+<tr><td>CP-SAT (OR-Tools)</td><td>integer / boolean</td><td>Scheduling, sequencing, assignment, rostering — anything with "no two jobs on the same machine at once," precedence, or "exactly one of these."</td><td>Large continuous quantities. It's a constraint solver with an LP inside, not an LP solver with constraints.</td></tr>
+</table>
+<p>The rough rule: <strong>quantities → LP; quantities with some switches → MILP; sequences and assignments → CP-SAT.</strong> And when the model is right but still too slow, that's the signal to reach back for the heuristics from the earlier posts — a first-fit-decreasing pass to hand the solver a warm start, or a decomposition like column generation where the solver only sees a piece at a time.</p>
+
+<h3>When a solver is the wrong tool</h3>
+<ul>
+  <li><strong>The objective isn't known.</strong> If nobody can say whether an hour of corrugator time or a day of lateness costs more, the solver will optimize whichever one you typed. Get the weights first.</li>
+  <li><strong>The data is worse than the model.</strong> A proven-optimal schedule built on run rates that are 20% off is a precise answer to a different question. Fix the inputs before the formulation.</li>
+  <li><strong>It's a one-off.</strong> Eight orders on four machines, a planner with ten years on the floor does fine with a whiteboard. Solvers earn their keep when the problem recurs every shift, the instance is big enough that intuition fails, or the constraints change faster than habits.</li>
+  <li><strong>The exact answer isn't worth the wait.</strong> A 2%-worse plan in 5 seconds usually beats the optimal plan in 2 hours. That's what time limits and optimality gaps are for.</li>
+</ul>
+
+<hr>
+
+<h2>Model 1 · Product mix: what is an hour of the corrugator worth?</h2>
+<p>Three board grades, one week. Each grade has a margin per MSF, uses corrugator hours, converting hours, and tons of linerboard, and has a cap on what the order book will take. Decide how many MSF of each to run.</p>
+<pre><code>maximize   38·B + 42·C + 61·BC                        ($ contribution)
+subject to 0.030·B + 0.028·C + 0.055·BC ≤ 120           corrugator hours
+           0.040·B + 0.040·C + 0.045·BC ≤ 190           converting hours
+           0.085·B + 0.085·C + 0.130·BC ≤ 400           linerboard tons
+           B ≤ 1800,  C ≤ 2600,  BC ≤ 900,  all ≥ 0     demand caps</code></pre>
+<p>GLOP solves it instantly:</p>
+<table class="when">
+<tr><th>Grade</th><th>Run (MSF)</th><th>Reduced cost</th><th>Meaning</th></tr>
+<tr><td>C</td><td>2,600.0</td><td>+6.53</td><td>At its demand cap. Every extra MSF of C demand is worth $6.53.</td></tr>
+<tr><td>B</td><td>1,573.3</td><td>0.00</td><td>Basic — fills what's left of the corrugator.</td></tr>
+<tr><td>BC</td><td>0.0</td><td>−8.67</td><td>Not worth a slot. BC needs $8.67/MSF more margin before it displaces single wall.</td></tr>
+</table>
+<table class="when">
+<tr><th>Constraint</th><th>Used</th><th>Shadow price</th><th>Meaning</th></tr>
+<tr><td>corrugator hours</td><td>120.0 / 120</td><td><strong>$1,266.67 / hr</strong></td><td>Binding. One more corrugator hour this week is worth $1,267 of margin. That's the number to put in front of whoever decides on overtime or a speed upgrade.</td></tr>
+<tr><td>converting hours</td><td>166.9 / 190</td><td>$0</td><td>Slack. Adding converting capacity changes nothing.</td></tr>
+<tr><td>linerboard tons</td><td>354.7 / 400</td><td>$0</td><td>Slack.</td></tr>
+</table>
+<p>Objective: <strong>$168,987</strong>. The surprise for most people is that BC — the highest-margin grade — runs zero. It uses nearly twice the corrugator time per MSF, and the corrugator is the only thing that's scarce, so per <em>scarce hour</em> it's the worst grade on the list. The LP sees that; a margin report doesn't. Duality (CLRS §29.4) is what turns "the constraint is tight" into a dollar figure, and it's the single most useful output a solver gives a plant manager.</p>
+
+<hr>
+
+<h2>Model 2 · Job shop: eight orders, four machines, proven optimal</h2>
+<p>Now the sequencing problem. Every order flows corrugator → converting → (sometimes) die cutter. There's one corrugator, two printer-slotters that can both do converting, and one die cutter. Each operation has a run time; there's a 10-minute setup between jobs on any machine; each order has a due time. Minimize the makespan, and don't be late.</p>
+<p>This is Kleinberg–Tardos §4.2 (scheduling to minimize lateness) stacked three machines deep with a choice of machine in the middle — and that's enough to make it NP-hard. The greedy exchange argument that proves earliest-deadline-first optimal for one machine doesn't survive the second stage. Abdul Bari's job-sequencing lecture (41) is the one-machine greedy version; the branch-and-bound version (69) is what CP-SAT is doing underneath, with far better bounds.</p>
+
+<div class="viz" id="gantt" style="position:relative"><div class="tip" id="tip"></div></div>
+
+<p>CP-SAT returned <strong>OPTIMAL</strong> in <strong>0.01 seconds</strong>: makespan <strong>455 minutes</strong>, total lateness <strong>0</strong>. The whiteboard baseline — release orders in the list order, each operation to whichever eligible machine frees up first — gives 485 minutes with 125 minutes of lateness across three orders.</p>
+<p>And 455 is provably the floor, which you can check by hand: the corrugator has 340 minutes of work plus seven setups between eight jobs, 410 minutes, and whichever job runs last still needs its converting operation afterwards — the shortest is 45. 410 + 45 = 455. The solver found a sequence that puts the 45-minute converting job last on the corrugator and leaves nothing idle on it. That's not luck; that's the bound and the search meeting.</p>
+<p>Look at what it chose. Aurora (due 300, with a long die-cut) goes first. The two double-wall RSCs, which have the longest corrugator runs, go early so their converting can overlap with everything else. The three die-cut orders are spread so the die cutter never has two waiting. No planner would get all of that right on a whiteboard, and this is only eight orders.</p>
+
+<h2>The model, in OR-Tools</h2>
+<p>The whole thing is about forty lines. What makes CP-SAT the right tool here is <code>NoOverlap</code> and optional intervals: you tell it "these intervals can't overlap on this machine" and "exactly one of these alternatives is real," and the disjunctive reasoning — the hard part of scheduling — is handled inside the solver.</p>
+<pre><code>from ortools.sat.python import cp_model
+m = cp_model.CpModel()
+
+for j, (name, grade, ops, due) in enumerate(ORDERS):
+    prev_end = None
+    for k, (stage, dur) in enumerate(ops):
+        s = m.NewIntVar(0, horizon, f"s{j}_{k}")
+        e = m.NewIntVar(0, horizon, f"e{j}_{k}")
+        m.Add(e == s + dur)
+        if prev_end is not None:
+            m.Add(s >= prev_end)                     # precedence within the order
+        prev_end = e
+        alts = []
+        for mach in MACHINES[stage]:                 # flexible: pick a machine
+            p = m.NewBoolVar(f"p{j}_{k}_{mach}")
+            iv = m.NewOptionalIntervalVar(s, dur + SETUP, m.NewIntVar(0, horizon + SETUP, ""), p, "")
+            intervals[mach].append(iv)
+            alts.append(p)
+        m.AddExactlyOne(alts)
+    job_end.append(prev_end)
+    L = m.NewIntVar(0, horizon, f"late{j}")
+    m.Add(L >= prev_end - due)                       # lateness, floored at 0 by the domain
+    late.append(L)
+
+for mach, ivs in intervals.items():
+    m.AddNoOverlap(ivs)                              # one job at a time per machine
+
+makespan = m.NewIntVar(0, horizon, "makespan")
+m.AddMaxEquality(makespan, job_end)
+m.Minimize(makespan * 10 + sum(late))               # makespan first, lateness as tiebreak
+
+solver = cp_model.CpSolver()
+solver.parameters.max_time_in_seconds = 20
+status = solver.Solve(m)                            # → OPTIMAL, 0.01 s</code></pre>
+<p>Things this model leaves out that a plant's version would add, each a few lines: sequence-dependent setups (grade changes on the corrugator cost more than width changes — a <code>AddCircuit</code> or transition-matrix formulation), release times (the paper isn't here until 10:00), machine availability windows (planned maintenance as fixed intervals), and a weighted objective where a late key account costs more than a late one-off. The structure doesn't change. That's the point of modeling it instead of coding it.</p>
+
+<h2>The LP, in OR-Tools</h2>
+<pre><code>from ortools.linear_solver import pywraplp
+s = pywraplp.Solver.CreateSolver("GLOP")
+x = {k: s.NumVar(0, demand_max[k], k) for k in ["B", "C", "BC"]}
+corr = s.Add(sum(corr_hr[k] * x[k] for k in x) <= 120, "corrugator_hours")
+conv = s.Add(sum(conv_hr[k] * x[k] for k in x) <= 190, "converting_hours")
+lin  = s.Add(sum(liner_t[k] * x[k] for k in x) <= 400, "linerboard_tons")
+s.Maximize(sum(margin[k] * x[k] for k in x))
+s.Solve()
+corr.dual_value()        # → 1266.67   the shadow price
+x["BC"].reduced_cost()   # → -8.67     what BC's margin is short by</code></pre>
+
+<hr>
+<p class="meta">Theory: CLRS ch. 29 (linear programming, duality in §29.4); Kleinberg &amp; Tardos §4.2 (minimizing lateness) and ch. 8 (NP-completeness of multi-machine scheduling); Abdul Bari lectures 41 and 69 for the greedy and branch-and-bound views of job sequencing. Plant data is representative, not a specific mill's. Models, numbers, and charts are mine; solved with OR-Tools 9.15.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script>
+(function(){
+const DATA={"orders":[{"name":"O-101 Rockford 42x30 RSC","grade":"C","ops":[["CORR",45],["CONV",60]],"due":360},{"name":"O-102 Elgin die-cut tray","grade":"B","ops":[["CORR",30],["CONV",40],["DIE",50]],"due":420},{"name":"O-103 Joliet 48x40 RSC","grade":"BC","ops":[["CORR",70],["CONV",55]],"due":480},{"name":"O-104 Aurora display","grade":"B","ops":[["CORR",25],["CONV",35],["DIE",65]],"due":300},{"name":"O-105 Peoria HSC","grade":"C","ops":[["CORR",50],["CONV",45]],"due":540},{"name":"O-106 Gary wrap-around","grade":"C","ops":[["CORR",40],["CONV",50],["DIE",40]],"due":480},{"name":"O-107 Naperville RSC","grade":"BC","ops":[["CORR",60],["CONV",70]],"due":600},{"name":"O-108 Kenosha partition","grade":"B","ops":[["CORR",20],["CONV",30],["DIE",45]],"due":360}],"machines":["Corrugator","Printer-Slotter A","Printer-Slotter B","Die Cutter"],"setup":10,"cpsat":{"status":"OPTIMAL","makespan":455,"total_late":0,"wall":0.01,"schedule":[{"job":0,"name":"O-101 Rockford 42x30 RSC","grade":"C","stage":"CORR","machine":"Corrugator","start":185,"end":230,"due":360},{"job":0,"name":"O-101 Rockford 42x30 RSC","grade":"C","stage":"CONV","machine":"Printer-Slotter A","start":230,"end":290,"due":360},{"job":1,"name":"O-102 Elgin die-cut tray","grade":"B","stage":"CORR","machine":"Corrugator","start":270,"end":300,"due":420},{"job":1,"name":"O-102 Elgin die-cut tray","grade":"B","stage":"CONV","machine":"Printer-Slotter A","start":300,"end":340,"due":420},{"job":1,"name":"O-102 Elgin die-cut tray","grade":"B","stage":"DIE","machine":"Die Cutter","start":345,"end":395,"due":420},{"job":2,"name":"O-103 Joliet 48x40 RSC","grade":"BC","stage":"CORR","machine":"Corrugator","start":35,"end":105,"due":480},{"job":2,"name":"O-103 Joliet 48x40 RSC","grade":"BC","stage":"CONV","machine":"Printer-Slotter A","start":105,"end":160,"due":480},{"job":3,"name":"O-104 Aurora display","grade":"B","stage":"CORR","machine":"Corrugator","start":0,"end":25,"due":300},{"job":3,"name":"O-104 Aurora display","grade":"B","stage":"CONV","machine":"Printer-Slotter B","start":25,"end":60,"due":300},{"job":3,"name":"O-104 Aurora display","grade":"B","stage":"DIE","machine":"Die Cutter","start":60,"end":125,"due":300},{"job":4,"name":"O-105 Peoria HSC","grade":"C","stage":"CORR","machine":"Corrugator","start":360,"end":410,"due":540},{"job":4,"name":"O-105 Peoria HSC","grade":"C","stage":"CONV","machine":"Printer-Slotter B","start":410,"end":455,"due":540},{"job":5,"name":"O-106 Gary wrap-around","grade":"C","stage":"CORR","machine":"Corrugator","start":310,"end":350,"due":480},{"job":5,"name":"O-106 Gary wrap-around","grade":"C","stage":"CONV","machine":"Printer-Slotter A","start":350,"end":400,"due":480},{"job":5,"name":"O-106 Gary wrap-around","grade":"C","stage":"DIE","machine":"Die Cutter","start":405,"end":445,"due":480},{"job":6,"name":"O-107 Naperville RSC","grade":"BC","stage":"CORR","machine":"Corrugator","start":115,"end":175,"due":600},{"job":6,"name":"O-107 Naperville RSC","grade":"BC","stage":"CONV","machine":"Printer-Slotter B","start":175,"end":245,"due":600},{"job":7,"name":"O-108 Kenosha partition","grade":"B","stage":"CORR","machine":"Corrugator","start":240,"end":260,"due":360},{"job":7,"name":"O-108 Kenosha partition","grade":"B","stage":"CONV","machine":"Printer-Slotter B","start":260,"end":290,"due":360},{"job":7,"name":"O-108 Kenosha partition","grade":"B","stage":"DIE","machine":"Die Cutter","start":290,"end":335,"due":360}],"lates":[0,0,0,0,0,0,0,0]},"fifo":{"makespan":485,"total_late":125,"schedule":[{"job":0,"name":"O-101 Rockford 42x30 RSC","grade":"C","stage":"CORR","machine":"Corrugator","start":0,"end":45,"due":360},{"job":0,"name":"O-101 Rockford 42x30 RSC","grade":"C","stage":"CONV","machine":"Printer-Slotter A","start":45,"end":105,"due":360},{"job":1,"name":"O-102 Elgin die-cut tray","grade":"B","stage":"CORR","machine":"Corrugator","start":55,"end":85,"due":420},{"job":1,"name":"O-102 Elgin die-cut tray","grade":"B","stage":"CONV","machine":"Printer-Slotter B","start":85,"end":125,"due":420},{"job":1,"name":"O-102 Elgin die-cut tray","grade":"B","stage":"DIE","machine":"Die Cutter","start":125,"end":175,"due":420},{"job":2,"name":"O-103 Joliet 48x40 RSC","grade":"BC","stage":"CORR","machine":"Corrugator","start":95,"end":165,"due":480},{"job":2,"name":"O-103 Joliet 48x40 RSC","grade":"BC","stage":"CONV","machine":"Printer-Slotter A","start":165,"end":220,"due":480},{"job":3,"name":"O-104 Aurora display","grade":"B","stage":"CORR","machine":"Corrugator","start":175,"end":200,"due":300},{"job":3,"name":"O-104 Aurora display","grade":"B","stage":"CONV","machine":"Printer-Slotter B","start":200,"end":235,"due":300},{"job":3,"name":"O-104 Aurora display","grade":"B","stage":"DIE","machine":"Die Cutter","start":235,"end":300,"due":300},{"job":4,"name":"O-105 Peoria HSC","grade":"C","stage":"CORR","machine":"Corrugator","start":210,"end":260,"due":540},{"job":4,"name":"O-105 Peoria HSC","grade":"C","stage":"CONV","machine":"Printer-Slotter A","start":260,"end":305,"due":540},{"job":5,"name":"O-106 Gary wrap-around","grade":"C","stage":"CORR","machine":"Corrugator","start":270,"end":310,"due":480},{"job":5,"name":"O-106 Gary wrap-around","grade":"C","stage":"CONV","machine":"Printer-Slotter B","start":310,"end":360,"due":480},{"job":5,"name":"O-106 Gary wrap-around","grade":"C","stage":"DIE","machine":"Die Cutter","start":360,"end":400,"due":480},{"job":6,"name":"O-107 Naperville RSC","grade":"BC","stage":"CORR","machine":"Corrugator","start":320,"end":380,"due":600},{"job":6,"name":"O-107 Naperville RSC","grade":"BC","stage":"CONV","machine":"Printer-Slotter A","start":380,"end":450,"due":600},{"job":7,"name":"O-108 Kenosha partition","grade":"B","stage":"CORR","machine":"Corrugator","start":390,"end":410,"due":360},{"job":7,"name":"O-108 Kenosha partition","grade":"B","stage":"CONV","machine":"Printer-Slotter B","start":410,"end":440,"due":360},{"job":7,"name":"O-108 Kenosha partition","grade":"B","stage":"DIE","machine":"Die Cutter","start":440,"end":485,"due":360}],"lates":[0,0,0,0,0,0,0,125]}};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const ink=()=>css('--ink'),ink2=()=>css('--ink-2'),ink3=()=>css('--ink-3'),rule=()=>css('--rule'),accent=()=>css('--accent');
+
+// ---------- 2-D LP picture: B vs C with BC fixed at 0
+viz('lp2d',function(){
+  const W=720,H=420,m={l:60,r:20,t:20,b:44};
+  const svg=d3.select('#lp2d').append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const x=d3.scaleLinear().domain([0,4600]).range([m.l,W-m.r]),y=d3.scaleLinear().domain([0,3200]).range([H-m.b,m.t]);
+  svg.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(x).ticks(6)).selectAll('text,line,path').attr('stroke',ink3()).attr('fill',ink3());
+  svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6)).selectAll('text,line,path').attr('stroke',ink3()).attr('fill',ink3());
+  svg.append('text').attr('x',W/2).attr('y',H-6).attr('text-anchor','middle').attr('fill',ink2()).attr('font-size',12).text('B single wall (MSF)');
+  svg.append('text').attr('transform',`translate(14,${H/2}) rotate(-90)`).attr('text-anchor','middle').attr('fill',ink2()).attr('font-size',12).text('C single wall (MSF)');
+  // constraints as lines: corr 0.030B+0.028C<=120 ; conv 0.040B+0.040C<=190 ; liner 0.085B+0.085C<=400 ; B<=1800 ; C<=2600
+  const cons=[
+    {n:'corrugator 120 h',f:b=>(120-0.030*b)/0.028,c:'#c0392b'},
+    {n:'converting 190 h',f:b=>(190-0.040*b)/0.040,c:'#2f80b9'},
+    {n:'linerboard 400 t',f:b=>(400-0.085*b)/0.085,c:'#8e7cc3'},
+  ];
+  // feasible polygon vertices (clip by all)
+  const feas=(b,c)=>b>=0&&c>=0&&b<=1800&&c<=2600&&0.030*b+0.028*c<=120+1e-9&&0.040*b+0.040*c<=190+1e-9&&0.085*b+0.085*c<=400+1e-9;
+  // sample polygon by scanning B
+  const poly=[];for(let b=0;b<=1800;b+=5){let top=Math.min(2600,...cons.map(k=>k.f(b)));if(top>=0)poly.push([b,top]);}
+  const pts=[[0,0],...poly,[1800,0]];
+  svg.append('path').attr('d',d3.line().x(d=>x(d[0])).y(d=>y(d[1]))(pts)+'Z').attr('fill',accent()).attr('fill-opacity',.15).attr('stroke',accent()).attr('stroke-width',1.5);
+  cons.forEach(k=>{const b0=0,b1=4600;svg.append('line').attr('x1',x(b0)).attr('y1',y(k.f(b0))).attr('x2',x(b1)).attr('y2',y(k.f(b1))).attr('stroke',k.c).attr('stroke-width',1.5).attr('stroke-dasharray','5,4');
+    svg.append('text').attr('x',x(2350)).attr('y',y(k.f(2350))-6).attr('fill',k.c).attr('font-size',11).text(k.n);});
+  svg.append('line').attr('x1',x(1800)).attr('x2',x(1800)).attr('y1',y(0)).attr('y2',y(3200)).attr('stroke',ink3()).attr('stroke-dasharray','3,3');
+  svg.append('line').attr('x1',x(0)).attr('x2',x(4600)).attr('y1',y(2600)).attr('y2',y(2600)).attr('stroke',ink3()).attr('stroke-dasharray','3,3');
+  svg.append('text').attr('x',x(1800)+4).attr('y',y(3100)).attr('fill',ink3()).attr('font-size',11).text('B ≤ 1800');
+  svg.append('text').attr('x',x(3900)).attr('y',y(2600)-6).attr('fill',ink3()).attr('font-size',11).text('C ≤ 2600');
+  // objective contours 38B+42C = k
+  [60000,100000,140000].forEach(k=>{svg.append('line').attr('x1',x(0)).attr('y1',y(k/42)).attr('x2',x(k/38)).attr('y2',y(0)).attr('stroke',ink2()).attr('stroke-width',1).attr('opacity',.5);
+    svg.append('text').attr('x',x(k/38)-4).attr('y',y(0)-4).attr('text-anchor','end').attr('fill',ink2()).attr('font-size',10).text('$'+(k/1000)+'k');});
+  const ob=1573.33,oc=2600,k=38*ob+42*oc;
+  svg.append('line').attr('x1',x(0)).attr('y1',y(k/42)).attr('x2',x(k/38)).attr('y2',y(0)).attr('stroke',accent()).attr('stroke-width',2);
+  svg.append('circle').attr('cx',x(ob)).attr('cy',y(oc)).attr('r',6).attr('fill',accent()).attr('stroke',css('--bg')).attr('stroke-width',2);
+  svg.append('text').attr('x',x(ob)+12).attr('y',y(oc)-14).attr('text-anchor','start').attr('fill',ink()).attr('font-size',12).attr('font-weight',600).text('optimum: B=1573, C=2600 → $168,987');
+  d3.select('#lp2d').append('div').attr('class','legend').html(`<span><i style="background:${accent()};opacity:.4"></i>feasible region</span><span>grey lines: equal-profit contours · green: the best one, touching the region at a corner</span>`);
+});
+
+// ---------- Gantt: DATA is the solver output, embedded as JSON
+viz('gantt',function(){
+  const el=d3.select('#gantt'),tip=d3.select('#tip');
+  const bar=el.insert('div',':first-child').attr('class','bar');
+  const b1=bar.append('button').text('CP-SAT (optimal)').attr('aria-pressed','true');
+  const b2=bar.append('button').text('whiteboard FIFO').attr('aria-pressed','false');
+  const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const M=DATA.machines,W=760,rowH=44,m={l:150,r:16,t:26,b:30},H=m.t+M.length*rowH+m.b;
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  const x=d3.scaleLinear().domain([0,500]).range([m.l,W-m.r]);
+  const color=d3.scaleOrdinal().domain(d3.range(8)).range(['#5b8def','#2fb38a','#e39a2f','#c25fb0','#e05d5d','#8e7cc3','#3fb0c8','#a0a53b']);
+  svg.append('g').attr('transform',`translate(0,${H-m.b+6})`).call(d3.axisBottom(x).ticks(10).tickFormat(d=>d+'m')).selectAll('text,line,path').attr('stroke',ink3()).attr('fill',ink3());
+  M.forEach((mm,i)=>{svg.append('text').attr('x',m.l-10).attr('y',m.t+i*rowH+rowH/2+4).attr('text-anchor','end').attr('fill',ink()).attr('font-size',12).text(mm);
+    svg.append('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',m.t+i*rowH+rowH-4).attr('y2',m.t+i*rowH+rowH-4).attr('stroke',rule());});
+  const layer=svg.append('g');const mk=svg.append('g');
+  function draw(key){
+    const d=DATA[key];layer.selectAll('*').remove();mk.selectAll('*').remove();
+    const rows=layer.selectAll('g').data(d.schedule).join('g');
+    rows.append('rect').attr('x',e=>x(e.start)).attr('y',e=>m.t+M.indexOf(e.machine)*rowH+6).attr('width',0).attr('height',rowH-16).attr('rx',4).attr('fill',e=>color(e.job)).attr('opacity',.92)
+      .on('mousemove',(ev,e)=>{tip.style('opacity',1).style('left',(ev.offsetX+12)+'px').style('top',(ev.offsetY-30)+'px').text(`${e.name} · ${e.stage} ${e.start}–${e.end} · due ${e.due}`);}).on('mouseleave',()=>tip.style('opacity',0))
+      .transition().delay(e=>e.start*2).duration(300).attr('width',e=>x(e.end)-x(e.start));
+    rows.append('text').attr('x',e=>x(e.start)+5).attr('y',e=>m.t+M.indexOf(e.machine)*rowH+rowH/2+4).attr('fill','#fff').attr('font-size',11).text(e=>e.name.split(' ')[0]).attr('opacity',0).transition().delay(e=>e.start*2+200).attr('opacity',1);
+    mk.append('line').attr('x1',x(d.makespan)).attr('x2',x(d.makespan)).attr('y1',m.t-4).attr('y2',H-m.b).attr('stroke',accent()).attr('stroke-width',2).attr('stroke-dasharray','5,3');
+    mk.append('text').attr('x',x(d.makespan)-4).attr('y',m.t+6).attr('text-anchor','end').attr('fill',accent()).attr('font-size',12).attr('font-weight',600).text('makespan '+d.makespan);
+    // late markers
+    DATA.orders.forEach((o,j)=>{if(d.lates[j]>0){const last=d.schedule.filter(e=>e.job===j).sort((a,b)=>b.end-a.end)[0];mk.append('text').attr('x',x(last.end)+3).attr('y',m.t+M.indexOf(last.machine)*rowH+10).attr('fill','#c0392b').attr('font-size',10).text('late +'+d.lates[j]);}});
+    st.html(`makespan <b>${d.makespan} min</b> · total lateness <b>${d.total_late} min</b>`+(key==='cpsat'?` · <b>${d.status}</b> in ${d.wall}s`:''));
+    b1.attr('aria-pressed',key==='cpsat');b2.attr('aria-pressed',key==='fifo');
+  }
+  b1.on('click',()=>draw('cpsat'));b2.on('click',()=>draw('fifo'));draw('cpsat');
+  el.append('div').attr('class','legend').html(DATA.orders.map((o,j)=>`<span><i style="background:${color(j)}"></i>${o.name.split(' ')[0]} ${o.name.split(' ').slice(1).join(' ')} · due ${o.due}</span>`).join(''));
+});
+})();
+</script>
+</body>
+</html>
