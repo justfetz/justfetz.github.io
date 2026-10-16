@@ -23,10 +23,91 @@
 .bar .st b{color:var(--ink);font-weight:500}
 .legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
-.embed{margin:0 0 24px}
-.embed iframe{width:100%;height:1120px;border:1px solid var(--rule);border-radius:10px;background:var(--bg)}
-.embed .cap{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:8px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-@media (max-width:720px){.embed iframe{height:1600px}}
+#xs{--bg:#f6f5f1; --panel:#ffffff; --ink:#15201c; --ink2:#4b5753; --ink3:#86918c; --line:#dfe3df; --accent:#1f6f5c; --accent2:#c86a2a; --dead:#b94a3c; --band:#1f6f5c22; --seq0:#cfe3dc; --seq1:#1f6f5c; --web:#ece7dc; --paper:#f3eee2; --o0:#2a78d6;--o1:#eb6834;--o2:#1baf7a;--o3:#eda100;--o4:#e87ba4;--o5:#008300;--o6:#6250d6;--o7:#e34948;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #xs{--bg:#0e1412;--panel:#151d1a;--ink:#e9ede9;--ink2:#b4bdb8;--ink3:#7f8a85;--line:#263430;--accent:#7fd1b9;--accent2:#f0a060;--dead:#e07a6c;--band:#7fd1b922;--seq0:#24403a;--seq1:#7fd1b9;--web:#2a2f2a;--paper:#33382f;--o0:#3987e5;--o1:#d95926;--o2:#199e70;--o3:#c98500;--o4:#d55181;--o5:#3a9a3a;--o6:#9085e9;--o7:#e66767;color-scheme:dark}}
+:root[data-theme="dark"] #xs{--bg:#0e1412;--panel:#151d1a;--ink:#e9ede9;--ink2:#b4bdb8;--ink3:#7f8a85;--line:#263430;--accent:#7fd1b9;--accent2:#f0a060;--dead:#e07a6c;--band:#7fd1b922;--seq0:#24403a;--seq1:#7fd1b9;--web:#2a2f2a;--paper:#33382f;--o0:#3987e5;--o1:#d95926;--o2:#199e70;--o3:#c98500;--o4:#d55181;--o5:#3a9a3a;--o6:#9085e9;--o7:#e66767;color-scheme:dark}
+#xs *{box-sizing:border-box}
+#xs{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+#xs .wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+#xs header h1{margin:0;font-size:17px;font-weight:600;letter-spacing:-.2px;line-height:1.3;text-wrap:balance}
+#xs header .sub{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+#xs .knobs{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+#xs .knob{display:flex;flex-direction:column;gap:4px;min-width:0}
+#xs .knob label{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+#xs .knob input[type=range]{width:130px;accent-color:var(--accent)}
+#xs .knob select, #xs .knob input[type=number]{font-family:var(--mono);font-size:12px;min-height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+#xs .knob .v{font-family:var(--mono);font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+#xs .knobs .sp{flex:1}
+#xs .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+#xs .seg button{font-family:var(--mono);font-size:12px;min-height:36px;padding:0 10px;border:0;background:transparent;color:var(--ink2);cursor:pointer}
+#xs .seg button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+#xs button.play{font-family:var(--mono);font-size:12px;min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer}
+#xs button.play:hover{border-color:var(--accent);color:var(--accent)}
+#xs button:focus-visible, #xs input:focus-visible, #xs select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#xs .grid{display:grid;grid-template-columns:290px minmax(0,1fr) 380px;gap:14px}
+@media (max-width:1100px){#xs .grid{grid-template-columns:1fr 1fr}#xs .map{grid-column:1/-1;order:-1}}
+@media (max-width:720px){#xs .grid{grid-template-columns:1fr}}
+#xs .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+#xs .panel h2{margin:0 0 2px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+#xs .panel .n{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:10px}
+#xs .rung{display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);cursor:pointer}
+#xs .rung:first-child{border-top:0}
+#xs .rung .id{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink3)}
+#xs .rung[aria-current="true"] .id{color:var(--accent)}
+#xs .rung .t{font-size:12px;color:var(--ink);line-height:1.3}
+#xs .rung .t small{display:block;font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:1px}
+#xs .rung .bar{height:7px;border-radius:4px;background:var(--seq0);position:relative;margin-top:4px;overflow:hidden}
+#xs .rung .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:4px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+#xs .rung .c{font-family:var(--mono);font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+#xs .rung .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#xs .rung .d{font-family:var(--mono);font-size:10px;color:var(--dead)}
+#xs .map .stage{position:relative;width:100%;aspect-ratio:4/3;max-width:100%}
+#xs .map canvas, #xs .map svg, #xs .run canvas, #xs .run svg{position:absolute;inset:0;width:100%;height:100%}
+#xs .map svg, #xs .run svg{font-family:var(--mono);pointer-events:none}
+#xs .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:11.5px;line-height:1.5;padding:7px 9px;border-radius:6px;opacity:0;white-space:nowrap;z-index:5;transition:opacity .1s}
+#xs .lg{font-family:var(--mono);font-size:11px;color:var(--ink3);display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+#xs .lg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+#xs .lg .ramp{display:inline-block;width:60px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--seq0),var(--seq1));vertical-align:-1px;margin:0 5px}
+#xs .ci{border-top:1px solid var(--line);padding:9px 0}
+#xs .ci:first-of-type{border-top:0;padding-top:0}
+#xs .ci .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-family:var(--mono);font-size:11px;color:var(--ink2)}
+#xs .ci .h b{color:var(--ink);font-weight:600}
+#xs .ci svg{display:block;width:100%;height:auto;font-family:var(--mono);margin-top:3px}
+#xs .sc{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+#xs .sc div{background:var(--bg);border-radius:8px;padding:8px 10px}
+#xs .sc b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+#xs .sc em{font-style:normal;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+#xs .sc em small{font-size:11px;font-weight:400;color:var(--ink3);margin-left:2px}
+#xs .ful{font-family:var(--mono);font-size:11px}
+#xs .ful .r{display:grid;grid-template-columns:40px 1fr 80px;gap:8px;align-items:center;padding:2px 0}
+#xs .ful .b{height:8px;border-radius:4px;background:var(--seq0);position:relative;overflow:hidden}
+#xs .ful .b i{position:absolute;top:0;bottom:0;left:0;background:var(--accent);transition:width .5s}
+#xs .ful .b u{position:absolute;top:0;bottom:0;border-left:1px dashed var(--ink3);border-right:1px dashed var(--ink3)}
+#xs .ful .v{text-align:right;color:var(--ink2);font-variant-numeric:tabular-nums}
+#xs .strand{font-family:var(--mono);font-size:11px;color:var(--dead);margin-top:8px}
+#xs .cislist{max-height:420px;overflow:auto}
+#xs .run .stage{position:relative;width:100%;height:360px;max-width:100%;border-radius:8px;overflow:hidden;background:var(--bg);cursor:grab}
+#xs .run .hud{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0 0}
+#xs .run .hud div{background:var(--bg);border-radius:8px;padding:7px 10px}
+#xs .run .hud b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+#xs .run .hud em{font-style:normal;font-family:var(--mono);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+#xs .run .hud em small{font-size:10px;font-weight:400;color:var(--ink3);margin-left:3px}
+#xs .knife{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+#xs .knife div{font-family:var(--mono);font-size:11px;background:var(--bg);border-radius:6px;padding:6px 10px;color:var(--ink2);min-width:160px}
+#xs .knife b{color:var(--ink);font-weight:600}
+#xs .knife em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--accent2);font-weight:600}
+#xs .orders{font-family:var(--mono);font-size:11px;width:100%;border-collapse:collapse;margin-top:6px}
+#xs .orders th{text-align:right;font-weight:500;color:var(--ink3);padding:3px 4px;border-bottom:1px solid var(--line)}
+#xs .orders td{text-align:right;padding:3px 4px;color:var(--ink2);font-variant-numeric:tabular-nums}
+#xs .orders th:first-child, #xs .orders td:first-child{text-align:left;color:var(--ink)}
+#xs .orders i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+#xs .note{font-size:12.5px;color:var(--ink2);line-height:1.5;max-width:72ch}
+#xs .note code{font-family:var(--mono);font-size:11.5px;background:var(--bg);padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){#xs *{transition:none!important}}
+.xs{position:relative;left:50%;transform:translateX(-50%);width:min(1400px,calc(100vw - 40px));margin:0 0 8px}
+#xs .wrap{max-width:none}
+#xs .cap{font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:10px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#xs .cap a{color:var(--ink2)}
 </style>
 </head>
 <body>
@@ -60,9 +141,58 @@
 <div class="sect">the math, as I understand it now</div>
 <p>A pattern is a web width, up to three orders on the three knives, and the outs of each. A CI is a pattern plus a run length. A schedule is a list of CIs. That's the whole object. For fifteen orders of one grade there are somewhere between a hundred thousand and a million feasible patterns before a single run length is chosen. You prune in order: the cheap physics first — used width can't exceed the web; trim can't exceed seven inches a side or the chute jams — and the expensive checks, like whether the score lines fit on three shafts two inches apart, only on what survives.</p>
 
-<div class="embed">
-  <iframe src="corrugator-search-space.html" title="Corrugator search space explorer: the pruning ladder, the web-width by used-width map, and the run schedule" loading="lazy"></iframe>
-  <div class="cap"><span>live: one grade partition on a 110" machine, every gate counted, the schedule run sheet by sheet</span><a href="corrugator-search-space.html">open full page →</a></div>
+<div class="xs" id="xs">
+
+<div class="wrap" id="xswrap">
+<header>
+  <h1>One grade partition, every schema it could run, and where each one dies</h1>
+  <div class="sub" id="sub"></div>
+</header>
+
+<div class="knobs">
+  <div class="knob"><label for="kOrders">orders in the pool</label><input type="range" id="kOrders" min="4" max="24" value="10"><span class="v" id="vOrders">10</span></div>
+  <div class="knob"><label for="kSeed">seed</label><input type="number" id="kSeed" value="7" min="1" max="9999" style="width:80px"></div>
+  <div class="knob"><label for="kPos">max knife positions</label><select id="kPos"><option>1</option><option>2</option><option selected>3</option></select></div>
+  <div class="knob"><label for="kObj">objective</label><select id="kObj"><option value="msf">max useful MSF/hr</option><option value="trim">min trim %</option><option value="setups">fewest setups</option></select></div>
+  <div class="knob"><label for="kCap">catalog cap</label><input type="range" id="kCap" min="50" max="5000" step="50" value="800"><span class="v" id="vCap">800</span></div>
+  <div class="knob"><label for="kSetup">setup minutes / CI</label><input type="range" id="kSetup" min="2" max="20" value="6"><span class="v" id="vSetup">6</span></div>
+  <div class="sp"></div>
+  <div class="knob"><label>ladder</label><div class="seg" id="stages"></div></div>
+  <button class="play" id="play">▶ walk the ladder</button>
+</div>
+
+<div class="grid">
+  <section class="panel" id="ladder"><h2>The pruning ladder</h2><div class="n">alive after each gate · bar is log scale</div><div id="rungs"></div></section>
+  <section class="panel map"><h2>The 2-D map: web width × used width</h2><div class="n">every point is one schema. Green strip per web = chute band, <span style="font-family:var(--mono)">W − 14 ≤ used ≤ W</span>. Hover a point.</div>
+    <div class="stage"><canvas id="cv"></canvas><svg id="ov"></svg><div class="tip" id="tip"></div></div>
+    <div class="lg"><span><i style="background:var(--ink3);opacity:.35"></i>dead: wider than the web</span><span><i style="background:var(--dead)"></i>dead: &gt; 7" trim/side</span><span><i style="background:var(--dead);opacity:.45"></i>dead: score shafts</span><span>alive, by MSF/hr <span class="ramp"></span></span><span><i style="background:var(--accent2)"></i>selected</span></div>
+  </section>
+  <section class="panel"><h2>Selected schedule <span id="schN" style="font-family:var(--mono);font-size:11px;font-weight:400;color:var(--ink3)"></span></h2>
+    <div class="sc"><div><b>useful MSF/hr</b><em id="sMsf">—</em></div><div><b>trim</b><em id="sTrim">—</em></div><div><b>CIs · hours</b><em id="sSet">—</em></div></div>
+    <div class="cislist" id="cis"></div>
+    <div class="ful" id="ful"></div>
+    <div class="strand" id="strand"></div>
+  </section>
+</div>
+
+<section class="panel run">
+  <h2>Run the schedule <span style="font-family:var(--mono);font-size:11px;font-weight:400;color:var(--ink3)">lineal feet along the machine · web centered · each rectangle is one sheet off its HQM knife · solid lines are slits, dashed are scores, orange across the web is the shear at an order change · scroll to zoom, drag to pan</span></h2>
+  <div class="knobs" style="padding:8px 10px;margin:6px 0 10px"><button class="play" id="runBtn">▶ run</button><button class="play" id="resetBtn">⟲ reset</button>
+    <div class="knob"><label for="kSpeed">playback × real time</label><input type="range" id="kSpeed" min="10" max="600" step="10" value="120"><span class="v" id="vSpeed">120×</span></div>
+    <div class="knob"><label for="kFollow">camera</label><select id="kFollow"><option value="follow">follow the playhead</option><option value="whole">whole schedule</option></select></div>
+  </div>
+  <div class="stage" id="runStage"><canvas id="rcv"></canvas><svg id="rov"></svg><div class="tip" id="rtip"></div></div>
+  <div class="hud"><div><b>lineal feet</b><em id="hFt">0</em></div><div><b>elapsed</b><em id="hMin">0<small>min</small></em></div><div><b>MSF produced</b><em id="hMsf">0</em></div><div><b>current CI</b><em id="hCi">—</em></div><div><b>speed</b><em id="hSpd">—<small>fpm</small></em></div><div><b>web</b><em id="hWeb">—</em></div></div>
+  <div class="knife" id="knives"></div>
+</section>
+
+<section class="panel">
+  <h2>The orders in this partition</h2><div class="n">synthetic, one grade (C), generated from the seed · widths 16–52", cutoffs 18–80", three score depths</div>
+  <div style="overflow-x:auto"><table class="orders" id="otab"></table></div>
+  <p class="note" style="margin:12px 0 0">What this is and isn't. The enumeration, the chute band, the shaft bound, the dedup and the scores are the real gates from the scheduling-math ladder (L1–L5), with the machine constants from the plant-truth ledger; the speed model is the measured web-band curve, the short-cutoff haircut and the spread cliff. The master is a <em>greedy</em> cover of the ±10% window, sequenced widest-web-first, standing in for the CBC MIP with Dinkelbach the engine runs, so the schedule is good, not certified optimal. Run lengths follow the engine's L7 bound, <code>r̄ = min over the schema's orders of 1.1·q / sheets-per-foot</code>, and an order that can't be covered is listed, never dropped silently.</p>
+</section>
+<div class="cap"><span>live: one grade partition on a 110" machine, every gate counted, the schedule run sheet by sheet</span><a href="corrugator-search-space.html">open as its own page →</a></div>
+</div>
 </div>
 
 <p>Every rule is one of two kinds. Physics: one grade per CI, the chute, the shafts, one order per knife. Those are removed from the space, never penalized. Liberties: the window, setups, short cutoffs. Those are priced or bounded, never forbidden. I used to call the second kind slack, which isn't quite it — slack is what's left in a constraint at a solution; a liberty is the decision you make up front about which rules are walls and which are prices. When a planner says "we can't run that," the first thing to find out is which kind of can't. Score depth sounds like physics and is usually a customer preference. Whether die-cuts get scored on the corrugator sounds like a fact and is, as far as I can tell, an open question.</p>
@@ -97,6 +227,221 @@
 
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(function(){
+const MACHINE=110, WEBS=[80,87,92,98,104,110], CHUTE=7, SHAFTS=3, HEADS=16, SPACING=2.0;
+const css=n=>getComputedStyle(document.getElementById('xs')).getPropertyValue(n).trim();
+const ocol=i=>css('--o'+(i%8));
+const fmtN=d3.format(','),f1=d3.format('.1f');
+
+// ---------------- knobs
+const K={orders:10,seed:7,pos:3,obj:'msf',cap:800,setup:6};
+const el=id=>document.getElementById(id);
+function bindKnob(id,key,vid,fmt){const e=el(id);e.addEventListener('input',()=>{K[key]=isNaN(+e.value)?e.value:+e.value;if(vid)el(vid).textContent=fmt?fmt(K[key]):K[key];rebuild();});}
+bindKnob('kOrders','orders','vOrders');bindKnob('kSeed','seed');bindKnob('kPos','pos');bindKnob('kObj','obj');bindKnob('kCap','cap','vCap');bindKnob('kSetup','setup','vSetup');
+
+// ---------------- order generator (seeded)
+function rng(seed){let s=seed*2654435761%4294967296||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
+function makeOrders(n,seed){const r=rng(seed);const out=[];const styles=[['RSC',2],['RSC',2],['RSC',2],['tray',6],['sheet',0],['die-cut',4]];
+  for(let i=0;i<n;i++){const [style,sc]=styles[Math.floor(r()*styles.length)];const w=16+Math.round(r()*36);const L=18+Math.round(r()*62);const q=Math.round((3000+r()*27000)/500)*500;
+    out.push({id:'O-'+(i+1),idx:i,w,L,q,style,sc,depth:['A','A','B','C'][Math.floor(r()*4)],flap:Math.max(3,Math.round(w*0.25))});}
+  return out;}
+
+// ---------------- speed model
+function bandSpeed(W){return W<96?583:W<108?617:589;}
+function cutoffMult(Lmin){return Lmin<=22?0.76:Lmin<=26?0.85:Lmin<=32?0.95:1.0;}
+function speedOf(s){const Ls=s.pos.map(p=>p.o.L);const sp=bandSpeed(s.web)*cutoffMult(Math.min(...Ls));const spread=Math.max(...Ls)/Math.min(...Ls);return spread>=4?sp-90:spread>=3?sp-45:sp;}
+
+// ---------------- enumeration
+function heads(s){const byD={};s.pos.forEach(p=>{byD[p.o.depth]=(byD[p.o.depth]||0)+p.k*p.o.sc;});return byD;}
+function shaftLB(s){return Object.values(heads(s)).reduce((a,c)=>a+Math.ceil(c/HEADS),0);}
+function exactShafts(s){const lines={};let x=(s.web-s.used)/2;
+  s.pos.forEach(p=>{for(let i=0;i<p.k;i++){const L=(lines[p.o.depth]=lines[p.o.depth]||[]);if(p.o.sc>=2)L.push(x+p.o.flap,x+p.o.w-p.o.flap);if(p.o.sc>=4)L.push(x+p.o.w/2-0.75,x+p.o.w/2+0.75);if(p.o.sc>=6)L.push(x+p.o.w/2-2.25,x+p.o.w/2+2.25);x+=p.o.w;}});
+  let need=0;for(const d in lines){const xs=lines[d].sort((a,b)=>a-b);const shafts=[];xs.forEach(v=>{let ok=false;for(const sh of shafts){if(sh.length<HEADS&&v-sh[sh.length-1]>=SPACING){sh.push(v);ok=true;break;}}if(!ok)shafts.push([v]);});need+=shafts.length;}
+  return need;}
+const perms=n=>n===1?1:n===2?2:6;
+function enumerate(ORDERS,maxPos){
+  const n=ORDERS.length;const combos=[];
+  for(let i=0;i<n;i++){combos.push([i]);if(maxPos>=2)for(let j=i+1;j<n;j++){combos.push([i,j]);if(maxPos>=3)for(let k=j+1;k<n;k++)combos.push([i,j,k]);}}
+  let L0=0,L1=0,L2=0,L3=0,L4=0,L5=0;const pts=[];
+  const outsVectors=c=>{const res=[];const max=c.map(i=>Math.floor(MACHINE/ORDERS[i].w));(function rec(idx,acc,used){if(used>MACHINE)return;if(idx===c.length){res.push(acc.slice());return;}for(let k=1;k<=max[idx];k++){acc.push(k);rec(idx+1,acc,used+k*ORDERS[c[idx]].w);acc.pop();}})(0,[],0);return res;};
+  combos.forEach(c=>{const pr=perms(c.length);const maxv=c.map(i=>Math.floor(MACHINE/ORDERS[i].w));L0+=maxv.reduce((a,b)=>a*b,1)*WEBS.length*pr; // raw: unbounded outs grid
+    outsVectors(c).forEach(v=>{const used=v.reduce((a,k,i)=>a+k*ORDERS[c[i]].w,0);
+      WEBS.forEach(W=>{const s={web:W,used,pos:c.map((i,j)=>({o:ORDERS[i],k:v[j]})),fate:'alive'};
+        if(used>W){s.fate='wide';pts.push(s);return;}L1+=pr;
+        if(W-used>2*CHUTE){s.fate='trim';pts.push(s);return;}L2+=pr;L3++;
+        if(shaftLB(s)>SHAFTS){s.fate='shaftLB';pts.push(s);return;}L4++;
+        if(exactShafts(s)>SHAFTS){s.fate='shaft';pts.push(s);return;}L5++;
+        s.speed=speedOf(s);s.msfhr=s.speed*60*used/12/1000;s.trim=(W-used)/W;s.p=s.pos.map(p=>p.k*12/p.o.L);pts.push(s);});});});
+  return {pts,counts:[L0,L1,L2,L3,L4,L5]};
+}
+
+// ---------------- greedy master + solo fallback
+function master(ORDERS,catalog,obj,setupMin){
+  const prod=ORDERS.map(()=>0);const sel=[];let hours=0;const strand=[];
+  const score=(s,r,idx,unmet)=>{const useful=idx.reduce((a,i,j)=>a+(unmet[i]?Math.min(r*s.p[j],Math.max(0,ORDERS[i].q-prod[i]))*(ORDERS[i].w*ORDERS[i].L/144):0),0)/1000;const hrs=r/s.speed/60+setupMin/60;
+    if(obj==='msf')return useful/hrs;if(obj==='trim')return useful/(1+40*s.trim)/hrs;return useful*(1+r/20000);};
+  for(let it=0;it<60;it++){
+    const unmet=ORDERS.map((o,i)=>prod[i]<0.9*o.q);if(!unmet.some(Boolean))break;
+    let best=null,bestv=-1;
+    catalog.forEach(s=>{const idx=s.pos.map(p=>p.o.idx);if(!idx.some(i=>unmet[i]))return;const r=Math.min(...idx.map((i,j)=>(1.1*ORDERS[i].q-prod[i])/s.p[j]));if(r<=30)return;const v=score(s,r,idx,unmet);if(v>bestv){bestv=v;best={s,r,idx};}});
+    if(!best){ORDERS.forEach((o,i)=>{if(unmet[i])strand.push({o,reason:'no feasible schema with room left in its window'});});break;}
+    const {s,r,idx}=best;idx.forEach((i,j)=>prod[i]+=r*s.p[j]);hours+=r/s.speed/60+setupMin/60;sel.push({s,r});
+  }
+  sel.sort((a,b)=>b.s.web-a.s.web||b.r-a.r); // widest web first: step-downs, per the measured direction asymmetry
+  const useful=ORDERS.reduce((a,o,i)=>a+Math.min(prod[i],1.1*o.q)*(o.w*o.L/144),0)/1000;
+  const paper=sel.reduce((a,x)=>a+x.r*x.s.web/12,0)/1000;const usedA=sel.reduce((a,x)=>a+x.r*x.s.used/12,0)/1000;
+  return {sel,prod,hours,useful,msfhr:hours?useful/hours:0,trim:paper?1-usedA/paper:0,strand,lineal:sel.reduce((a,x)=>a+x.r,0)};
+}
+
+// ---------------- state
+let ORDERS,pts,alive,catalog,M,STAGES,stageIdx=7,timer=null;
+const stageOf={wide:1,trim:2,shaftLB:4,shaft:5,cap:6,alive:99};
+function rebuild(){
+  ORDERS=makeOrders(K.orders,K.seed);
+  const e=enumerate(ORDERS,K.pos);pts=e.pts;alive=pts.filter(s=>s.fate==='alive');
+  const solos=alive.filter(s=>s.pos.length===1);const ranked=alive.filter(s=>s.pos.length>1).sort((a,b)=>b.msfhr-a.msfhr);
+  catalog=solos.concat(ranked.slice(0,Math.max(0,K.cap-solos.length)));const cat=new Set(catalog);alive.forEach(s=>{s.selected=false;if(!cat.has(s))s.fate='cap';});
+  M=master(ORDERS,catalog,K.obj,K.setup);M.sel.forEach(x=>x.s.selected=true);
+  const [L0,L1,L2,L3,L4,L5]=e.counts;
+  STAGES=[{id:'L0',t:'Raw space',s:'ordered positions × outs × webs',c:L0},{id:'L1',t:'Width-bounded outs',s:'used ≤ web (DFS carries remaining)',c:L1},{id:'L2',t:'Chute band',s:'0 ≤ W − used ≤ 14" (7"/side)',c:L2},{id:'L3',t:'Canonical dedup',s:'(web, sorted(order, outs))',c:L3},{id:'L4',t:'Shaft lower bound',s:'Σ_d ⌈heads_d/16⌉ ≤ 3',c:L4},{id:'L5',t:'Exact shaft assignment',s:'one depth/shaft, ≤16 heads, ≥2" apart',c:L5},{id:'L6',t:'Cap with solo guarantee',s:'top '+K.cap+' by MSF/hr; solos exempt',c:catalog.length},{id:'M',t:'Master picks',s:'(schema, run ft) covering 0.9q–1.1q',c:M.sel.length}];
+  el('sub').textContent=`110" corrugator · webs 80–110 · ${K.orders} orders, C flute · chute ≤ 7"/side · 3 shafts × 16 heads · ±10% window · ${fmtN(pts.length)} schemas enumerated`;
+  renderLadder();renderOrders();buildQt();go(stageIdx);runReset();
+}
+
+// ---------------- ladder
+const rungs=d3.select('#rungs'),stages=d3.select('#stages');
+function renderLadder(){
+  rungs.html('');stages.html('');const logS=d3.scaleLog().domain([1,Math.max(2,STAGES[0].c)]).range([2,100]);
+  STAGES.forEach((st,i)=>{const prev=i?STAGES[i-1].c:st.c;
+    const r=rungs.append('div').attr('class','rung').attr('role','button').attr('tabindex',0).on('click',()=>go(i)).on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' ')go(i);});
+    r.append('div').attr('class','id').text(st.id);const t=r.append('div');const k=t.append('div').attr('class','k');k.append('div').attr('class','t').html(st.t+'<small>'+st.s+'</small>');k.append('div').attr('class','c').text(fmtN(st.c));
+    t.append('div').attr('class','bar').append('i').style('width',logS(Math.max(1,st.c))+'%');
+    t.append('div').attr('class','d').text(i===7?(fmtN(prev-st.c)+' alive, not chosen'):i?('−'+fmtN(prev-st.c)+' died here'):' ');
+    stages.append('button').text(st.id).attr('aria-pressed','false').on('click',()=>go(i));});
+}
+function go(i){stageIdx=i;clearTimeout(timer);rungs.selectAll('.rung').attr('aria-current',(d,j)=>j===i?'true':null);stages.selectAll('button').attr('aria-pressed',(d,j)=>j===i?'true':'false');draw();renderSchedule(i===7);}
+function walk(){let i=0;go(0);(function step(){i++;if(i>7)return;timer=setTimeout(()=>{go(i);step();},800);})();}
+el('play').addEventListener('click',walk);
+
+// ---------------- 2-D map
+const stage=document.querySelector('.map .stage'),cv=el('cv'),ov=d3.select('#ov'),tip=d3.select('#tip');const ctx=cv.getContext('2d');let Wpx=0,Hpx=0;
+const m={l:44,r:12,t:16,b:30};const xs=d3.scalePoint().domain(WEBS).padding(0.6),ys=d3.scaleLinear().domain([0,MACHINE]);
+function jit(s,i){s.j=((i*9301+49297)%233280)/233280-0.5;}
+function px(s){return {x:xs(s.web)+s.j*xs.step()*0.7,y:ys(s.used)+((s.pos.length*7+s.pos[0].k)%5-2)*0.9};}
+function resize(){const r=stage.getBoundingClientRect();Wpx=r.width;Hpx=r.height;const dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Wpx*dpr;cv.height=Hpx*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);xs.range([m.l,Wpx-m.r]);ys.range([Hpx-m.b,m.t]);drawOverlay();draw();buildQt();}
+function drawOverlay(){ov.attr('viewBox',`0 0 ${Wpx} ${Hpx}`).selectAll('*').remove();const step=xs.step();
+  WEBS.forEach(W=>{const x=xs(W);ov.append('rect').attr('x',x-step*0.42).attr('y',ys(W)).attr('width',step*0.84).attr('height',ys(W-2*CHUTE)-ys(W)).attr('fill',css('--band')).attr('stroke',css('--accent')).attr('stroke-dasharray','3,3');ov.append('text').attr('x',x).attr('y',Hpx-10).attr('text-anchor','middle').attr('fill',css('--ink2')).attr('font-size',11).text(W+'"');});
+  [20,40,60,80,100].forEach(v=>{ov.append('line').attr('x1',m.l).attr('x2',Wpx-m.r).attr('y1',ys(v)).attr('y2',ys(v)).attr('stroke',css('--line'));ov.append('text').attr('x',m.l-6).attr('y',ys(v)+4).attr('text-anchor','end').attr('fill',css('--ink3')).attr('font-size',10).text(v);});
+  ov.append('text').attr('x',m.l).attr('y',12).attr('fill',css('--ink3')).attr('font-size',10).text('used width, inches');ov.append('text').attr('x',Wpx-m.r).attr('y',Hpx-10).attr('text-anchor','end').attr('fill',css('--ink3')).attr('font-size',10).text('web');}
+function draw(){if(!pts)return;ctx.clearRect(0,0,Wpx,Hpx);const ext=d3.extent(alive,s=>s.msfhr);const seq=d3.scaleLinear().domain(ext[0]===undefined?[0,1]:ext).range([css('--seq0'),css('--seq1')]);const ink3=css('--ink3'),dead=css('--dead'),acc2=css('--accent2');
+  const sample=pts.length>40000?Math.ceil(pts.length/40000):1;
+  pts.forEach((s,i)=>{if(s.j===undefined)jit(s,i);if(s.fate!=='alive'&&i%sample)return;const {x,y}=px(s);const died=stageOf[s.fate];let fill,alpha;
+    if(stageIdx<died){if(s.fate==='alive'||stageIdx>=6){fill=seq(s.msfhr);alpha=0.9;}else{fill=ink3;alpha=0.5;}}
+    else{if(s.fate==='wide'){fill=ink3;alpha=0.1;}else if(s.fate==='trim'){fill=dead;alpha=0.2;}else if(s.fate==='cap'){fill=ink3;alpha=0.16;}else{fill=dead;alpha=0.45;}}
+    if(s.fate==='alive'&&stageIdx===7&&!s.selected)alpha=0.3;ctx.globalAlpha=alpha;ctx.fillStyle=fill;ctx.beginPath();ctx.arc(x,y,2.1,0,6.283);ctx.fill();});
+  ctx.globalAlpha=1;if(stageIdx===7)M.sel.forEach(({s})=>{const {x,y}=px(s);ctx.strokeStyle=acc2;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,7,0,6.283);ctx.stroke();ctx.fillStyle=acc2;ctx.beginPath();ctx.arc(x,y,3,0,6.283);ctx.fill();});}
+let qt;function buildQt(){if(!pts)return;pts.forEach((s,i)=>{if(s.j===undefined)jit(s,i);});qt=d3.quadtree().x(s=>px(s).x).y(s=>px(s).y).addAll(pts);}
+stage.addEventListener('mousemove',ev=>{if(!qt)return;const r=stage.getBoundingClientRect();const mx=ev.clientX-r.left,my=ev.clientY-r.top;const s=qt.find(mx,my,10);if(!s){tip.style('opacity',0);return;}
+  const dress=s.pos.map(p=>`${p.o.id}×${p.k}`).join(' + ');const fate={wide:'dead at L1: '+s.used+'" > web',trim:'dead at L2: '+((s.web-s.used)/2).toFixed(1)+'"/side trim',shaftLB:'dead at L4: needs '+shaftLB(s)+' shafts',shaft:'dead at L5: needs '+exactShafts(s)+' shafts (2" spacing)',cap:'alive but cut by the cap',alive:(s.selected?'SELECTED · ':'alive · ')+Math.round(s.msfhr)+' MSF/hr · '+Math.round(s.speed)+' fpm'}[s.fate];
+  tip.style('opacity',1).style('left',Math.min(mx+14,Wpx-230)+'px').style('top',(my-14)+'px').html(`<b>${s.web}" web · ${s.used}" used</b><br>${dress}<br>${fate}`);});
+stage.addEventListener('mouseleave',()=>tip.style('opacity',0));
+
+// ---------------- schedule panel (center-origin web bars)
+function renderSchedule(show){
+  const cis=d3.select('#cis').html(''),ful=d3.select('#ful').html(''),st=d3.select('#strand').html('');
+  if(!show){el('schN').textContent='walk the ladder to M';['sMsf','sTrim','sSet'].forEach(i=>el(i).textContent='—');return;}
+  el('schN').textContent=`${M.sel.length} CIs · ${fmtN(Math.round(M.lineal))} lineal ft`;
+  el('sMsf').innerHTML=Math.round(M.msfhr)+'<small>MSF/hr</small>';el('sTrim').innerHTML=(100*M.trim).toFixed(1)+'<small>%</small>';el('sSet').innerHTML=M.sel.length+'<small>· '+M.hours.toFixed(1)+' h</small>';
+  const W=352,H=56,sc=(W-20)/MACHINE,cx=W/2;
+  M.sel.forEach(({s,r},i)=>{const ci=cis.append('div').attr('class','ci');
+    ci.append('div').attr('class','h').html(`<span><b>CI ${i+1}</b> · ${s.web}" · ${s.pos.map(p=>p.o.id+'×'+p.k).join(' + ')}</span><span>${fmtN(Math.round(r))} ft · ${Math.round(s.speed)} fpm</span>`);
+    const svg=ci.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+    svg.append('rect').attr('x',cx-MACHINE*sc/2).attr('y',8).attr('width',MACHINE*sc).attr('height',24).attr('fill','none').attr('stroke',css('--line'));
+    svg.append('rect').attr('x',cx-s.web*sc/2).attr('y',8).attr('width',s.web*sc).attr('height',24).attr('fill',css('--web'));
+    let x=cx-s.used*sc/2;s.pos.forEach((p,pi)=>{for(let k=0;k<p.k;k++){svg.append('rect').attr('x',x+1).attr('y',10).attr('width',p.o.w*sc-2).attr('height',20).attr('rx',2).attr('fill',ocol(p.o.idx)).attr('opacity',.85);if(p.o.w*sc>24)svg.append('text').attr('x',x+p.o.w*sc/2).attr('y',24).attr('text-anchor','middle').attr('fill','#fff').attr('font-size',9).text(p.o.id);x+=p.o.w*sc;}});
+    svg.append('line').attr('x1',cx).attr('x2',cx).attr('y1',4).attr('y2',36).attr('stroke',css('--ink3')).attr('stroke-dasharray','2,2');
+    svg.append('text').attr('x',cx-s.web*sc/2).attr('y',48).attr('fill',css('--ink3')).attr('font-size',9.5).text('trim '+((s.web-s.used)/2).toFixed(1)+'"/side');
+    svg.append('text').attr('x',cx+s.web*sc/2).attr('y',48).attr('text-anchor','end').attr('fill',css('--ink3')).attr('font-size',9.5).text(Math.round(s.msfhr)+' MSF/hr · HQM '+s.pos.map((p,j)=>j+1).join('/'));});
+  ful.append('div').attr('class','n').style('margin','10px 0 4px').text('fulfillment · dashed = 0.9q and 1.1q');
+  ORDERS.forEach((o,i)=>{const r=ful.append('div').attr('class','r');r.append('span').html(`<i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${ocol(i)};margin-right:4px"></i>${o.id}`);const b=r.append('div').attr('class','b');b.append('u').style('left',(100*0.9/1.2)+'%').style('width',(100*0.2/1.2)+'%');b.append('i').style('width',(100*Math.min(M.prod[i],1.2*o.q)/(1.2*o.q))+'%');r.append('span').attr('class','v').text(fmtN(Math.round(M.prod[i]))+' / '+fmtN(o.q));});
+  if(M.strand.length)st.html('stranded (ledgered, not dropped): '+M.strand.map(x=>x.o.id+' — '+x.reason).join('; '));
+}
+function renderOrders(){const ot=d3.select('#otab').html('');ot.append('tr').selectAll('th').data(['order','style','width"','cutoff"','sheets q','score lines','depth','max outs @110']).join('th').text(d=>d);
+  ORDERS.forEach(o=>{const tr=ot.append('tr');tr.append('td').html(`<i style="background:${ocol(o.idx)}"></i>${o.id}`);[o.style,o.w,o.L,fmtN(o.q),o.sc,o.depth,Math.floor(MACHINE/o.w)].forEach(v=>tr.append('td').text(v));});}
+
+// ---------------- run schedule: 2-D web map with sheets, zoom, playhead
+const rstage=el('runStage'),rcv=el('rcv'),rov=d3.select('#rov'),rtip=d3.select('#rtip');const rctx=rcv.getContext('2d');let RW=0,RH=0;let zoomT=d3.zoomIdentity;let playing=false,playFt=0,lastT=0,raf=null;
+const RM={l:46,r:10,t:22,b:26};
+function rresize(){const r=rstage.getBoundingClientRect();RW=r.width;RH=r.height;const dpr=Math.min(2,window.devicePixelRatio||1);rcv.width=RW*dpr;rcv.height=RH*dpr;rctx.setTransform(dpr,0,0,dpr,0,0);rdraw();}
+function layoutCIs(){let x=0;return M.sel.map((c,i)=>{const o={ci:c,i,x0:x,x1:x+c.r};x+=c.r;return o;});}
+function baseScale(){const total=Math.max(1,M.lineal);return d3.scaleLinear().domain([0,total]).range([RM.l,RW-RM.r]);}
+const ySc=()=>d3.scaleLinear().domain([-MACHINE/2,MACHINE/2]).range([RH-RM.b,RM.t]);
+function rdraw(){if(!M)return;const x0=baseScale(),x=zoomT.rescaleX(x0),y=ySc();rctx.clearRect(0,0,RW,RH);
+  const web=css('--web'),paper=css('--paper'),line=css('--line'),ink3=css('--ink3'),acc2=css('--accent2');
+  // machine extent
+  rctx.fillStyle=css('--bg');rctx.fillRect(RM.l,RM.t,RW-RM.l-RM.r,RH-RM.t-RM.b);rctx.strokeStyle=line;rctx.strokeRect(RM.l,y(MACHINE/2),RW-RM.l-RM.r,y(-MACHINE/2)-y(MACHINE/2));
+  rctx.save();rctx.beginPath();rctx.rect(RM.l,RM.t,RW-RM.l-RM.r,RH-RM.t-RM.b);rctx.clip();
+  layoutCIs().forEach(({ci,i,x0:a,x1:b})=>{const {s,r}=ci;const px0=x(a),px1=x(b);if(px1<RM.l||px0>RW-RM.r)return;
+    // web (paper) block
+    rctx.fillStyle=web;rctx.fillRect(px0,y(s.web/2),px1-px0,y(-s.web/2)-y(s.web/2));
+    // lanes
+    let yy=s.used/2;const pxPerIn=(px1-px0)/r/12;
+    s.pos.forEach((p,pi)=>{for(let k=0;k<p.k;k++){const yTop=y(yy),yBot=y(yy-p.o.w);rctx.fillStyle=ocol(p.o.idx);rctx.globalAlpha=0.75;rctx.fillRect(px0,yTop,px1-px0,yBot-yTop);rctx.globalAlpha=1;
+      // sheet rectangles: cut lines every L inches along the machine direction
+      const sheetPx=p.o.L*pxPerIn;if(sheetPx>=2.5){rctx.strokeStyle=css('--bg');rctx.lineWidth=sheetPx>12?1.4:0.8;rctx.beginPath();const start=Math.max(0,Math.floor((RM.l-px0)/sheetPx));const end=Math.min(Math.floor(r*12/p.o.L),Math.ceil((RW-px0)/sheetPx));for(let c=start;c<=end;c++){const cx=px0+c*sheetPx;rctx.moveTo(cx,yTop);rctx.lineTo(cx,yBot);}rctx.stroke();}
+      else{rctx.fillStyle=paper;rctx.globalAlpha=0.18;rctx.fillRect(px0,yTop,px1-px0,yBot-yTop);rctx.globalAlpha=1;}
+      // scores: dashed longitudinal lines at the flap / center positions (the same geometry the L5 shaft check uses)
+      if(yBot-yTop>6){const sc=[];if(p.o.sc>=2)sc.push(p.o.flap,p.o.w-p.o.flap);if(p.o.sc>=4)sc.push(p.o.w/2-0.75,p.o.w/2+0.75);if(p.o.sc>=6)sc.push(p.o.w/2-2.25,p.o.w/2+2.25);
+        rctx.strokeStyle='rgba(255,255,255,0.75)';rctx.lineWidth=1;rctx.setLineDash([4,3]);rctx.beginPath();sc.forEach(v=>{const sy=y(yy-v);rctx.moveTo(Math.max(px0,RM.l),sy);rctx.lineTo(Math.min(px1,RW-RM.r),sy);});rctx.stroke();rctx.setLineDash([]);}
+      // slit: the knife between outs / positions, a solid line along the run
+      rctx.strokeStyle=css('--ink');rctx.lineWidth=1.2;rctx.beginPath();rctx.moveTo(px0,yBot);rctx.lineTo(px1,yBot);rctx.stroke();
+      if(px1-px0>60&&yBot-yTop>11){rctx.fillStyle='#fff';rctx.font='10px IBM Plex Mono, monospace';rctx.fillText(`${p.o.id} HQM${pi+1} · ${p.o.L}"`,Math.max(px0,RM.l)+4,yTop+11);}
+      yy-=p.o.w;}});
+    // outer slits (trim edges) and the shear at the order change: one cut across the full web
+    rctx.strokeStyle=css('--ink');rctx.lineWidth=1.2;rctx.beginPath();rctx.moveTo(px0,y(s.used/2));rctx.lineTo(px1,y(s.used/2));rctx.stroke();
+    rctx.strokeStyle=acc2;rctx.lineWidth=px1-px0>80?3:2;rctx.beginPath();rctx.moveTo(px1,y(s.web/2));rctx.lineTo(px1,y(-s.web/2));rctx.stroke();
+    if(px1-px0>120&&i<M.sel.length-1){rctx.fillStyle=acc2;rctx.font='10px IBM Plex Mono, monospace';rctx.fillText('shear · order change',px1+4,y(-s.web/2)-4);}
+    rctx.strokeStyle=ink3;rctx.setLineDash([3,3]);rctx.beginPath();rctx.moveTo(px1,RM.t);rctx.lineTo(px1,RH-RM.b);rctx.stroke();rctx.setLineDash([]);
+    rctx.fillStyle=css('--ink2');rctx.font='10px IBM Plex Mono, monospace';if(px1-px0>40)rctx.fillText(`CI ${i+1} · ${s.web}" · ${fmtN(Math.round(r))} ft`,Math.max(px0,RM.l)+4,RM.t-6);});
+  // playhead
+  if(playFt>0){const pxp=x(playFt);rctx.strokeStyle=acc2;rctx.lineWidth=2;rctx.beginPath();rctx.moveTo(pxp,RM.t);rctx.lineTo(pxp,RH-RM.b);rctx.stroke();rctx.fillStyle=acc2;rctx.beginPath();rctx.moveTo(pxp-6,RM.t);rctx.lineTo(pxp+6,RM.t);rctx.lineTo(pxp,RM.t+8);rctx.fill();
+    // already-run portion dimmed
+    rctx.fillStyle=css('--bg');rctx.globalAlpha=0.35;rctx.fillRect(RM.l,RM.t,Math.max(0,pxp-RM.l),RH-RM.t-RM.b);rctx.globalAlpha=1;}
+  rctx.restore();
+  // axes
+  rov.attr('viewBox',`0 0 ${RW} ${RH}`).selectAll('*').remove();const ticks=x.ticks(8);ticks.forEach(t=>{const tx=x(t);if(tx<RM.l||tx>RW-RM.r)return;rov.append('text').attr('x',tx).attr('y',RH-8).attr('text-anchor','middle').attr('fill',css('--ink3')).attr('font-size',10).text(fmtN(t)+' ft');});
+  [-55,-27.5,0,27.5,55].forEach(v=>rov.append('text').attr('x',RM.l-6).attr('y',y(v)+3).attr('text-anchor','end').attr('fill',css('--ink3')).attr('font-size',9.5).text((v>0?'+':'')+v+'"'));
+}
+const zoom=d3.zoom().scaleExtent([1,3000]).translateExtent([[RM.l,0],[Infinity,0]]).on('zoom',ev=>{zoomT=ev.transform;rdraw();});
+d3.select(rstage).call(zoom).on('dblclick.zoom',null);
+rstage.addEventListener('mousemove',ev=>{if(!M)return;const r=rstage.getBoundingClientRect();const mx=ev.clientX-r.left,my=ev.clientY-r.top;const x=zoomT.rescaleX(baseScale()),y=ySc();const ft=x.invert(mx),yy=y.invert(my);
+  const L=layoutCIs().find(c=>ft>=c.x0&&ft<c.x1);if(!L||Math.abs(yy)>L.ci.s.used/2){rtip.style('opacity',0);return;}
+  let top=L.ci.s.used/2,hit=null;L.ci.s.pos.forEach((p,pi)=>{for(let k=0;k<p.k;k++){if(!hit&&yy<=top&&yy>top-p.o.w)hit={p,pi,k};top-=p.o.w;}});if(!hit){rtip.style('opacity',0);return;}
+  const cuts=Math.round(L.ci.r*12/hit.p.o.L);const sheetNo=Math.floor((ft-L.x0)*12/hit.p.o.L)+1;
+  rtip.style('opacity',1).style('left',Math.min(mx+14,RW-240)+'px').style('top',(my-14)+'px').html(`<b>CI ${L.i+1} · HQM${hit.pi+1} · ${hit.p.o.id}</b><br>${hit.p.o.w}" × ${hit.p.o.L}" · out ${hit.k+1} of ${hit.p.k}<br>sheet ${fmtN(sheetNo)} of ${fmtN(cuts)} on this knife`);});
+rstage.addEventListener('mouseleave',()=>rtip.style('opacity',0));
+// playback
+function hud(){const L=layoutCIs().find(c=>playFt>=c.x0&&playFt<c.x1)||(playFt>=M.lineal?layoutCIs()[layoutCIs().length-1]:null);
+  let msf=0,min=0;layoutCIs().forEach(c=>{const done=Math.max(0,Math.min(c.ci.r,playFt-c.x0));msf+=done*c.ci.s.used/12/1000;min+=done/c.ci.s.speed+(done>0?K.setup*Math.min(1,done/Math.max(1,c.ci.r*0.02)):0);});
+  el('hFt').textContent=fmtN(Math.round(playFt));el('hMin').innerHTML=Math.round(min)+'<small>min</small>';el('hMsf').textContent=msf.toFixed(1);
+  if(L){el('hCi').textContent='CI '+(L.i+1)+' of '+M.sel.length;el('hSpd').innerHTML=Math.round(L.ci.s.speed)+'<small>fpm</small>';el('hWeb').textContent=L.ci.s.web+'"';
+    const kn=d3.select('#knives').html('');const ftIn=Math.max(0,Math.min(L.ci.r,playFt-L.x0));L.ci.s.pos.forEach((p,pi)=>{const total=Math.round(L.ci.r*12/p.o.L),done=Math.min(total,Math.floor(ftIn*12/p.o.L));kn.append('div').html(`<b>HQM${pi+1}</b> ${p.o.id} ${p.o.L}" × ${p.k} out<br>NominalCuts <em>${fmtN(total-done)}</em> of ${fmtN(total)} remaining`);});}
+  else{el('hCi').textContent='—';el('hSpd').innerHTML='—<small>fpm</small>';el('hWeb').textContent='—';d3.select('#knives').html('');}}
+function tick(t){if(!playing)return;const dt=(t-lastT)/1000;lastT=t;const L=layoutCIs().find(c=>playFt>=c.x0&&playFt<c.x1);const spd=L?L.ci.s.speed:600;playFt+=spd/60*dt*K.speed;if(playFt>=M.lineal){playFt=M.lineal;playing=false;el('runBtn').textContent='▶ run';}
+  if(el('kFollow').value==='follow'){const x0=baseScale();const k=Math.max(zoomT.k,180);const tx=Math.min(RW*0.35-k*x0(playFt),RM.l*(1-k));zoomT=d3.zoomIdentity.translate(tx,0).scale(k);d3.select(rstage).call(zoom.transform,zoomT);}
+  rdraw();hud();raf=requestAnimationFrame(tick);}
+function runReset(){playing=false;playFt=0;el('runBtn').textContent='▶ run';zoomT=d3.zoomIdentity;d3.select(rstage).call(zoom.transform,zoomT);rdraw();hud();}
+el('runBtn').addEventListener('click',()=>{if(playing){playing=false;el('runBtn').textContent='▶ run';return;}if(playFt>=M.lineal)playFt=0;playing=true;el('runBtn').textContent='❚❚ pause';lastT=performance.now();raf=requestAnimationFrame(tick);});
+el('resetBtn').addEventListener('click',runReset);
+K.speed=120;el('kSpeed').addEventListener('input',e=>{K.speed=+e.target.value;el('vSpeed').textContent=K.speed+'×';});
+el('kFollow').addEventListener('change',()=>{if(el('kFollow').value==='whole'){zoomT=d3.zoomIdentity;d3.select(rstage).call(zoom.transform,zoomT);rdraw();}});
+
+window.addEventListener('resize',()=>{resize();rresize();});
+resize();rresize();rebuild();
+window.__ss={get pts(){return pts},get M(){return M},get STAGES(){return STAGES},K};
+})();
+</script>
 <script src="../assets/theme.js"></script>
 <script src="../assets/viz.js"></script>
 <script>
