@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shortest paths on a plant network — Jason Fetzer</title>
+<meta name="description" content="Dijkstra, Bellman-Ford, and Floyd-Warshall on a network of plants and a distribution center: when each applies, why negative edges break Dijkstra, and the all-pairs matrix filling in — animated with d3.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:800px}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.viz svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.bar .st{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:auto;text-align:right}
+.bar .st b{color:var(--ink);font-weight:500}
+.legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.when{width:100%;border-collapse:collapse;font-size:14.5px;margin:0 0 24px}
+.when th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:8px 10px 8px 0;border-bottom:1px solid var(--rule)}
+.when td{padding:10px 10px 10px 0;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+.when td:first-child{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-16 · graphs · logistics · d3</p>
+<h1>Three shortest-path algorithms, one plant network</h1>
+<p class="lede">Dijkstra when every lane costs something. Bellman-Ford when some lanes pay you back. Floyd-Warshall when you need every pair at once. Same nine nodes, same edge weights — watch each one work and see exactly where the other two would have been wrong or wasteful.</p>
+
+<p>The network: eight corrugated plants around Chicago and one distribution center, directed lanes with transit time in minutes. This is the graph under a transshipment model — the one in <a href="https://github.com/justfetz/transportation-and-transshipment-models">transportation-and-transshipment-models</a> — before you add capacities and turn it into a flow problem.</p>
+
+<h2>Which one, when</h2>
+<table class="when">
+<tr><th>Algorithm</th><th>Answers</th><th>Edge weights</th><th>Cost</th><th>Use it for</th></tr>
+<tr><td>Dijkstra</td><td>one source → all</td><td>non-negative only</td><td>O((V+E) log V)</td><td>Routing, ETAs, "nearest plant that can make this grade." The default.</td></tr>
+<tr><td>Bellman-Ford</td><td>one source → all</td><td>any; detects negative cycles</td><td>O(V·E)</td><td>Backhaul credits, currency/arbitrage, anything where an edge can reduce cost. Slower, but honest.</td></tr>
+<tr><td>Floyd-Warshall</td><td>every pair</td><td>any; detects negative cycles</td><td>O(V³)</td><td>Distance matrices for a solver (transshipment, TSP, facility location). Dense graphs up to a few hundred nodes.</td></tr>
+<tr><td>BFS</td><td>one source → all</td><td>all equal (hops)</td><td>O(V+E)</td><td>Unweighted: fewest handoffs, fewest stages. Dijkstra with the queue swapped for a plain one.</td></tr>
+</table>
+<p>The decision is really two questions: <em>can a weight be negative?</em> and <em>do I need one source or all of them?</em> Dijkstra is fastest and most people's default, but it has a precondition, and the second visual below shows it quietly returning a wrong answer when that precondition fails.</p>
+
+<h2>1 · Dijkstra: greedy, and correct because weights are non-negative</h2>
+<p>Keep a tentative distance for every node, starting at 0 for the source and ∞ elsewhere. Repeatedly pull the unsettled node with the smallest tentative distance, mark it settled, and <em>relax</em> each outgoing edge: if going through this node is shorter than what the neighbor had, update it. CLRS §24.3; Kleinberg–Tardos §4.4 proves it with the same exchange argument as every other greedy in chapter 4; Abdul Bari's lecture 45.</p>
+<div class="viz" id="dijk"></div>
+<p>The greedy step is "the smallest unsettled node is final." That's true only because every edge is ≥ 0: nothing you discover later can make a settled node cheaper. Settle a node once, never revisit it — that's where the speed comes from, and it's exactly the assumption the next section breaks.</p>
+
+<h2>2 · Bellman-Ford: slower, and the only one that survives a negative edge</h2>
+<p>Suppose the Naperville → Aurora lane has a <strong>backhaul credit</strong>: a carrier is paying to move an empty trailer that direction, so running it costs you −20 instead of +24. Dijkstra settles Aurora at 76 via Elgin, before it has even reached Naperville at 82 — and once settled, never looks back. The true cheapest route to Aurora goes <em>through Naperville</em> at 62, and every node downstream of Aurora inherits the error. Bellman-Ford doesn't settle anything. It just relaxes every edge, V−1 times, and the right answer propagates:</p>
+<div class="viz" id="bf"></div>
+<p>Why V−1 passes: a shortest path has at most V−1 edges, and each pass is guaranteed to finalize at least one more edge of every shortest path. If a V-th pass still improves something, there's a negative cycle — a loop you could drive forever and get paid — and the problem has no answer. That check is the whole reason Bellman-Ford exists in arbitrage detection, and why solvers run it on your cost matrix before trusting it. CLRS §24.1, Bari lecture 53.</p>
+
+<h2>3 · Floyd-Warshall: every pair, three nested loops</h2>
+<p>Sometimes you don't want one source; you want the whole distance matrix to feed a transshipment or TSP model. Floyd-Warshall is dynamic programming on the question "what's the shortest i→j path using only intermediate nodes from the first k?" Increase k one node at a time; at each step, every pair asks whether routing through node k helps. CLRS §25.2, Bari lecture 49.</p>
+<pre><code>for k in nodes:
+    for i in nodes:
+        for j in nodes:
+            d[i][j] = min(d[i][j], d[i][k] + d[k][j])</code></pre>
+<div class="viz" id="fw"></div>
+<p>Each k-step is a pass over the matrix; cells that shrink are the pairs for which node k is a useful waypoint. Watch which k changes the most cells — that's your hub. Negative weights are fine; a negative diagonal entry when it finishes means a negative cycle. It's O(V³), which is 729 operations here and 27 million at 300 nodes — still fine; a million nodes is not. For sparse graphs that size, run Dijkstra from each source instead (or Johnson's algorithm if weights are negative).</p>
+
+<h2>Where this sits in the stack</h2>
+<ul>
+  <li><strong>Transshipment models</strong> need a cost for every source→sink pair through intermediates. Floyd-Warshall produces that matrix; the LP then decides flows on it. Same with the <a href="linear-optimization-box-plant.html">product-mix</a> style models once there's more than one site.</li>
+  <li><strong>Routing and ETAs</strong> in a TMS are Dijkstra (or A*, which is Dijkstra with a heuristic to aim it). Non-negative, single-source, fast.</li>
+  <li><strong>Backhauls, credits, incentives</strong> make weights negative, and then the correct answer and the fast answer diverge. Knowing which algorithm you're actually running is the difference between a plan that's right and a plan that's confidently wrong.</li>
+  <li><strong>Critical path</strong> from the <a href="dags-data-engineering.html">DAG post</a> is the same relaxation with max instead of min, and only one pass because topological order guarantees predecessors are done. DAGs are the one case where shortest/longest paths are linear time.</li>
+</ul>
+
+<h2>The Java</h2>
+<pre><code>// Dijkstra with a priority queue. Edges non-negative.
+static Map&lt;String,Integer&gt; dijkstra(Map&lt;String,List&lt;int[]&gt;&gt; adj, List&lt;String&gt; nodes, String src) {
+    Map&lt;String,Integer&gt; dist = new HashMap&lt;&gt;();
+    for (String n : nodes) dist.put(n, Integer.MAX_VALUE);
+    dist.put(src, 0);
+    PriorityQueue&lt;Object[]&gt; pq = new PriorityQueue&lt;&gt;(Comparator.comparingInt(a -&gt; (int) a[1]));
+    pq.add(new Object[]{src, 0});
+    Set&lt;String&gt; settled = new HashSet&lt;&gt;();
+    while (!pq.isEmpty()) {
+        Object[] top = pq.poll();
+        String u = (String) top[0];
+        if (!settled.add(u)) continue;                   // stale queue entry
+        for (int[] e : adj.get(u)) {                      // e = {toIndex, weight}
+            String v = nodes.get(e[0]);
+            if (dist.get(u) + e[1] &lt; dist.get(v)) {       // relax
+                dist.put(v, dist.get(u) + e[1]);
+                pq.add(new Object[]{v, dist.get(v)});
+            }
+        }
+    }
+    return dist;
+}
+
+// Bellman-Ford. Any weights; returns null on a negative cycle.
+static int[] bellmanFord(int n, int[][] edges, int src) {   // edges = {u, v, w}
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE / 2);
+    dist[src] = 0;
+    for (int pass = 0; pass &lt; n - 1; pass++)
+        for (int[] e : edges)
+            if (dist[e[0]] + e[2] &lt; dist[e[1]]) dist[e[1]] = dist[e[0]] + e[2];
+    for (int[] e : edges)                                     // pass n: still improving? negative cycle
+        if (dist[e[0]] + e[2] &lt; dist[e[1]]) return null;
+    return dist;
+}
+
+// Floyd-Warshall. d[i][j] = direct weight, INF if none, 0 on the diagonal.
+static void floydWarshall(int[][] d) {
+    int n = d.length;
+    for (int k = 0; k &lt; n; k++)
+        for (int i = 0; i &lt; n; i++)
+            for (int j = 0; j &lt; n; j++)
+                if (d[i][k] + d[k][j] &lt; d[i][j]) d[i][j] = d[i][k] + d[k][j];
+    // d[i][i] &lt; 0 for any i  ⇒  negative cycle
+}</code></pre>
+
+<hr>
+<p class="meta">Theory: CLRS §24.1 (Bellman-Ford), §24.3 (Dijkstra), §25.2 (Floyd-Warshall); Kleinberg &amp; Tardos §4.4 (Dijkstra), §6.8 (Bellman-Ford); Abdul Bari lectures 45, 49, 53. Network and transit times are illustrative. Visuals and code are mine.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script>
+(function(){
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const ink=()=>css('--ink'),ink2=()=>css('--ink-2'),ink3=()=>css('--ink-3'),rule=()=>css('--rule'),accent=()=>css('--accent');
+const P={Rockford:[110,70],Elgin:[250,120],Aurora:[260,230],Joliet:[400,270],Naperville:[380,160],Chicago_DC:[520,100],Gary:[640,230],Kenosha:[540,30],Peoria:[90,260]};
+const NODES=Object.keys(P);
+// directed lanes [from, to, minutes]
+const EDGES=[['Rockford','Elgin',44],['Elgin','Rockford',46],['Rockford','Peoria',80],['Elgin','Aurora',32],['Elgin','Naperville',38],['Elgin','Kenosha',70],
+ ['Aurora','Joliet',30],['Joliet','Aurora',30],['Aurora','Naperville',22],['Naperville','Aurora',24],['Peoria','Aurora',96],['Naperville','Joliet',28],['Naperville','Chicago_DC',35],['Chicago_DC','Naperville',36],
+ ['Joliet','Gary',58],['Gary','Chicago_DC',42],['Chicago_DC','Gary',40],['Chicago_DC','Kenosha',55],['Kenosha','Chicago_DC',54],['Kenosha','Rockford',88],['Joliet','Peoria',130],['Peoria','Joliet',128]];
+const SRC='Rockford';
+function drawNet(svg,edges,W,H){
+  svg.append('defs').append('marker').attr('id','arr'+Math.random().toString(36).slice(2,6)).attr('viewBox','0 0 10 10').attr('refX',16).attr('refY',5).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,0L10,5L0,10z').attr('fill',ink3());
+  const mid=svg.select('marker').attr('id');
+  const curve=d=>{const a=P[d[0]],b=P[d[1]];const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);const nx=-dy/len*14,ny=dx/len*14;return `M${a[0]},${a[1]} Q${(a[0]+b[0])/2+nx},${(a[1]+b[1])/2+ny} ${b[0]},${b[1]}`;};
+  const E=svg.append('g').selectAll('path').data(edges).join('path').attr('d',curve).attr('fill','none').attr('stroke',rule()).attr('stroke-width',1.4).attr('marker-end',`url(#${mid})`);
+  const L=svg.append('g').selectAll('text').data(edges).join('text').attr('x',d=>{const a=P[d[0]],b=P[d[1]];const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);return (a[0]+b[0])/2-dy/len*13;}).attr('y',d=>{const a=P[d[0]],b=P[d[1]];const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);return (a[1]+b[1])/2+dx/len*13+3;}).attr('text-anchor','middle').attr('fill',d=>d[2]<0?'#c0392b':ink3()).attr('font-size',9.5).text(d=>d[2]);
+  const N=svg.append('g').selectAll('g').data(NODES).join('g').attr('transform',k=>`translate(${P[k][0]},${P[k][1]})`);
+  N.append('circle').attr('r',9).attr('fill',k=>k===SRC?accent():k==='Chicago_DC'?'#e39a2f':ink2()).attr('stroke',css('--bg')).attr('stroke-width',2);
+  N.append('text').attr('y',-13).attr('text-anchor','middle').attr('fill',ink()).attr('font-size',11).text(k=>k.replace('_',' '));
+  const D=N.append('text').attr('y',24).attr('text-anchor','middle').attr('fill',accent()).attr('font-size',11).attr('font-weight',600).text('');
+  return {E,N,D,L};
+}
+
+// ---------- 1. Dijkstra
+viz('dijk',function(){
+  const el=d3.select('#dijk'),W=760,H=320;
+  const bar=el.append('div').attr('class','bar');const btn=bar.append('button').text('▶ run Dijkstra from Rockford');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);const {E,N,D}=drawNet(svg,EDGES,W,H);
+  function run(){
+    const dist={},prev={},settled=new Set();NODES.forEach(n=>dist[n]=Infinity);dist[SRC]=0;const log=[];
+    while(settled.size<NODES.length){
+      const u=NODES.filter(n=>!settled.has(n)).reduce((a,b)=>dist[a]<=dist[b]?a:b);if(dist[u]===Infinity)break;settled.add(u);log.push({type:'settle',u,d:dist[u]});
+      EDGES.filter(e=>e[0]===u).forEach(e=>{const v=e[1];if(dist[u]+e[2]<dist[v]){dist[v]=dist[u]+e[2];prev[v]=u;log.push({type:'relax',u,v,d:dist[v],e});}});
+    }
+    N.selectAll('circle').attr('stroke',css('--bg')).attr('stroke-width',2);D.text('');E.attr('stroke',rule()).attr('stroke-width',1.4);
+    log.forEach((s,i)=>setTimeout(()=>{
+      if(s.type==='settle'){N.filter(n=>n===s.u).select('circle').attr('stroke',accent()).attr('stroke-width',3.5);st.html(`settle <b>${s.u}</b> at ${s.d} — smallest unsettled, so it’s final`);}
+      else{D.filter(n=>n===s.v).text(s.d);E.filter(e=>e===s.e).attr('stroke',accent()).attr('stroke-width',2.5);st.html(`relax ${s.u}→${s.v}: ${s.d}`);}
+    },260*i));
+    setTimeout(()=>{E.attr('stroke',rule()).attr('stroke-width',1.4);NODES.forEach(v=>{if(prev[v]){E.filter(e=>e[0]===prev[v]&&e[1]===v).attr('stroke',accent()).attr('stroke-width',3);}});
+      st.html(`done · shortest-path tree from Rockford · Gary <b>${dist.Gary}</b> via ${(function(){let p=['Gary'];while(prev[p[0]])p.unshift(prev[p[0]]);return p.join('→');})()}`);},260*log.length+100);
+  }
+  btn.on('click',run);run();
+  el.append('div').attr('class','legend').html(`<span><i style="background:${accent()}"></i>source / settled / tree edge</span><span><i style="background:#e39a2f"></i>distribution center</span><span>green number = distance in minutes</span>`);
+},[drawNet]);
+
+// ---------- 2. Bellman-Ford with a negative edge
+viz('bf',function(){
+  const el=d3.select('#bf'),W=760,H=320;
+  const E2=EDGES.map(e=>e[0]==='Naperville'&&e[1]==='Aurora'?['Naperville','Aurora',-20]:e);
+  const bar=el.append('div').attr('class','bar');
+  const bD=bar.append('button').text('Dijkstra (wrong here)').attr('aria-pressed','false');const bB=bar.append('button').text('▶ Bellman-Ford').attr('aria-pressed','true');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);const {E,N,D}=drawNet(svg,E2,W,H);
+  function dijkstraWrong(){
+    const dist={},settled=new Set();NODES.forEach(n=>dist[n]=Infinity);dist[SRC]=0;
+    while(settled.size<NODES.length){const u=NODES.filter(n=>!settled.has(n)).reduce((a,b)=>dist[a]<=dist[b]?a:b);if(dist[u]===Infinity)break;settled.add(u);E2.filter(e=>e[0]===u&&!settled.has(e[1])).forEach(e=>{if(dist[u]+e[2]<dist[e[1]])dist[e[1]]=dist[u]+e[2];});}
+    return dist;
+  }
+  function bellman(){
+    const dist={};NODES.forEach(n=>dist[n]=Infinity);dist[SRC]=0;const passes=[];
+    for(let p=1;p<NODES.length;p++){const changed=[];E2.forEach(e=>{if(dist[e[0]]+e[2]<dist[e[1]]){dist[e[1]]=dist[e[0]]+e[2];changed.push({v:e[1],d:dist[e[1]],e});}});passes.push(changed);if(!changed.length)break;}
+    const neg=E2.some(e=>dist[e[0]]+e[2]<dist[e[1]]);
+    return {dist,passes,neg};
+  }
+  function showD(dist){D.text(n=>dist[n]===Infinity?'∞':dist[n]);}
+  function runD(){bD.attr('aria-pressed',true);bB.attr('aria-pressed',false);E.attr('stroke',rule()).attr('stroke-width',1.4);const d=dijkstraWrong();showD(d);const t=bellman().dist;
+    D.attr('fill',n=>d[n]!==t[n]?'#c0392b':accent());const wrong=NODES.filter(n=>d[n]!==t[n]);st.html(`Dijkstra settles Aurora at <b>${d.Aurora}</b> (via Elgin) before it reaches Naperville at 82 — then Naperville→Aurora = −20 would give <b style="color:#c0392b">${t.Aurora}</b>, but Aurora is already final. ${wrong.length} nodes wrong (red), everything downstream of Aurora.`);}
+  function runB(){bD.attr('aria-pressed',false);bB.attr('aria-pressed',true);D.attr('fill',accent()).text('');E.attr('stroke',rule()).attr('stroke-width',1.4);
+    const {dist,passes,neg}=bellman();let t=0;const dd={};NODES.forEach(n=>dd[n]=Infinity);dd[SRC]=0;showD(dd);
+    passes.forEach((ch,p)=>{setTimeout(()=>{E.attr('stroke',rule()).attr('stroke-width',1.4);st.html(`pass ${p+1} of ${NODES.length-1}: relax all ${E2.length} edges · ${ch.length} improved`);},t);t+=500;
+      ch.forEach(c=>{setTimeout(()=>{dd[c.v]=c.d;showD(dd);E.filter(e=>e===c.e).attr('stroke',accent()).attr('stroke-width',2.5);},t);t+=150;});t+=400;});
+    setTimeout(()=>st.html(`converged after ${passes.length} passes · Aurora <b>${dist.Aurora}</b> via Joliet’s backhaul · negative cycle: <b>${neg?'yes':'none'}</b>`),t);}
+  bD.on('click',runD);bB.on('click',runB);runB();
+  el.append('div').attr('class','legend').html(`<span style="color:#c0392b">Naperville→Aurora = −20 (backhaul credit)</span><span><i style="background:${accent()}"></i>edge relaxed this step</span>`);
+},[drawNet]);
+
+// ---------- 3. Floyd-Warshall
+viz('fw',function(){
+  const el=d3.select('#fw');
+  const bar=el.append('div').attr('class','bar');const btn=bar.append('button').text('▶ step k = 1 … 9');const st=bar.append('span').attr('class','st').html('&nbsp;');
+  const n=NODES.length,short=NODES.map(s=>s.replace('_DC','').slice(0,4));
+  const cw=56,ch=30,lx=60,ty=36,W=lx+n*cw+10,H=ty+n*ch+10;
+  const svg=el.append('svg').attr('viewBox',`0 0 ${W} ${H}`);
+  short.forEach((s,j)=>svg.append('text').attr('x',lx+j*cw+cw/2).attr('y',ty-12).attr('text-anchor','middle').attr('fill',ink3()).attr('font-size',10).text(s));
+  short.forEach((s,i)=>svg.append('text').attr('x',lx-8).attr('y',ty+i*ch+ch/2+4).attr('text-anchor','end').attr('fill',ink3()).attr('font-size',10).text(s));
+  const cells=[];for(let i=0;i<n;i++)for(let j=0;j<n;j++){const g=svg.append('g').attr('transform',`translate(${lx+j*cw},${ty+i*ch})`);g.append('rect').attr('width',cw-2).attr('height',ch-2).attr('rx',3).attr('fill',css('--code-bg')).attr('stroke',rule());const t=g.append('text').attr('x',cw/2-1).attr('y',ch/2+4).attr('text-anchor','middle').attr('fill',ink()).attr('font-size',11);cells.push({i,j,g,t});}
+  const INF=1e9;let d;
+  function init(){d=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?0:INF));EDGES.forEach(e=>{d[NODES.indexOf(e[0])][NODES.indexOf(e[1])]=e[2];});}
+  function render(changed){cells.forEach(c=>{c.t.text(d[c.i][c.j]>=INF?'∞':d[c.i][c.j]);c.g.select('rect').attr('fill',changed&&changed.has(c.i+','+c.j)?accent():css('--code-bg')).attr('fill-opacity',changed&&changed.has(c.i+','+c.j)?.3:1);});}
+  function run(){
+    init();render();let t=0;
+    for(let k=0;k<n;k++){setTimeout(()=>{const changed=new Set();for(let i=0;i<n;i++)for(let j=0;j<n;j++){if(d[i][k]+d[k][j]<d[i][j]){d[i][j]=d[i][k]+d[k][j];changed.add(i+','+j);}}
+      render(changed);cells.filter(c=>c.i===k||c.j===k).forEach(c=>c.g.select('rect').attr('stroke',accent()).attr('stroke-width',1.5));
+      st.html(`k = ${k+1} (${NODES[k].replace('_',' ')}) · <b>${changed.size}</b> pairs improved by routing through it`);
+      setTimeout(()=>cells.forEach(c=>c.g.select('rect').attr('stroke',rule()).attr('stroke-width',1)),700);},t);t+=900;}
+    setTimeout(()=>st.html(`all pairs done · e.g. Peoria→Kenosha <b>${d[NODES.indexOf('Peoria')][NODES.indexOf('Kenosha')]}</b>, Gary→Rockford <b>${d[NODES.indexOf('Gary')][NODES.indexOf('Rockford')]}</b> · diagonal all 0 → no negative cycle`),t);
+  }
+  btn.on('click',run);run();
+  el.append('div').attr('class','legend').html(`<span><i style="background:${accent()};opacity:.4"></i>cell improved at this k</span><span>row = from, column = to, minutes</span>`);
+});
+})();
+</script>
+</body>
+</html>
