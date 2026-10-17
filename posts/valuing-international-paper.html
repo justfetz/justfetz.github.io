@@ -32,6 +32,17 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.mkt{font-weight:600;color:var
 .story ul{margin:0;padding-left:18px}
 .src{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
 .src a{color:var(--ink-2)}
+.bet{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.bet .knobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px;margin-bottom:12px}
+.bet label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.bet input[type=range]{width:100%;accent-color:var(--accent)}
+.bet .v{font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+.bet .out{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:6px 0 10px}
+.bet .out div{border:1px solid var(--rule);border-radius:8px;padding:8px 10px;background:var(--code-bg)}
+.bet .out b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.bet .out em{font-style:normal;font-family:var(--mono);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.bet .verdict{font-size:15px;color:var(--ink);margin:4px 0 0}
+.bet svg{display:block;width:100%;height:auto;font-family:var(--mono)}
 .note{border:1px solid var(--rule);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--ink-2);margin:0 0 24px}
 </style>
 </head>
@@ -139,6 +150,27 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.mkt{font-weight:600;color:var
 <div class="pull">At $32 the market is pricing a coin flip on a down-cycle. If you think it's 30%, the shares are worth about $39 and you have an edge. If you think it's 50%, you're being paid nothing.</div>
 
 <p>Everything else — the DCF, the comps, the sum of the parts — collapses into that one judgment. Which is the useful thing about doing this properly: it tells you what you're actually betting on, and it isn't the dividend or the spin-off or the price increase. It's the cycle. And the cycle is the thing you can watch: box shipments, the index in October and November, OCC, and what the DS Smith buyers are willing to pay on November 3.</p>
+
+<div class="sect">price your own bet</div>
+<p>Everything above is my guess. Here is the same machine with the guesses exposed. Set what <em>you</em> believe — how much of the $170 sticks, the mid-cycle margin, what a buyer pays in 2030, the discount rate, and the odds of a down-cycle — and the page prices the bet the way the spreadsheet and the Monte Carlo do, live.</p>
+<div class="bet" id="bet">
+  <div class="knobs">
+    <label>price that sticks<input type="range" id="bStick" min="0" max="100" value="50"><span class="v" id="vStick">50% of $170/t</span></label>
+    <label>NA mid-cycle margin<input type="range" id="bMargin" min="12" max="21" step="0.5" value="17"><span class="v" id="vMargin">17.0%</span></label>
+    <label>exit multiple (2030)<input type="range" id="bMult" min="6" max="12" step="0.25" value="8"><span class="v" id="vMult">8.0×</span></label>
+    <label>WACC<input type="range" id="bWacc" min="6" max="9" step="0.1" value="7.4"><span class="v" id="vWacc">7.4%</span></label>
+    <label>P(down-cycle, 3 yrs)<input type="range" id="bDown" min="5" max="80" value="30"><span class="v" id="vDown">30%</span></label>
+  </div>
+  <div class="out">
+    <div><b>your value / share</b><em id="oVal">—</em></div>
+    <div><b>vs $32</b><em id="oUp">—</em></div>
+    <div><b>P(value &gt; $32)</b><em id="oP">—</em></div>
+    <div><b>10th / 90th pct</b><em id="oPct">—</em></div>
+    <div><b>2027 EBITDA</b><em id="oE">—</em></div>
+  </div>
+  <svg id="bHist" viewBox="0 0 680 120" role="img" aria-label="Distribution of value under your beliefs"></svg>
+  <p class="verdict" id="oVerdict"></p>
+</div>
 
 <p>On sizing: Kelly on this distribution says a half-Kelly position of about 40% of a portfolio, which is absurd, and the absurdity is the lesson. Kelly assumes you know the distribution. The distribution is the thing you're least sure of — I assigned that 30% myself. Treat Kelly as an upper bound, then divide by the number of things you could be wrong about. For one stock in one cyclical industry, that's a small position or none.</p>
 
@@ -250,6 +282,65 @@ viz('cycle', function () {
   svg.append('circle').attr('cx', x(0.3)).attr('cy', y(me.p_above)).attr('r', 8).attr('fill', 'none').attr('stroke', '#c86a2a').attr('stroke-width', 2);
   svg.append('text').attr('x', x(0.3) + 12).attr('y', y(me.p_above) + 18).attr('font-size', 10.5).attr('fill', '#c86a2a').text('my 30%');
   svg.append('text').attr('x', x(0.5)).attr('y', y(rows.find(d => Math.abs(d.p_down - 0.5) < 1e-6).p_above) + 20).attr('text-anchor', 'middle').attr('font-size', 10.5).attr('fill', css('--ink-2')).text("the market's price");
+});
+
+viz('bet', function () {
+  // The same chain as the Scenarios sheet and montecarlo.py, in the browser, with the reader's beliefs.
+  const I = { price: 32, shares: 529.5, netDebt: 9217 - 726, revNA25: 15000, revEMEA25: 8500, revH1: 11975, na26: 2425, emea26: 950, corp: -75,
+    idx: 170, sens: 9, inGuide: 175, contrib: 0.30, costout: 300, infl: 250, emeaDelta: 150, g: 0.025, da: 0.08, nwc: 0.10, tax: 0.24,
+    capex27: 1900, sep: 250, gT: 0.02, emeaMargin: 0.11, capexLT: 0.065, vol: 0.01 };
+  const revNA26 = I.revH1 * 2 * I.revNA25 / (I.revNA25 + I.revEMEA25), revEMEA26 = I.revH1 * 2 * I.revEMEA25 / (I.revNA25 + I.revEMEA25), rev26 = revNA26 + revEMEA26;
+  function value(a) { // a = {stick, margin, mult, wacc, vol, emeaMargin, emeaDelta, capexLT, noise}
+    const pd = a.stick * I.idx * I.sens - I.inGuide;
+    const revNA27 = revNA26 * (1 + a.vol) + pd, revEMEA27 = revEMEA26 * (1 + I.g), rev27 = revNA27 + revEMEA27;
+    const na27 = I.na26 + pd + revNA26 * a.vol * I.contrib + (I.costout - I.infl) * revNA26 / rev26;
+    const emea27 = I.emea26 + a.emeaDelta + (I.costout - I.infl) * revEMEA26 / rev26;
+    const e27 = na27 + emea27 + I.corp, g3 = Math.pow(1 + I.g, 3), rev30 = rev27 * g3;
+    const e30 = revNA27 * g3 * a.margin + revEMEA27 * g3 * a.emeaMargin + I.corp;
+    const u30 = (e30 - rev30 * I.da) * (1 - I.tax) + rev30 * I.da - rev30 * a.capexLT - rev30 * I.g / (1 + I.g) * I.nwc;
+    const u27 = (e27 - rev27 * I.da) * (1 - I.tax) + rev27 * I.da - I.capex27 - I.sep * 0.5;
+    const w = a.wacc, D = t => Math.pow(1 + w, t);
+    const pv = u27 / D(0.7) + (u27 * 2 / 3 + u30 / 3) / D(1.7) + (u27 / 3 + u30 * 2 / 3) / D(2.7) + u30 / D(3.7);
+    const tv = 0.5 * (u30 * (1 + I.gT) / (w - I.gT) + e30 * a.mult) * a.noise;
+    return { ps: (pv + tv / D(3.7) - I.netDebt) / I.shares, e27 };
+  }
+  // tiny seeded RNG + samplers, so the page is deterministic
+  let seed = 2026; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const tri = (a, m, b) => { const u = rnd(), c = (m - a) / (b - a); return u < c ? a + Math.sqrt(u * (b - a) * (m - a)) : b - Math.sqrt((1 - u) * (b - a) * (b - m)); };
+  const norm = (mu, sd) => mu + sd * Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+  const beta = (p, q) => { const x = -Math.log(rnd() + 1e-12) * p, y = -Math.log(rnd() + 1e-12) * q; return x / (x + y); }; // rough: gamma(k,1)≈exp*k shape proxy
+  const $ = id => document.getElementById(id);
+  const fmt = d3.format('$,.0f'), pct = d3.format('.0%');
+  function run() {
+    const stick = +$('bStick').value / 100, margin = +$('bMargin').value / 100, mult = +$('bMult').value, wacc = +$('bWacc').value / 100, pDown = +$('bDown').value / 100;
+    $('vStick').textContent = pct(stick) + ' of $170/t'; $('vMargin').textContent = (margin * 100).toFixed(1) + '%'; $('vMult').textContent = mult.toFixed(1) + '×'; $('vWacc').textContent = (wacc * 100).toFixed(1) + '%'; $('vDown').textContent = pct(pDown);
+    const point = value({ stick, margin, mult, wacc, vol: I.vol, emeaMargin: I.emeaMargin, emeaDelta: I.emeaDelta, capexLT: I.capexLT, noise: 1 });
+    // Monte Carlo around the reader's beliefs: base regime centered on their sliders, down-cycle regime pulled toward the bear.
+    seed = 2026; const N = 3000, vals = [];
+    for (let i = 0; i < N; i++) {
+      const down = rnd() < pDown;
+      const a = down
+        ? { stick: Math.min(stick, beta(2, 5)), margin: tri(0.11, Math.min(margin, 0.135), 0.16), mult: tri(6, Math.min(mult, 7), 8.5), wacc: Math.min(0.10, Math.max(0.055, norm(wacc, 0.005))), vol: norm(-0.025, 0.015), emeaMargin: tri(0.08, 0.095, 0.11), emeaDelta: norm(0, 75), capexLT: tri(0.06, 0.065, 0.078), noise: Math.exp(norm(0, 0.15)) }
+        : { stick: Math.max(0, Math.min(1, norm(stick, 0.12))), margin: tri(margin - 0.03, margin, margin + 0.035), mult: tri(mult - 1.5, mult, mult + 2.5), wacc: Math.min(0.10, Math.max(0.055, norm(wacc, 0.005))), vol: norm(0.01, 0.015), emeaMargin: tri(0.10, 0.115, 0.13), emeaDelta: norm(150, 75), capexLT: tri(0.06, 0.065, 0.078), noise: Math.exp(norm(0, 0.15)) };
+      vals.push(value(a).ps);
+    }
+    vals.sort((x, y) => x - y);
+    const p = vals.filter(v => v > I.price).length / N, q = k => vals[Math.floor(k * N)];
+    $('oVal').textContent = fmt(point.ps); $('oUp').textContent = (point.ps / I.price - 1 >= 0 ? '+' : '') + pct(point.ps / I.price - 1);
+    $('oP').textContent = pct(p); $('oPct').textContent = fmt(q(0.1)) + ' / ' + fmt(q(0.9)); $('oE').textContent = fmt(point.e27) + 'M';
+    $('oVerdict').textContent = p > 0.6 ? `Under your beliefs the shares are worth more than $32 in ${pct(p)} of outcomes — an edge, if your ${pct(pDown)} on the cycle is right. The 10th percentile (${fmt(q(0.1))}) is the number to size against.`
+      : p > 0.45 ? `Under your beliefs this is close to a fair bet (${pct(p)}). You're not being paid to take it; you'd be taking it for the dividend and the spin-off, which the model doesn't price.`
+      : `Under your beliefs the market is right or generous at $32 (${pct(p)} above the price). The bull case needs a belief you don't hold.`;
+    // histogram
+    const svg = d3.select('#bHist'); svg.selectAll('*').remove();
+    const W = 680, H = 120, m = { l: 8, r: 8, t: 8, b: 20 }, x = d3.scaleLinear().domain([0, 90]).range([m.l, W - m.r]);
+    const bins = d3.bin().domain([0, 90]).thresholds(36)(vals), y = d3.scaleLinear().domain([0, d3.max(bins, b => b.length)]).range([H - m.b, m.t]);
+    svg.append('g').selectAll('rect').data(bins).join('rect').attr('x', b => x(b.x0) + 1).attr('width', b => Math.max(1, x(b.x1) - x(b.x0) - 2)).attr('y', b => y(b.length)).attr('height', b => y(0) - y(b.length)).attr('fill', b => b.x1 <= I.price ? '#b94a3c' : css('--accent')).attr('opacity', 0.85);
+    svg.append('line').attr('x1', x(I.price)).attr('x2', x(I.price)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', css('--ink')).attr('stroke-dasharray', '4 3');
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(9).tickFormat(d => '$' + d).tickSize(0)).call(g => { g.select('.domain').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10).attr('dy', '1.2em'); });
+  }
+  ['bStick', 'bMargin', 'bMult', 'bWacc', 'bDown'].forEach(id => $(id).addEventListener('input', run));
+  run();
 });
 </script>
 </body>
