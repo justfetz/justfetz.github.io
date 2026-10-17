@@ -1,0 +1,21 @@
+PASS  market cap = price × shares: $16,944M vs $16,944M
+PASS  net debt = gross debt − cash: $8,491M
+PASS  2026E EBITDA = guidance midpoint: $3,300M vs $3,300M guide midpoint
+PASS  2026E levered FCF inside the company's Jan guide ($300–500M): $303M (guide given before the April cut; the low end is the honest reading)
+PASS  dividend cost ≈ $980M: $980M = $1.85 × 529.5M
+PASS  2026E levered FCF does NOT cover the dividend: 0.31× coverage
+PASS  Gordon TV implies an exit multiple between SW and PKG: 8.2x (SW 7.2x, PKG 12.2x)
+PASS  Exit-multiple TV implies a sane perpetual growth (0–4%): 1.89%
+PASS  WACC > terminal growth: 7.36% > 2.0%
+PASS  terminal value share of EV disclosed and in the mature-company band (60–90%): 82%
+PASS  DCF sheet ≈ Scenarios mid-cycle column (same chain, two layouts): $40.25 vs $40.49
+PASS  Sensitivity grid (17% × 8.5x) ≈ DCF within the interpolation error: $41.91 vs $40.25
+PASS  Bear < Mid < Bull: $13 < $40 < $71
+PASS  25% of $170/ton moves 2027E EBITDA by 42.5 × $9M: $382.5M vs $382.5M (CFO: $10/ton ≈ $90M)
+PASS  Python chain reproduces Scenarios!C21 (2027E EBITDA): $4,136M vs $4,136M
+PASS  P(value > price) falls monotonically as P(down-cycle) rises: 83% → 74% → 65% → 57% → 48% → 39% → 31%
+PASS  breakeven P(down-cycle) ≈ 50% (market price = expected value): mean at p=0.5: $32.7
+PASS  MC mean sits between the Bear and Bull point estimates: $37.7
+PASS  regime split is real: P(>price | down) ≪ P(>price | base): 5% vs 91%
+
+0 failure(s)

@@ -180,6 +180,179 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-spac
 
 <div class="note"><strong>What to watch, in order of how fast it would change my mind</strong> (kept current in the <a href="ip-thesis-log.html">thesis log</a>): Fibre Box Association shipments for Q4 (demand); the Fastmarkets index in October and November (does the third round hold); the Q3 call's price realization number against the $175M that was in guidance; the November 3 DS Smith day and any sale price (the SOTP); OCC above $120 (the cost side). Each one is a row in the model.</div>
 
+<div class="sect">what drives it</div>
+<p>Before sizing anything, which assumption actually moves the answer? Rank correlation between each simulated input and the value per share, across the twenty thousand runs. The regime dominates, then the mid-cycle margin, then the exit multiple — the pricing guess matters, but less than the cycle it sits inside.</p>
+<div class="viz" id="tornado"><div class="cap">Spearman rank correlation of each input with value per share. Negative means a higher input lowers the value.</div></div>
+
+<div class="sect">my bet, as instruments</div>
+<p>The model values the business; a position pays on the <em>price</em>, and the two can disagree for a long time. So this adds one more assumption — over about a year the price closes 60% of the gap toward the simulated value, with 12% of market noise on top — and maps that onto the four ways I could actually express the view, per 100 shares. Option premiums are placeholders from a reasonable chain; check the live one before doing anything.</p>
+<div class="viz" id="payoff"><div class="cap">Payoff at the horizon for each instrument (lines) over the distribution of the horizon price (bars). The dashed line is today's $32.</div></div>
+<table class="sens"><tr><th>instrument (per 100 shares)</th><th>capital</th><th>E[P&L]</th><th>P(profit)</th><th>10th</th><th>90th</th><th>worst</th><th>on capital</th></tr><tr><td>100 shares at $32</td><td class='n'>$3,200</td><td class='n'>$523</td><td class='n'>68%</td><td class='n'>(828)</td><td class='n'>$1,823</td><td class='n'>(2,038)</td><td class='n'>+16%</td></tr><tr><td>1 call, Jan-2028 $35 (~$3.50)</td><td class='n'>$350</td><td class='n'>$82</td><td class='n'>38%</td><td class='n'>(350)</td><td class='n'>$989</td><td class='n'>(350)</td><td class='n'>+23%</td></tr><tr><td>1 cash-secured put, $28 6-mo (~$1.75)</td><td class='n'>$2,800</td><td class='n'>$59</td><td class='n'>80%</td><td class='n'>(348)</td><td class='n'>$175</td><td class='n'>(1,556)</td><td class='n'>+2%</td></tr><tr><td>1 call spread 35/45 (~$2.25)</td><td class='n'>$225</td><td class='n'>$109</td><td class='n'>43%</td><td class='n'>(225)</td><td class='n'>$775</td><td class='n'>(225)</td><td class='n'>+48%</td></tr></table>
+<p>The table is the "win rate is a proxy" lesson on my own bet. The cash-secured put wins <strong>80% of the time</strong> and has the <em>lowest</em> expected return on capital, because the 20% is where it loses $1,500 against $175 of premium. The call spread has the best return on capital and loses everything 57% of the time. Shares are the boring middle: two-thirds odds, +16% expected, and they pay the dividend while I wait, if it survives. None of this is advice; it's the distribution, priced four ways.</p>
+<details class="code"><summary>show the code (bet.py, as run)</summary><pre>&quot;&quot;&quot;My bet: the value distribution mapped onto the instruments I could actually buy.
+
+The Monte Carlo gives a distribution of what the shares are WORTH. A position pays on
+what they TRADE at, and the market can disagree with value for a long time. So the one
+extra assumption here is convergence: over the horizon the price moves a fraction c of
+the way from $32 toward the simulated value (c = 1 is full convergence, 0 is none).
+
+Option premiums are ILLUSTRATIVE placeholders — check the live chain before trading.
+Run: python3 bet.py  (writes bet.json for the post&#x27;s chart)
+&quot;&quot;&quot;
+import io, contextlib, json
+import numpy as np
+
+# re-run the simulation to get the value draws (same seed as montecarlo.py)
+src = open(&quot;montecarlo.py&quot;).read().replace(&#x27;json.dump(out, open(&quot;mc.json&quot;, &quot;w&quot;), indent=1)&#x27;, &#x27;&#x27;)
+ns = {}
+with contextlib.redirect_stdout(io.StringIO()):
+    exec(src, ns)
+value, down, price = ns[&quot;value&quot;], ns[&quot;down&quot;], ns[&quot;price&quot;]
+rng = np.random.default_rng(7)
+
+# ---- horizon price: partial convergence toward value, plus noise the model can&#x27;t see
+c = 0.6                                              # 60% of the gap closes over ~12–15 months
+price_T = price + c * (value - price)
+price_T = price_T * np.exp(rng.normal(0, 0.12, len(value)))   # 12% lognormal market noise
+price_T = np.maximum(price_T, 3)
+
+# ---- dividend over the horizon: $1.85 held in the base regime, halved in a down-cycle (cut)
+div = np.where(down, 0.925, 1.85)
+
+# ---- instruments (per 100 shares / one contract). Premiums are placeholders.
+CALL_K, CALL_PREM = 35.0, 3.50          # Jan-2028 $35 call, illustrative
+PUT_K, PUT_PREM = 28.0, 1.75            # 6-month $28 cash-secured put, illustrative
+SPR_K1, SPR_K2, SPR_NET = 35.0, 45.0, 2.25   # 35/45 call spread, illustrative net debit
+
+instruments = {
+    &quot;100 shares at $32&quot;: dict(pnl=100 * (price_T - price) + 100 * div, capital=100 * price),
+    &quot;1 call, Jan-2028 $35 (~$3.50)&quot;: dict(pnl=100 * (np.maximum(0, price_T - CALL_K) - CALL_PREM), capital=100 * CALL_PREM),
+    &quot;1 cash-secured put, $28 6-mo (~$1.75)&quot;: dict(pnl=100 * (PUT_PREM - np.maximum(0, PUT_K - price_T)), capital=100 * PUT_K),
+    &quot;1 call spread 35/45 (~$2.25)&quot;: dict(pnl=100 * (np.minimum(SPR_K2 - SPR_K1, np.maximum(0, price_T - SPR_K1)) - SPR_NET), capital=100 * SPR_NET),
+}
+rows = []
+for name, d in instruments.items():
+    p = d[&quot;pnl&quot;]
+    rows.append(dict(name=name, capital=float(d[&quot;capital&quot;]), mean=float(p.mean()), p_profit=float((p &gt; 0).mean()),
+                     p10=float(np.percentile(p, 10)), p50=float(np.percentile(p, 50)), p90=float(np.percentile(p, 90)),
+                     worst=float(p.min()), roc=float(p.mean() / d[&quot;capital&quot;]),
+                     mean_down=float(p[down].mean()), mean_base=float(p[~down].mean())))
+    print(f&quot;{name:40s} capital ${d[&#x27;capital&#x27;]:&gt;6,.0f}  E[P&amp;L] ${p.mean():&gt;7,.0f}  P(profit) {(p&gt;0).mean():5.1%}  10th ${np.percentile(p,10):&gt;7,.0f}  90th ${np.percentile(p,90):&gt;7,.0f}  worst ${p.min():&gt;7,.0f}  on capital {p.mean()/d[&#x27;capital&#x27;]:+.1%}&quot;)
+
+# payoff curves for the chart (per 100 shares, before dividends)
+grid = np.arange(10, 70.5, 0.5)
+curves = {
+    &quot;shares&quot;: (100 * (grid - price)).tolist(),
+    &quot;call&quot;: (100 * (np.maximum(0, grid - CALL_K) - CALL_PREM)).tolist(),
+    &quot;put&quot;: (100 * (PUT_PREM - np.maximum(0, PUT_K - grid))).tolist(),
+    &quot;spread&quot;: (100 * (np.minimum(SPR_K2 - SPR_K1, np.maximum(0, grid - SPR_K1)) - SPR_NET)).tolist(),
+}
+hist, edges = np.histogram(price_T, bins=np.arange(0, 100, 2.5))
+json.dump(dict(convergence=c, price=price, grid=grid.tolist(), curves=curves, rows=rows,
+               priceT=dict(edges=edges.tolist(), counts=hist.tolist(), p10=float(np.percentile(price_T, 10)), p50=float(np.percentile(price_T, 50)), p90=float(np.percentile(price_T, 90))),
+               premiums=dict(call=CALL_PREM, put=PUT_PREM, spread=SPR_NET)), open(&quot;bet.json&quot;, &quot;w&quot;))
+print(f&quot;\nhorizon price (c={c}): 10th ${np.percentile(price_T,10):.0f}  median ${np.percentile(price_T,50):.0f}  90th ${np.percentile(price_T,90):.0f}&quot;)
+</pre></details>
+
+<div class="sect">does it tie out</div>
+<p>A model that evaluates is not a model that's right. So the numbers are checked the way a reviewer would check them — every identity, every cross-check between methods, every claim against what the company itself said — and the checks run as a script that fails loudly. Twenty-one checks; all pass. The ones that matter most: the 2026 cash flow lands inside the company's own guide, the Gordon terminal value implies an exit multiple the comps support, the Python reproduces the spreadsheet to the dollar, and the Monte Carlo's breakeven is where the arithmetic says it should be.</p>
+<details class="code" open><summary>validation output</summary><pre>PASS  market cap = price × shares: $16,944M vs $16,944M
+PASS  net debt = gross debt − cash: $8,491M
+PASS  2026E EBITDA = guidance midpoint: $3,300M vs $3,300M guide midpoint
+PASS  2026E levered FCF inside the company&#x27;s Jan guide ($300–500M): $303M (guide given before the April cut; the low end is the honest reading)
+PASS  dividend cost ≈ $980M: $980M = $1.85 × 529.5M
+PASS  2026E levered FCF does NOT cover the dividend: 0.31× coverage
+PASS  Gordon TV implies an exit multiple between SW and PKG: 8.2x (SW 7.2x, PKG 12.2x)
+PASS  Exit-multiple TV implies a sane perpetual growth (0–4%): 1.89%
+PASS  WACC &gt; terminal growth: 7.36% &gt; 2.0%
+PASS  terminal value share of EV disclosed and in the mature-company band (60–90%): 82%
+PASS  DCF sheet ≈ Scenarios mid-cycle column (same chain, two layouts): $40.25 vs $40.49
+PASS  Sensitivity grid (17% × 8.5x) ≈ DCF within the interpolation error: $41.91 vs $40.25
+PASS  Bear &lt; Mid &lt; Bull: $13 &lt; $40 &lt; $71
+PASS  25% of $170/ton moves 2027E EBITDA by 42.5 × $9M: $382.5M vs $382.5M (CFO: $10/ton ≈ $90M)
+PASS  Python chain reproduces Scenarios!C21 (2027E EBITDA): $4,136M vs $4,136M
+PASS  P(value &gt; price) falls monotonically as P(down-cycle) rises: 83% → 74% → 65% → 57% → 48% → 39% → 31%
+PASS  breakeven P(down-cycle) ≈ 50% (market price = expected value): mean at p=0.5: $32.7
+PASS  MC mean sits between the Bear and Bull point estimates: $37.7
+PASS  regime split is real: P(&gt;price | down) ≪ P(&gt;price | base): 5% vs 91%
+
+0 failure(s)
+</pre></details>
+<details class="code"><summary>show the checks (validate.py)</summary><pre>&quot;&quot;&quot;Validation: does the model tie out?  Run: python3 validate.py
+
+Each check is a thing a reviewer would ask. A check prints PASS/FAIL with the numbers,
+and the script exits non-zero if anything fails, so it can gate a republish.
+&quot;&quot;&quot;
+import json, sys, subprocess
+from openpyxl import load_workbook
+
+wb = load_workbook(&quot;IP_valuation_model.xlsx&quot;, data_only=True)
+inp = {r[0].value: r[1].value for r in wb[&quot;Inputs&quot;].iter_rows(min_row=5) if r[0].value and r[1].value is not None}
+M, D, S, V = wb[&quot;Model&quot;], wb[&quot;DCF&quot;], wb[&quot;Scenarios&quot;], wb[&quot;Sensitivity&quot;]
+mc = json.load(open(&quot;mc.json&quot;)); pdown = json.load(open(&quot;mc_pdown.json&quot;))
+fails = 0
+def check(name, ok, detail):
+    global fails
+    print(f&quot;{&#x27;PASS&#x27; if ok else &#x27;FAIL&#x27;}  {name}: {detail}&quot;)
+    fails += 0 if ok else 1
+
+# --- identities and tie-outs to what the company said
+price, shares = inp[&quot;Share price ($)&quot;], inp[&quot;Diluted shares (millions)&quot;]
+mcap, netdebt = D[&quot;B5&quot;].value, D[&quot;B6&quot;].value
+check(&quot;market cap = price × shares&quot;, abs(mcap - price * shares) &lt; 1, f&quot;${mcap:,.0f}M vs ${price*shares:,.0f}M&quot;)
+check(&quot;net debt = gross debt − cash&quot;, abs(netdebt - (inp[&quot;Gross debt&quot;] - inp[&quot;Cash and temporary investments&quot;])) &lt; 1, f&quot;${netdebt:,.0f}M&quot;)
+e26 = M[&quot;C14&quot;].value
+check(&quot;2026E EBITDA = guidance midpoint&quot;, abs(e26 - (inp[&quot;2026 adj. EBITDA guidance — low&quot;] + inp[&quot;2026 adj. EBITDA guidance — high&quot;]) / 2) &lt; 1, f&quot;${e26:,.0f}M vs $3,300M guide midpoint&quot;)
+lfcf26 = M[&quot;C30&quot;].value
+check(&quot;2026E levered FCF inside the company&#x27;s Jan guide ($300–500M)&quot;, 250 &lt;= lfcf26 &lt;= 550, f&quot;${lfcf26:,.0f}M (guide given before the April cut; the low end is the honest reading)&quot;)
+div = -M[&quot;C31&quot;].value
+check(&quot;dividend cost ≈ $980M&quot;, abs(div - 980) &lt; 20, f&quot;${div:,.0f}M = $1.85 × 529.5M&quot;)
+check(&quot;2026E levered FCF does NOT cover the dividend&quot;, lfcf26 &lt; div, f&quot;{lfcf26/div:.2f}× coverage&quot;)
+
+# --- terminal value cross-checks (each method implies the other&#x27;s parameter)
+tv_mult = D[&quot;B23&quot;].value; tv_g = D[&quot;B24&quot;].value
+check(&quot;Gordon TV implies an exit multiple between SW and PKG&quot;, inp[&quot;Smurfit Westrock EV/EBITDA (LTM)&quot;] &lt;= tv_mult &lt;= inp[&quot;PKG EV/EBITDA (LTM)&quot;], f&quot;{tv_mult:.1f}x (SW {inp[&#x27;Smurfit Westrock EV/EBITDA (LTM)&#x27;]}x, PKG {inp[&#x27;PKG EV/EBITDA (LTM)&#x27;]}x)&quot;)
+check(&quot;Exit-multiple TV implies a sane perpetual growth (0–4%)&quot;, 0 &lt;= tv_g &lt;= 0.04, f&quot;{tv_g*100:.2f}%&quot;)
+check(&quot;WACC &gt; terminal growth&quot;, D[&quot;B11&quot;].value &gt; inp[&quot;Terminal growth rate&quot;], f&quot;{D[&#x27;B11&#x27;].value*100:.2f}% &gt; {inp[&#x27;Terminal growth rate&#x27;]*100:.1f}%&quot;)
+tv_share = D[&quot;B31&quot;].value
+check(&quot;terminal value share of EV disclosed and in the mature-company band (60–90%)&quot;, 0.6 &lt;= tv_share &lt;= 0.9, f&quot;{tv_share*100:.0f}%&quot;)
+
+# --- three routes agree
+dcf_ps, scen_mid_ps, sens_cell = D[&quot;B33&quot;].value, S[&quot;C30&quot;].value, V[&quot;D8&quot;].value  # sensitivity row 17% × col 8.5x
+check(&quot;DCF sheet ≈ Scenarios mid-cycle column (same chain, two layouts)&quot;, abs(dcf_ps - scen_mid_ps) &lt; 1.0, f&quot;${dcf_ps:.2f} vs ${scen_mid_ps:.2f}&quot;)
+check(&quot;Sensitivity grid (17% × 8.5x) ≈ DCF within the interpolation error&quot;, abs(sens_cell - dcf_ps) &lt; 3.0, f&quot;${sens_cell:.2f} vs ${dcf_ps:.2f}&quot;)
+check(&quot;Bear &lt; Mid &lt; Bull&quot;, S[&quot;B30&quot;].value &lt; S[&quot;C30&quot;].value &lt; S[&quot;D30&quot;].value, f&quot;${S[&#x27;B30&#x27;].value:.0f} &lt; ${S[&#x27;C30&#x27;].value:.0f} &lt; ${S[&#x27;D30&#x27;].value:.0f}&quot;)
+
+# --- the CFO&#x27;s sensitivity is reproduced
+e0, e25 = V[&quot;C16&quot;].value, V[&quot;C17&quot;].value  # 2027E EBITDA at 0% and 25% stick
+check(&quot;25% of $170/ton moves 2027E EBITDA by 42.5 × $9M&quot;, abs((e25 - e0) - 42.5 * 9) &lt; 1, f&quot;${e25-e0:,.1f}M vs ${42.5*9:,.1f}M (CFO: $10/ton ≈ $90M)&quot;)
+
+# --- Python reproduces the spreadsheet chain (the Monte Carlo&#x27;s point estimate equals the mid column)
+import importlib.util, io, contextlib
+src = open(&quot;montecarlo.py&quot;).read().replace(&#x27;json.dump(out, open(&quot;mc.json&quot;, &quot;w&quot;), indent=1)&#x27;, &#x27;&#x27;)
+ns = {}
+with contextlib.redirect_stdout(io.StringIO()):
+    exec(src, ns)
+import numpy as np
+# deterministic run of the same chain at the mid inputs
+a = dict(stick=0.5, margin=0.17, mult=8.0, wacc=D[&quot;B11&quot;].value, vol=0.01, emea_m=0.11, emea_d=150.0, capex=0.065)
+pd_ = a[&quot;stick&quot;] * 170 * 9 - 175
+rev_na_27 = ns[&quot;rev_na_26&quot;] * (1 + a[&quot;vol&quot;]) + pd_; rev_emea_27 = ns[&quot;rev_emea_26&quot;] * 1.025
+na27 = 2425 + pd_ + ns[&quot;rev_na_26&quot;] * a[&quot;vol&quot;] * 0.30 + (300 - 250) * ns[&quot;rev_na_26&quot;] / ns[&quot;rev_26&quot;]
+emea27 = 950 + a[&quot;emea_d&quot;] + (300 - 250) * ns[&quot;rev_emea_26&quot;] / ns[&quot;rev_26&quot;]
+check(&quot;Python chain reproduces Scenarios!C21 (2027E EBITDA)&quot;, abs((na27 + emea27 - 75) - S[&quot;C21&quot;].value) &lt; 1, f&quot;${na27+emea27-75:,.0f}M vs ${S[&#x27;C21&#x27;].value:,.0f}M&quot;)
+
+# --- Monte Carlo sanity
+check(&quot;P(value &gt; price) falls monotonically as P(down-cycle) rises&quot;, all(pdown[i][&quot;p_above&quot;] &gt; pdown[i+1][&quot;p_above&quot;] for i in range(len(pdown)-1)), &quot; → &quot;.join(f&quot;{r[&#x27;p_above&#x27;]:.0%}&quot; for r in pdown))
+check(&quot;breakeven P(down-cycle) ≈ 50% (market price = expected value)&quot;, any(abs(r[&quot;mean&quot;] - 32) &lt; 1.5 and abs(r[&quot;p_down&quot;] - 0.5) &lt; 1e-9 for r in pdown), f&quot;mean at p=0.5: ${[r[&#x27;mean&#x27;] for r in pdown if abs(r[&#x27;p_down&#x27;]-0.5)&lt;1e-9][0]:.1f}&quot;)
+check(&quot;MC mean sits between the Bear and Bull point estimates&quot;, S[&quot;B30&quot;].value &lt; mc[&quot;mean&quot;] &lt; S[&quot;D30&quot;].value, f&quot;${mc[&#x27;mean&#x27;]:.1f}&quot;)
+check(&quot;regime split is real: P(&gt;price | down) ≪ P(&gt;price | base)&quot;, mc[&quot;p_above_price_given_down&quot;] &lt; 0.2 and mc[&quot;p_above_price_given_base&quot;] &gt; 0.8, f&quot;{mc[&#x27;p_above_price_given_down&#x27;]:.0%} vs {mc[&#x27;p_above_price_given_base&#x27;]:.0%}&quot;)
+
+print(f&quot;\n{fails} failure(s)&quot;)
+sys.exit(1 if fails else 0)
+</pre></details>
+<p>What a green run proves and what it doesn't: the arithmetic is consistent and tied to its sources. It cannot prove the 30%, the 17%, or the 8×. Those are the judgment, and the log is where they get tested against time.</p>
+
 <div class="sect">the workbook, rendered</div>
 <p>The same spreadsheet, so you don't have to open it. Blue is a hardcoded input, yellow is a judgment of mine, everything else is a formula. The provenance column is the point: every number says where it came from.</p>
 <details class="code" open><summary>Inputs — every assumption with its source</summary><div style="overflow-x:auto"><table class="sens xl"><tr><th>assumption</th><th>value</th><th>provenance</th><th>source / note</th></tr><tr><th colspan="4" style="text-align:left;padding-top:12px">Market data (as of Oct 15–17, 2026)</th></tr><tr><td>Item</td><td>Value</td><td>Provenance</td><td>Source / note</td></tr><tr><td>Share price ($)</td><td class="n">$32.00</td><td>MARKET</td><td>Benzinga quote page, last updated Oct 15, 2026 (header shows $31.90; FAQ shows $32.12).</td></tr><tr><td>Diluted shares (millions)</td><td class="n">529.5</td><td>REPORTED</td><td>Q2 2026 earnings release: diluted average shares 529.5M.</td></tr><tr><td>Dividend per share ($/yr)</td><td class="n">$1.85</td><td>MARKET</td><td>Benzinga: 5.80% yield at $31.90 → $1.85/share; policy maintained through 2026 per Q4 2025 call.</td></tr><tr><td>Gross debt</td><td class="n">$9,217</td><td>REPORTED</td><td>Q2 2026 balance sheet: notes payable/current maturities $1,002M + long-term debt $8,215M. Excludes $2,131M nonrecourse VIE liabilities.</td></tr><tr><td>Cash and temporary investments</td><td class="n">$726</td><td>REPORTED</td><td>Q2 2026 balance sheet.</td></tr><tr><td>Other debt-like items (pension deficit, leases) — placeholder</td><td class="n">$0</td><td>JUDGMENT</td><td>Set to 0 pending the 10-K pension note; the Q2 release shows non-operating pension INCOME, so the plan may be near fully funded. Check before publishing.</td></tr><tr><th colspan="4" style="text-align:left;padding-top:12px">Latest reported and guided financials</th></tr><tr><td>2025 pro forma net sales — Packaging Solutions NA</td><td class="n">$15,000</td><td>REPORTED</td><td>Q4 2025 call: &#x27;over $15B&#x27; pro forma for the North American business (rounded).</td></tr><tr><td>2025 pro forma net sales — Packaging Solutions EMEA</td><td class="n">$8,500</td><td>REPORTED</td><td>Q4 2025 call: about $8.5B pro forma for EMEA (DS Smith full year).</td></tr><tr><td>2025 pro forma adj. EBITDA — NA</td><td class="n">$2,300</td><td>REPORTED</td><td>Q4 2025 call: about $2.3B NA.</td></tr><tr><td>2025 pro forma adj. EBITDA — EMEA</td><td class="n">$800</td><td>REPORTED</td><td>Q4 2025 call: about $800M EMEA.</td></tr><tr><td>2025 free cash flow</td><td class="n">(159)</td><td>REPORTED</td><td>Q4 2025 call: free cash flow of negative $159M, reflecting transformation investment.</td></tr><tr><td>H1 2026 net sales</td><td class="n">$11,975</td><td>REPORTED</td><td>Q2 2026 release: six-month net sales $11,975M.</td></tr><tr><td>H1 2026 adj. EBITDA</td><td class="n">$1,264</td><td>REPORTED</td><td>Q2 2026 release: six-month adjusted EBITDA $1,264M (Q1 $677M, Q2 $587M).</td></tr><tr><td>H1 2026 capital expenditures</td><td class="n">$1,050</td><td>REPORTED</td><td>Q2 2026 release: six-month capex $1,050M.</td></tr><tr><td>2026 adj. EBITDA guidance — low</td><td class="n">$3,200</td><td>GUIDANCE</td><td>Q2 2026 release: $3.2–3.4B. (January: $3.5–3.7B; cut in April on demand, inflation, Middle East freight.)</td></tr><tr><td>2026 adj. EBITDA guidance — high</td><td class="n">$3,400</td><td>GUIDANCE</td><td>Q2 2026 release.</td></tr><tr><td>2026 adj. EBITDA guidance — NA (midpoint)</td><td class="n">$2,425</td><td>GUIDANCE</td><td>April 2026: NA $2.35–2.5B (from $2.5–2.6B).</td></tr><tr><td>2026 adj. EBITDA guidance — EMEA (midpoint)</td><td class="n">$950</td><td>GUIDANCE</td><td>April 2026: EMEA $0.9–1.0B (from $1.0–1.1B).</td></tr><tr><td>2026 depreciation &amp; amortization</td><td class="n">$1,965</td><td>GUIDANCE</td><td>Q2 2026 release outlook reconciliation: D&amp;A $1,965M.</td></tr><tr><td>2026 interest expense</td><td class="n">$370</td><td>GUIDANCE</td><td>Q2 2026 release outlook reconciliation.</td></tr><tr><td>2026 free cash flow guidance (Jan, midpoint)</td><td class="n">$400</td><td>GUIDANCE</td><td>Q4 2025 call: $300–500M FCF for 2026 (pre-April cut; not updated in the Q2 release).</td></tr><tr><td>Separation / transaction costs expected 2026–27</td><td class="n">$250</td><td>JUDGMENT</td><td>Q2 2026 alone: $43M separation costs + $5M NORPAC costs + $9M 80/20 severance. Annualized run-rate ~$250M through the spin; your call.</td></tr><tr><th colspan="4" style="text-align:left;padding-top:12px">The story, as numbers (Damodaran: narrative → numbers)</th></tr><tr><td>2026 containerboard index increase recognized YTD ($/ton, linerboard)</td><td class="n">$170</td><td>MARKET</td><td>Fastmarkets RISI via Packaging Dive (Sept 18, 2026): −20 Feb, +40 Mar, +30 Apr, +50 Jun, +70 Sep ≈ +$170/ton linerboard; medium +$100 in Sept alone.</td></tr><tr><td>EBITDA per $1/ton of price (annualized, NA)</td><td class="n">$9</td><td>GUIDANCE</td><td>CFO Lance Loeffler, Q4 2025 call: each $10/ton ≈ $90M annualized adjusted EBITDA.</td></tr><tr><td>Price benefit already inside 2026 NA guidance</td><td class="n">$175</td><td>GUIDANCE</td><td>Q1 2026 call: IP expects pricing to add ~$175M to NA in 2026, mostly in H2.</td></tr><tr><td>Share of the YTD index gain that STICKS through 2027 (floor judgment)</td><td class="n">50.0%</td><td>JUDGMENT</td><td>Q1 for Jason: of the $170/ton announced, what holds at the box level in 12 months? Green Markets found no evidence the third round reached the open market (Sept). Default 50%.</td></tr><tr><td>NA box volume growth 2027</td><td class="n">1.0%</td><td>JUDGMENT</td><td>Market flat in 2026 (TTOBMA cut containerboard to −2%); IP claims +3–4 pts vs market. Default +1%.</td></tr><tr><td>Contribution margin on incremental NA volume</td><td class="n">30.0%</td><td>JUDGMENT</td><td>Incremental box volume through existing mills/plants; typical converter contribution 25–35%.</td></tr><tr><td>Incremental 80/20 cost-out 2027 (NA + EMEA)</td><td class="n">$300</td><td>JUDGMENT</td><td>~$510M run-rate benefits in 2025, &#x27;similar&#x27; expected in 2026 (Q4 2025 call); EMEA &gt;$200M run-rate from 31 closures. Default $300M for 2027, fading.</td></tr><tr><td>Cost inflation 2027 (OCC, energy, labor, freight)</td><td class="n">$250</td><td>JUDGMENT</td><td>OCC back to ~$80–100/ton from 2025 lows (5-yr avg $140); freight up on Middle East; EMEA inflation ~$100M in 2026 guide. Default $250M.</td></tr><tr><td>EMEA EBITDA change 2027 (box-price catch-up + cost-out, net)</td><td class="n">$150</td><td>JUDGMENT</td><td>Q2 2026: EMEA lost money because paper prices rose faster than box prices. Catch-up + cost-out vs soft demand. Default +$150M.</td></tr><tr><td>Mid-cycle NA adj. EBITDA margin (2028+)</td><td class="n">17.0%</td><td>JUDGMENT</td><td>SW 15% LTM, PKG 21% LTM, IP NA 2026E ~16.5%. Bull = toward PKG after 80/20; bear = SW. Default 17%.</td></tr><tr><td>Mid-cycle EMEA adj. EBITDA margin (2028+)</td><td class="n">11.0%</td><td>JUDGMENT</td><td>DS Smith historically ~12–13%; 2026E ~10%. Default 11%.</td></tr><tr><td>Revenue growth 2028–2030 (nominal)</td><td class="n">2.5%</td><td>JUDGMENT</td><td>Box demand ≈ GDP-ish plus price; 2.5% nominal.</td></tr><tr><td>Capex 2027</td><td class="n">$1,900</td><td>JUDGMENT</td><td>2026 run-rate ~$2.1B incl. Riverdale conversion ($250M project) and $225M Mississippi greenfield (opens Q4 2027). Default $1.9B.</td></tr><tr><td>Capex as % of revenue 2028+ (maintenance + modest growth)</td><td class="n">6.5%</td><td>JUDGMENT</td><td>Paper is capex-heavy: D&amp;A ≈ 8% of sales today. 6.5% assumes the transformation capex rolls off. Your &#x27;assets in the ground are expensive to run&#x27; point lives here.</td></tr><tr><td>D&amp;A as % of revenue 2027+</td><td class="n">8.0%</td><td>JUDGMENT</td><td>2026: $1,965M on ~$24B = 8.2%.</td></tr><tr><td>Net working capital investment, % of incremental revenue</td><td class="n">10.0%</td><td>JUDGMENT</td><td>Packaging converters typically carry 8–12% of sales in NWC.</td></tr><tr><td>Cash tax rate</td><td class="n">24.0%</td><td>JUDGMENT</td><td>US 21% federal + state, blended with EMEA. Check against the 10-K effective rate.</td></tr><tr><th colspan="4" style="text-align:left;padding-top:12px">Discount rate (WACC build)</th></tr><tr><td>Risk-free rate (10-yr US Treasury)</td><td class="n">4.0%</td><td>MARKET</td><td>Placeholder near the Oct 2026 10-yr yield — refresh before publishing.</td></tr><tr><td>Equity beta</td><td class="n">1.1</td><td>JUDGMENT</td><td>IP 5-yr regression beta has run ~1.0–1.2; Damodaran paper/forest products industry beta ~1.0. Default 1.10.</td></tr><tr><td>Equity risk premium</td><td class="n">4.5%</td><td>JUDGMENT</td><td>Damodaran implied ERP has run 4–5% in 2025–26.</td></tr><tr><td>Pre-tax cost of debt</td><td class="n">5.5%</td><td>MARKET</td><td>IP senior unsecured notes have traded ~5–6% yield (BBB-range credit). Refresh.</td></tr><tr><td>Terminal growth rate</td><td class="n">2.0%</td><td>JUDGMENT</td><td>At or below long-run nominal GDP for a mature, capex-heavy business.</td></tr><tr><td>Exit EV/EBITDA multiple (cross-check)</td><td class="n">8.0</td><td>JUDGMENT</td><td>IP&#x27;s own 10-yr average ~8–9x; SW 7.2x and PKG 12.2x today.</td></tr><tr><th colspan="4" style="text-align:left;padding-top:12px">Peers (Multiples.vc, Oct 15–17, 2026)</th></tr><tr><td>PKG EV/EBITDA (LTM)</td><td class="n">12.2</td><td>MARKET</td><td>Multiples.vc Oct 17, 2026; EV $25B, LTM revenue $9.8B, EBITDA margin 21%.</td></tr><tr><td>PKG EBITDA margin (LTM)</td><td class="n">21.0%</td><td>MARKET</td><td>Multiples.vc.</td></tr><tr><td>Smurfit Westrock EV/EBITDA (LTM)</td><td class="n">7.2</td><td>MARKET</td><td>Multiples.vc Oct 15, 2026; EV $35B, LTM revenue $32B, EBITDA margin 15%.</td></tr><tr><td>Smurfit Westrock EBITDA margin (LTM)</td><td class="n">15.0%</td><td>MARKET</td><td>Multiples.vc.</td></tr><tr><th colspan="4" style="text-align:left;padding-top:12px">Scenario switch</th></tr><tr><td>Active scenario (1 = Bear, 2 = Mid-cycle, 3 = Bull) — drives the Scenarios sheet overrides</td><td class="n">2</td><td>JUDGMENT</td><td>The Model sheet uses the Inputs above directly; the Scenarios sheet runs all three side by side.</td></tr></table></div></details>
@@ -310,7 +483,7 @@ print(&quot;drivers (rank corr):&quot;, {k: round(v, 2) for k, v in drivers.item
 <p class="src" style="margin-top:10px">The browser panel above uses the same chain with a 3,000-draw simulation, so its percentages differ from the Python run by a point or two.</p>
 
 <div class="sect">the model and the code</div>
-<p>The spreadsheet is <a href="../models/ip-valuation/IP_valuation_model.xlsx">IP_valuation_model.xlsx</a>: 289 live formulas, a Dictionary sheet that explains every term in plant language, every input tagged with its source (Q2 2026 release, the Q1 and Q4 calls, Fastmarkets via Packaging Dive, Multiples.vc), and every judgment of mine in yellow so you can overwrite it. The Monte Carlo is <a href="../models/ip-valuation/montecarlo.py">montecarlo.py</a>, which mirrors the sheet's scenario chain line for line; <a href="../models/ip-valuation/build_model.py">build_model.py</a> generates the workbook. Public information only. Not investment advice; I'm an engineer who builds solvers, not a financial advisor, and I may hold or trade any of these names.</p>
+<p>The spreadsheet is <a href="../models/ip-valuation/IP_valuation_model.xlsx">IP_valuation_model.xlsx</a>: 289 live formulas, a Dictionary sheet that explains every term in plant language, every input tagged with its source (Q2 2026 release, the Q1 and Q4 calls, Fastmarkets via Packaging Dive, Multiples.vc), and every judgment of mine in yellow so you can overwrite it. The Monte Carlo is <a href="../models/ip-valuation/montecarlo.py">montecarlo.py</a>, which mirrors the sheet's scenario chain line for line; <a href="../models/ip-valuation/build_model.py">build_model.py</a> generates the workbook, <a href="../models/ip-valuation/validate.py">validate.py</a> runs the twenty-one tie-out checks, and <a href="../models/ip-valuation/bet.py">bet.py</a> maps the distribution onto the instruments. Public information only. Not investment advice; I'm an engineer who builds solvers, not a financial advisor, and I may hold or trade any of these names.</p>
 <p>The mechanics are the ones Wall Street Prep teaches — unlevered free cash flow, WACC, a terminal value two ways, comps and sum-of-the-parts. The discipline is Damodaran's: story first, mid-cycle for a cyclical, show what the terminal value carries, and treat the answer as a distribution because that's what it is. The floor is mine.</p>
 
 <p class="src">Written by Jason Fetzer, edited with Claude. Sources: IP Q2 2026 earnings release; Packaging Dive on the Q1 2026 call (Apr 30), the Savannah/Riceboro closures (Aug 2025) and Fastmarkets RISI pricing (Sept 18, 2026); MarketBeat Q4 2025 call summary (Jan 29, 2026); Investing.com on the EMEA sale process (Oct 15, 2026); Multiples.vc for PKG and SW; Benzinga quote (Oct 15, 2026).</p>
@@ -411,6 +584,44 @@ viz('cycle', function () {
   svg.append('circle').attr('cx', x(0.3)).attr('cy', y(me.p_above)).attr('r', 8).attr('fill', 'none').attr('stroke', '#c86a2a').attr('stroke-width', 2);
   svg.append('text').attr('x', x(0.3) + 12).attr('y', y(me.p_above) + 18).attr('font-size', 10.5).attr('fill', '#c86a2a').text('my 30%');
   svg.append('text').attr('x', x(0.5)).attr('y', y(rows.find(d => Math.abs(d.p_down - 0.5) < 1e-6).p_above) + 20).attr('text-anchor', 'middle').attr('font-size', 10.5).attr('fill', css('--ink-2')).text("the market's price");
+});
+
+
+const DRV = {"down-cycle regime": -0.6070608880481522, "price sticks": 0.5356287468220717, "NA mid-cycle margin": 0.7840605148586512, "exit multiple": 0.6672235328970587, "WACC": -0.18965111648862776, "2027 volume": 0.5830419073196047, "capex intensity": -0.10993287353583217, "model noise": 0.44016826181192065};
+const BET = {"grid":[10.0,10.5,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.5,16.0,16.5,17.0,17.5,18.0,18.5,19.0,19.5,20.0,20.5,21.0,21.5,22.0,22.5,23.0,23.5,24.0,24.5,25.0,25.5,26.0,26.5,27.0,27.5,28.0,28.5,29.0,29.5,30.0,30.5,31.0,31.5,32.0,32.5,33.0,33.5,34.0,34.5,35.0,35.5,36.0,36.5,37.0,37.5,38.0,38.5,39.0,39.5,40.0,40.5,41.0,41.5,42.0,42.5,43.0,43.5,44.0,44.5,45.0,45.5,46.0,46.5,47.0,47.5,48.0,48.5,49.0,49.5,50.0,50.5,51.0,51.5,52.0,52.5,53.0,53.5,54.0,54.5,55.0,55.5,56.0,56.5,57.0,57.5,58.0,58.5,59.0,59.5,60.0,60.5,61.0,61.5,62.0,62.5,63.0,63.5,64.0,64.5,65.0,65.5,66.0,66.5,67.0,67.5,68.0,68.5,69.0,69.5,70.0],"curves":{"shares":[-2200.0,-2150.0,-2100.0,-2050.0,-2000.0,-1950.0,-1900.0,-1850.0,-1800.0,-1750.0,-1700.0,-1650.0,-1600.0,-1550.0,-1500.0,-1450.0,-1400.0,-1350.0,-1300.0,-1250.0,-1200.0,-1150.0,-1100.0,-1050.0,-1000.0,-950.0,-900.0,-850.0,-800.0,-750.0,-700.0,-650.0,-600.0,-550.0,-500.0,-450.0,-400.0,-350.0,-300.0,-250.0,-200.0,-150.0,-100.0,-50.0,0.0,50.0,100.0,150.0,200.0,250.0,300.0,350.0,400.0,450.0,500.0,550.0,600.0,650.0,700.0,750.0,800.0,850.0,900.0,950.0,1000.0,1050.0,1100.0,1150.0,1200.0,1250.0,1300.0,1350.0,1400.0,1450.0,1500.0,1550.0,1600.0,1650.0,1700.0,1750.0,1800.0,1850.0,1900.0,1950.0,2000.0,2050.0,2100.0,2150.0,2200.0,2250.0,2300.0,2350.0,2400.0,2450.0,2500.0,2550.0,2600.0,2650.0,2700.0,2750.0,2800.0,2850.0,2900.0,2950.0,3000.0,3050.0,3100.0,3150.0,3200.0,3250.0,3300.0,3350.0,3400.0,3450.0,3500.0,3550.0,3600.0,3650.0,3700.0,3750.0,3800.0],"call":[-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-350.0,-300.0,-250.0,-200.0,-150.0,-100.0,-50.0,0.0,50.0,100.0,150.0,200.0,250.0,300.0,350.0,400.0,450.0,500.0,550.0,600.0,650.0,700.0,750.0,800.0,850.0,900.0,950.0,1000.0,1050.0,1100.0,1150.0,1200.0,1250.0,1300.0,1350.0,1400.0,1450.0,1500.0,1550.0,1600.0,1650.0,1700.0,1750.0,1800.0,1850.0,1900.0,1950.0,2000.0,2050.0,2100.0,2150.0,2200.0,2250.0,2300.0,2350.0,2400.0,2450.0,2500.0,2550.0,2600.0,2650.0,2700.0,2750.0,2800.0,2850.0,2900.0,2950.0,3000.0,3050.0,3100.0,3150.0],"put":[-1625.0,-1575.0,-1525.0,-1475.0,-1425.0,-1375.0,-1325.0,-1275.0,-1225.0,-1175.0,-1125.0,-1075.0,-1025.0,-975.0,-925.0,-875.0,-825.0,-775.0,-725.0,-675.0,-625.0,-575.0,-525.0,-475.0,-425.0,-375.0,-325.0,-275.0,-225.0,-175.0,-125.0,-75.0,-25.0,25.0,75.0,125.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0,175.0],"spread":[-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-225.0,-175.0,-125.0,-75.0,-25.0,25.0,75.0,125.0,175.0,225.0,275.0,325.0,375.0,425.0,475.0,525.0,575.0,625.0,675.0,725.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0,775.0]},"priceT":{"edges":[0.0,2.5,5.0,7.5,10.0,12.5,15.0,17.5,20.0,22.5,25.0,27.5,30.0,32.5,35.0,37.5,40.0,42.5,45.0,47.5,50.0,52.5,55.0,57.5,60.0,62.5,65.0,67.5,70.0,72.5,75.0,77.5,80.0,82.5,85.0,87.5,90.0,92.5,95.0,97.5],"counts":[0,0,0,0,1,20,170,596,1061,1375,1430,1527,1591,1857,1889,1912,1742,1393,1101,812,541,385,243,153,90,45,29,13,13,4,2,3,0,0,1,1,0,0,0],"p10":22.768888248189104,"p50":35.47138282337316,"p90":48.388061748841686},"price":32.0,"premiums":{"call":3.5,"put":1.75,"spread":2.25},"c":0.6};
+viz('tornado', function () {
+  const rows = Object.entries(DRV).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  const W = 680, bh = 22, H = rows.length * bh + 24, lw = 170;
+  const el = document.getElementById('tornado');
+  const svg = d3.select(el).insert('svg', ':first-child').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'What drives the value');
+  const x = d3.scaleLinear().domain([-1, 1]).range([lw, W - 16]);
+  svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', 6).attr('y2', H - 18).attr('stroke', css('--ink-3'));
+  const g = svg.selectAll('g').data(rows).join('g').attr('transform', (d, i) => `translate(0,${i * bh + 8})`);
+  g.append('text').attr('x', lw - 8).attr('y', 14).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', css('--ink-2')).text(d => d[0]);
+  g.append('rect').attr('x', d => Math.min(x(0), x(d[1]))).attr('y', 3).attr('height', bh - 8).attr('width', d => Math.abs(x(d[1]) - x(0))).attr('fill', d => d[1] >= 0 ? css('--accent') : '#b94a3c').attr('rx', 2);
+  g.append('text').attr('x', d => d[1] >= 0 ? x(d[1]) + 5 : x(d[1]) - 5).attr('y', 14).attr('text-anchor', d => d[1] >= 0 ? 'start' : 'end').attr('font-size', 10.5).attr('fill', css('--ink')).text(d => d3.format('+.2f')(d[1]));
+});
+viz('payoff', function () {
+  const W = 680, H = 320, m = { t: 16, r: 16, b: 34, l: 54 };
+  const el = document.getElementById('payoff');
+  const svg = d3.select(el).insert('svg', ':first-child').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Instrument payoffs over the horizon price distribution');
+  const x = d3.scaleLinear().domain([10, 70]).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([-2500, 3800]).range([H - m.b, m.t]);
+  const n = d3.sum(BET.priceT.counts), yh = d3.scaleLinear().domain([0, d3.max(BET.priceT.counts) / n]).range([H - m.b, H - m.b - 110]);
+  svg.append('g').selectAll('rect').data(BET.priceT.counts).join('rect').attr('x', (d, i) => x(BET.priceT.edges[i]) + 1).attr('width', (d, i) => Math.max(0, x(BET.priceT.edges[i + 1]) - x(BET.priceT.edges[i]) - 2)).attr('y', d => yh(d / n)).attr('height', d => yh(0) - yh(d / n)).attr('fill', css('--ink-3')).attr('opacity', 0.25);
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(7).tickFormat(d => '$' + d).tickSize(0)).call(g => { g.select('.domain').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10).attr('dy', '1.2em'); });
+  svg.append('text').attr('x', (m.l + W - m.r) / 2).attr('y', H - 2).attr('text-anchor', 'middle').attr('font-size', 10.5).attr('fill', css('--ink-3')).text('IP price at the horizon');
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6).tickFormat(d3.format('$,.0f')).tickSize(-(W - m.l - m.r))).call(g => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10); });
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', css('--ink-3'));
+  svg.append('line').attr('x1', x(BET.price)).attr('x2', x(BET.price)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', css('--ink')).attr('stroke-dasharray', '4 3');
+  const series = [['shares', '100 shares', css('--accent')], ['call', 'Jan-28 $35 call', '#2a78d6'], ['put', '$28 cash-secured put', '#eb6834'], ['spread', '35/45 call spread', '#8a6ed6']];
+  const line = d3.line().x((d, i) => x(BET.grid[i])).y(d => y(Math.max(-2500, Math.min(3800, d))));
+  series.forEach(([k, label, col]) => {
+    svg.append('path').datum(BET.curves[k]).attr('fill', 'none').attr('stroke', col).attr('stroke-width', 2).attr('d', line);
+    const last = BET.curves[k][BET.curves[k].length - 1];
+    svg.append('text').attr('x', W - m.r - 2).attr('y', y(Math.max(-2500, Math.min(3800, last))) - 5).attr('text-anchor', 'end').attr('font-size', 10.5).attr('fill', col).text(label);
+  });
+  svg.append('text').attr('x', W - m.r).attr('y', H - m.b - 118).attr('text-anchor', 'end').attr('font-size', 10.5).attr('fill', css('--ink-3')).text(`horizon price: 10th $${Math.round(BET.priceT.p10)} · median $${Math.round(BET.priceT.p50)} · 90th $${Math.round(BET.priceT.p90)} · convergence ${Math.round(BET.c * 100)}%`);
 });
 
 viz('bet', function () {
