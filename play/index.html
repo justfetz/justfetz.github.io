@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beat the Scheduler — a daily corrugator puzzle</title>
+<meta name="description" content="A daily puzzle: eight orders, the paper that's actually on the floor, three knives, seven inches of chute. Build the patterns, run the machine, beat the solver on trim, hours and on-time delivery.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:1180px}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.hd h1{margin:0;font-size:clamp(22px,3.5vw,30px)}
+.hd .sub{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px}
+.pill{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--rule);color:var(--ink-2)}
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr) 320px;gap:14px}
+@media (max-width:1000px){.grid{grid-template-columns:1fr 1fr}.build{grid-column:1/-1;order:-1}}
+@media (max-width:680px){.grid{grid-template-columns:1fr}}
+.panel{border:1px solid var(--rule);border-radius:12px;padding:14px;min-width:0;background:var(--bg)}
+.panel h2{margin:0 0 2px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.panel .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:10px}
+.orders{font-family:var(--mono);font-size:11.5px;width:100%;border-collapse:collapse}
+.orders th{text-align:right;font-weight:500;color:var(--ink-3);padding:3px 4px;border-bottom:1px solid var(--rule);font-size:10px;letter-spacing:.05em;text-transform:uppercase}
+.orders td{text-align:right;padding:4px 4px;color:var(--ink-2);font-variant-numeric:tabular-nums;border-bottom:1px solid var(--rule)}
+.orders th:first-child,.orders td:first-child{text-align:left;color:var(--ink);white-space:nowrap}
+.orders tr.pick{cursor:pointer}.orders tr.pick:hover td{background:var(--code-bg)}
+.orders tr.done td{color:var(--ink-3)} .orders tr.late td{color:#b94a3c}
+.orders i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.ful{height:5px;border-radius:3px;background:var(--rule);position:relative;overflow:hidden;margin-top:3px}
+.ful b{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.ful u{position:absolute;top:0;bottom:0;border-left:1px dashed var(--ink-3)}
+.inv{display:flex;flex-wrap:wrap;gap:6px}
+.inv button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 10px;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
+.inv button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--code-bg)}
+.inv button small{display:block;font-size:10px;color:var(--ink-3)}
+.inv button:disabled{opacity:.4;cursor:default}
+.knives{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.knife{border:1px dashed var(--rule);border-radius:8px;padding:8px;min-height:74px;font-family:var(--mono);font-size:11.5px}
+.knife b{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.knife .o{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.knife .o span{display:flex;gap:4px;align-items:center}
+.knife button{font-family:var(--mono);font-size:12px;min-width:30px;min-height:30px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer}
+.knife.empty{color:var(--ink-3)}
+.web{margin:8px 0 4px}
+.web svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.chk{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin:8px 0}
+.chk div{border:1px solid var(--rule);border-radius:8px;padding:7px 9px;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.chk b{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.chk em{font-style:normal;font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.chk .bad em{color:#b94a3c}.chk .ok em{color:var(--accent)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.row label{font-family:var(--mono);font-size:11px;color:var(--ink-3);display:flex;gap:8px;align-items:center;flex:1;min-width:200px}
+.row input[type=range]{flex:1;accent-color:var(--accent)}
+.btn{font-family:var(--mono);font-size:12.5px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:8px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.sched{font-family:var(--mono);font-size:11.5px}
+.ci{display:grid;grid-template-columns:1fr auto;gap:6px;border-top:1px solid var(--rule);padding:8px 0}
+.ci:first-child{border-top:0}
+.ci .t b{color:var(--ink);font-weight:600}.ci .t{color:var(--ink-2)}.ci .t small{display:block;color:var(--ink-3)}
+.ci .a{display:flex;gap:4px}.ci .a button{font-family:var(--mono);font-size:12px;min-width:30px;min-height:30px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer}
+.chg{font-size:10.5px;color:#c86a2a;padding:2px 0 0}
+.score{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0}
+.score div{border:1px solid var(--rule);border-radius:8px;padding:7px 8px;font-family:var(--mono);font-size:11px}
+.score b{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.score em{font-style:normal;font-size:16px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.score i{display:block;font-style:normal;color:var(--ink-3)}
+.score .win em{color:var(--accent)}.score .lose em{color:#b94a3c}
+.verdict{font-size:15px;margin:10px 0 6px;min-height:22px}
+.sharebox{font-family:var(--mono);font-size:12px;white-space:pre-wrap;background:var(--code-bg);border:1px solid var(--rule);border-radius:8px;padding:10px;margin-top:8px}
+.run{margin-top:14px}
+.run .stage{position:relative;width:100%;height:320px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--bg)}
+.run canvas{position:absolute;inset:0;width:100%;height:100%}
+.hud{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin-top:8px}
+.hud div{border:1px solid var(--rule);border-radius:8px;padding:6px 9px;font-family:var(--mono);font-size:11px}
+.hud b{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.hud em{font-style:normal;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.help{font-size:14.5px;color:var(--ink-2);max-width:72ch}
+.help code{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<main class="page">
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <a href="../posts/one-problem.html">the essay</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<div class="hd">
+  <div><h1>Beat the Scheduler</h1><div class="sub" id="sub">a daily corrugator puzzle · 110" machine · one grade · three knives · 7" of chute</div></div>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="pill" id="puzzleNo">#1</span><span class="pill" id="streak">streak 0</span><button class="btn" id="practice" type="button">practice (random)</button></div>
+</div>
+
+<div class="grid">
+  <section class="panel">
+    <h2>Today's orders <span class="n" id="oN"></span></h2>
+    <div class="n">click an order to put it on the next empty knife · one order per knife · due by end of shift 1, 2 or 3</div>
+    <table class="orders" id="otab"></table>
+    <h2 style="margin-top:14px">Paper on the floor</h2>
+    <div class="n">the rolls you actually have today · feet remaining · using a width you can't finish leaves a butt roll</div>
+    <div class="inv" id="inv"></div>
+  </section>
+
+  <section class="panel build">
+    <h2>Build a pattern <span class="n" id="bN">pick a web, fill the knives, set the run</span></h2>
+    <div class="web" id="webviz"></div>
+    <div class="knives" id="knives"></div>
+    <div class="chk" id="chk"></div>
+    <div class="row"><label>run length <input type="range" id="run" min="500" max="20000" step="100" value="5000"><span id="runV">5,000 ft</span></label>
+      <button class="btn" id="autoRun" type="button">to finish the tightest order</button></div>
+    <div class="row"><button class="btn pri" id="addCI" type="button" disabled>add this CI to the schedule</button><button class="btn" id="clearCI" type="button">clear</button></div>
+  </section>
+
+  <section class="panel">
+    <h2>Your schedule <span class="n" id="sN"></span></h2>
+    <div class="n">runs top to bottom · a web change costs more going up than down · each CI is a setup</div>
+    <div class="sched" id="sched"><div class="n">nothing scheduled yet</div></div>
+    <div class="score" id="score"></div>
+    <div class="verdict" id="verdict"></div>
+    <div class="row"><button class="btn pri" id="finish" type="button" disabled>run the machine</button><button class="btn" id="share" type="button" disabled>copy score</button><button class="btn" id="reveal" type="button">show the solver's schedule</button></div>
+    <div class="sharebox" id="sharebox" hidden></div>
+  </section>
+</div>
+
+<section class="run" id="runSec" hidden>
+  <div class="panel">
+    <h2>The run <span class="n">lineal feet along the machine · web centered · sheets off each knife · orange shear at every order change</span></h2>
+    <div class="stage"><canvas id="rcv"></canvas></div>
+    <div class="hud"><div><b>lineal ft</b><em id="hFt">0</em></div><div><b>elapsed</b><em id="hMin">0 min</em></div><div><b>MSF</b><em id="hMsf">0</em></div><div><b>current CI</b><em id="hCi">—</em></div><div><b>speed</b><em id="hSpd">—</em></div><div><b>web</b><em id="hWeb">—</em></div></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="runBtn" type="button">▶ play</button><button class="btn" id="runReset" type="button">⟲</button><label style="font-family:var(--mono);font-size:11px;color:var(--ink-3);display:flex;gap:8px;align-items:center">speed <input type="range" id="kSpeed" min="20" max="600" step="20" value="200" style="accent-color:var(--accent)"><span id="vSpeed">200×</span></label></div>
+  </div>
+</section>
+
+<section style="margin-top:24px">
+  <h2 style="font-size:18px">How to play</h2>
+  <p class="help">Eight orders of one board grade are due today. The paper on the floor is what it is — some widths you have plenty of, some you don't. A pattern is a web width plus up to three orders, one on each cutoff knife, with however many <em>outs</em> of each fit across. The physics are the real ones: the used width can't exceed the web; the trim can't exceed 7" a side or the chute jams; the score lines across all the outs have to fit on three shafts, two inches apart, one depth per shaft; one order per knife. The run length is how many feet you run that pattern before the shear cuts across the web and the next pattern starts.</p>
+  <p class="help">You're scored on three things the plant is scored on: <strong>trim</strong> (paper you bought and threw away), <strong>hours</strong> (run time plus a setup for every CI plus a penalty for web changes — going up is worse than going down), and <strong>on-time delivery</strong> (every order complete, within 90–110% of its quantity, before its shift ends). The solver builds its own schedule from the same orders and the same paper. Beat it on two of three and you win the day. The run animation at the bottom is the payoff: every rectangle is a sheet.</p>
+  <p class="help">The physics, the speed curve and the solver are the ones from <a href="../posts/one-problem.html">the essay</a> and <a href="../posts/corrugator-search-space.html">the explorer</a>. The orders are synthetic, seeded by the date, so everyone gets the same puzzle. Same time tomorrow.</p>
+</section>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script>
+(function(){
+// ---------------- plant physics (same constants as the explorer)
+const MACHINE=110, WEBS=[80,87,92,98,104,110], CHUTE=7, SHAFTS=3, HEADS=16, SPACING=2.0, SETUP_MIN=6, STEP_UP_MIN=4, STEP_DOWN_MIN=1.5, SHIFT_H=8;
+const COLS=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#6250d6','#e34948','#008300'];
+const el=id=>document.getElementById(id), fmtN=d3.format(','), f1=d3.format('.1f'), f2=d3.format('.2f');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function rng(seed){let s=seed*2654435761%4294967296||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
+function makeOrders(n,seed){const r=rng(seed);const out=[];const styles=[['RSC',2],['RSC',2],['RSC',2],['tray',6],['sheet',0],['die-cut',4]];
+  for(let i=0;i<n;i++){const [style,sc]=styles[Math.floor(r()*styles.length)];const w=16+Math.round(r()*36);const L=18+Math.round(r()*62);const q=Math.round((2000+r()*12000)/500)*500;
+    out.push({id:'O-'+(i+1),idx:i,w,L,q,style,sc,depth:['A','A','B','C'][Math.floor(r()*4)],flap:Math.max(3,Math.round(w*0.25)),due:1+Math.floor(r()*3)});}
+  return out;}
+function makeInventory(seed,ORDERS){const r=rng(seed+777);
+  // size the paper to the day: lineal feet the orders need at a typical 2.3 outs, plus 30% slack, then make the MIX scarce
+  const need=ORDERS.reduce((a,o)=>a+o.q*o.L/12,0)/2.3*1.3;
+  const weights={};WEBS.forEach(W=>{weights[W]=r()<0.3?0:0.3+r();});if(!weights[110])weights[110]=0.6;if(!Object.values(weights).some(Boolean))weights[104]=1;
+  const wsum=Object.values(weights).reduce((a,b)=>a+b,0);const inv={};WEBS.forEach(W=>{inv[W]=weights[W]?Math.round(need*weights[W]/wsum/1000)*1000:0;});return inv;}
+function bandSpeed(W){return W<96?583:W<108?617:589;}
+function cutoffMult(Lmin){return Lmin<=22?0.76:Lmin<=26?0.85:Lmin<=32?0.95:1.0;}
+function speedOf(s){const Ls=s.pos.map(p=>p.o.L);const sp=bandSpeed(s.web)*cutoffMult(Math.min(...Ls));const spread=Math.max(...Ls)/Math.min(...Ls);return spread>=4?sp-90:spread>=3?sp-45:sp;}
+function exactShafts(s){const lines={};let x=(s.web-s.used)/2;
+  s.pos.forEach(p=>{for(let i=0;i<p.k;i++){const L=(lines[p.o.depth]=lines[p.o.depth]||[]);if(p.o.sc>=2)L.push(x+p.o.flap,x+p.o.w-p.o.flap);if(p.o.sc>=4)L.push(x+p.o.w/2-0.75,x+p.o.w/2+0.75);if(p.o.sc>=6)L.push(x+p.o.w/2-2.25,x+p.o.w/2+2.25);x+=p.o.w;}});
+  let need=0;for(const d in lines){const xs=lines[d].sort((a,b)=>a-b);const shafts=[];xs.forEach(v=>{let ok=false;for(const sh of shafts){if(sh.length<HEADS&&v-sh[sh.length-1]>=SPACING){sh.push(v);ok=true;break;}}if(!ok)shafts.push([v]);});need+=shafts.length;}
+  return need;}
+function finishPattern(s){s.used=s.pos.reduce((a,p)=>a+p.k*p.o.w,0);s.trim=(s.web-s.used)/s.web;s.speed=speedOf(s);s.p=s.pos.map(p=>p.k*12/p.o.L);s.shafts=exactShafts(s);
+  s.problems=[];if(s.used>s.web)s.problems.push(`used ${s.used}" > web ${s.web}"`);else if(s.web-s.used>2*CHUTE)s.problems.push(`trim ${f1((s.web-s.used)/2)}"/side > 7"`);if(s.shafts>SHAFTS)s.problems.push(`${s.shafts} shafts needed, 3 available`);return s;}
+
+// ---------------- evaluating a schedule (yours or the solver's): hours, trim, OTD, butt rolls
+function evaluate(ORDERS,inv,sel){const prod=ORDERS.map(()=>0),done=ORDERS.map(()=>null);let hours=0,prevWeb=null,paperFt=0,usedArea=0,paperArea=0;const used={};const steps=[];
+  sel.forEach((c,i)=>{const {s,r}=c;let chg=0;if(prevWeb!==null&&s.web!==prevWeb)chg=(s.web>prevWeb?STEP_UP_MIN:STEP_DOWN_MIN);hours+=(SETUP_MIN+chg)/60;const runH=r/s.speed/60;hours+=runH;
+    s.pos.forEach((p,j)=>{prod[p.o.idx]+=r*s.p[j];if(prod[p.o.idx]>=0.9*p.o.q&&done[p.o.idx]===null)done[p.o.idx]=hours;});
+    used[s.web]=(used[s.web]||0)+r;paperArea+=r*s.web/12;usedArea+=r*s.used/12;prevWeb=s.web;steps.push({i,chg,runH,endH:hours});});
+  const complete=ORDERS.map((o,i)=>prod[i]>=0.9*o.q), over=ORDERS.map((o,i)=>Math.max(0,prod[i]-1.1*o.q)), late=ORDERS.map((o,i)=>complete[i]?done[i]>o.due*SHIFT_H:true);
+  const butt=Object.entries(used).filter(([W,ft])=>inv[W]-ft>0&&inv[W]-ft<2000).map(([W])=>+W), overInv=Object.entries(used).filter(([W,ft])=>ft>inv[W]).map(([W])=>+W);
+  const useful=ORDERS.reduce((a,o,i)=>a+Math.min(prod[i],1.1*o.q)*(o.w*o.L/144),0)/1000;
+  return {hours,trim:paperArea?1-usedArea/paperArea:0,onTime:late.filter(x=>!x).length,complete,late,over,butt,overInv,prod,useful,msfhr:hours?useful/hours:0,steps,lineal:sel.reduce((a,x)=>a+x.r,0)};}
+
+// ---------------- the solver: enumerate feasible patterns on the paper we have, greedy master, sequence widest-first with EDD ties
+function solve(ORDERS,inv){const webs=WEBS.filter(W=>inv[W]>0);const n=ORDERS.length;const cat=[];
+  const combos=[];for(let i=0;i<n;i++){combos.push([i]);for(let j=i+1;j<n;j++){combos.push([i,j]);for(let k=j+1;k<n;k++)combos.push([i,j,k]);}}
+  combos.forEach(c=>{const max=c.map(i=>Math.floor(MACHINE/ORDERS[i].w));(function rec(idx,acc,usedW){if(usedW>MACHINE)return;if(idx===c.length){webs.forEach(W=>{if(usedW>W||W-usedW>2*CHUTE)return;const s=finishPattern({web:W,pos:c.map((i,j)=>({o:ORDERS[i],k:acc[j]}))});if(!s.problems.length)cat.push(s);});return;}for(let k=1;k<=max[idx];k++){acc.push(k);rec(idx+1,acc,usedW+k*ORDERS[c[idx]].w);acc.pop();}})(0,[],0);});
+  const prod=ORDERS.map(()=>0),left=Object.assign({},inv),sel=[];
+  for(let it=0;it<40;it++){const unmet=ORDERS.map((o,i)=>prod[i]<0.9*o.q);if(!unmet.some(Boolean))break;let best=null,bv=-1;
+    cat.forEach(s=>{if(left[s.web]<=500)return;const idx=s.pos.map(p=>p.o.idx);if(!idx.some(i=>unmet[i]))return;let r=Math.min(...idx.map((i,j)=>(1.1*ORDERS[i].q-prod[i])/s.p[j]));r=Math.min(r,left[s.web]);if(r<=300)return;r=Math.round(r/100)*100;
+      const useful=idx.reduce((a,i,j)=>a+(unmet[i]?Math.min(r*s.p[j],Math.max(0,ORDERS[i].q-prod[i]))*(ORDERS[i].w*ORDERS[i].L/144):0),0)/1000;const hrs=r/s.speed/60+SETUP_MIN/60;const urg=idx.reduce((a,i)=>a+(unmet[i]?(4-ORDERS[i].due):0),0);
+      const v=useful/hrs*(1-0.5*s.trim)*(1+0.05*urg);if(v>bv){bv=v;best={s,r,idx};}});
+    if(!best)break;const {s,r,idx}=best;idx.forEach((i,j)=>prod[i]+=r*s.p[j]);left[s.web]-=r;sel.push({s,r:Math.round(r/100)*100});}
+  // sequence: earliest-due content first within web groups, widest web first
+  sel.forEach(x=>x.due=Math.min(...x.s.pos.map(p=>p.o.due)));sel.sort((a,b)=>a.due-b.due||b.s.web-a.s.web||b.r-a.r);
+  return sel;}
+
+// ---------------- state
+const DAY0=Date.UTC(2026,9,17);const today=new Date();const dayN=Math.floor((Date.UTC(today.getFullYear(),today.getMonth(),today.getDate())-DAY0)/86400000)+1;
+let seed=20261017+dayN-1, puzzle=dayN, ORDERS, INV, SCHED=[], BOT=null, BOTEVAL=null, cur={web:null,pos:[]}, finished=false, practice=false;
+function newPuzzle(s,label){seed=s;for(let tries=0;tries<30;tries++){ORDERS=makeOrders(8,seed);INV=makeInventory(seed,ORDERS);BOT=solve(ORDERS,INV);BOTEVAL=evaluate(ORDERS,INV,BOT);if(BOTEVAL.complete.every(Boolean)&&!BOTEVAL.overInv.length)break;seed+=1000003;}SCHED=[];cur={web:null,pos:[]};finished=false;
+  el('puzzleNo').textContent=label;el('sub').textContent=`${ORDERS.length} orders · C flute · paper on the floor: ${WEBS.filter(W=>INV[W]>0).map(W=>W+'"').join(', ')} · 7" chute · 3 shafts × 16 heads`;
+  el('runSec').hidden=true;el('sharebox').hidden=true;el('share').disabled=true;el('verdict').textContent='';renderAll();}
+
+// ---------------- rendering
+function fulfilled(){return evaluate(ORDERS,INV,SCHED.concat(cur.web&&cur.pos.length&&!finishPattern(Object.assign({},cur)).problems.length?[{s:finishPattern(Object.assign({web:cur.web,pos:cur.pos.map(p=>({o:p.o,k:p.k}))})),r:+el('run').value}]:[]));}
+function renderOrders(){const ev=fulfilled();const t=d3.select('#otab').html('');t.append('tr').selectAll('th').data(['order','w"','cut"','qty','scores','due','progress']).join('th').text(d=>d);
+  ORDERS.forEach(o=>{const onKnife=cur.pos.some(p=>p.o===o);const tr=t.append('tr').attr('class','pick'+(ev.complete[o.idx]?' done':'')).on('click',()=>addToKnife(o));
+    tr.append('td').html(`<i style="background:${COLS[o.idx]}"></i>${o.id}${onKnife?' ●':''}`);[o.w,o.L,fmtN(o.q),o.sc+' '+o.depth,'S'+o.due].forEach(v=>tr.append('td').text(v));
+    const pct=Math.min(1.15,ev.prod[o.idx]/o.q);tr.append('td').html(`<div class="ful" style="width:52px"><b style="width:${Math.min(100,pct/1.15*100)}%"></b><u style="left:${0.9/1.15*100}%"></u><u style="left:${1.1/1.15*100}%"></u></div>`);});
+  el('oN').textContent=`${ev.complete.filter(Boolean).length}/${ORDERS.length} complete`;}
+function renderInv(){const ev=evaluate(ORDERS,INV,SCHED);const usedBy={};SCHED.forEach(c=>usedBy[c.s.web]=(usedBy[c.s.web]||0)+c.r);const box=d3.select('#inv').html('');
+  WEBS.forEach(W=>{const left=INV[W]-(usedBy[W]||0);const b=box.append('button').attr('type','button').attr('aria-pressed',cur.web===W).attr('disabled',INV[W]<=0||left<=0?true:null).on('click',()=>{cur.web=W;renderBuild();})
+    .html(`${W}"<small>${INV[W]<=0?'none today':fmtN(Math.max(0,left))+' ft left'}</small>`);});}
+function addToKnife(o){if(finished)return;if(cur.pos.some(p=>p.o===o)){cur.pos=cur.pos.filter(p=>p.o!==o);renderAll();return;}if(cur.pos.length>=3)return;if(!cur.web)cur.web=WEBS.filter(W=>INV[W]>0).slice(-1)[0];cur.pos.push({o,k:1});renderAll();}
+function renderBuild(){const kn=d3.select('#knives').html('');for(let i=0;i<3;i++){const p=cur.pos[i];const d=kn.append('div').attr('class','knife'+(p?'':' empty'));d.append('b').text('HQM'+(i+1));
+    if(!p){d.append('span').text('empty — click an order');continue;}
+    const row=d.append('div').attr('class','o');row.append('span').html(`<i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${COLS[p.o.idx]}"></i>${p.o.id} ${p.o.w}"×${p.o.L}"`);
+    const ctl=row.append('span');ctl.append('button').attr('type','button').text('−').on('click',()=>{p.k=Math.max(1,p.k-1);renderAll();});ctl.append('span').text(p.k+' out');ctl.append('button').attr('type','button').text('+').on('click',()=>{p.k=Math.min(Math.floor(MACHINE/p.o.w),p.k+1);renderAll();});ctl.append('button').attr('type','button').attr('aria-label','remove').text('×').on('click',()=>{cur.pos.splice(i,1);renderAll();});}
+  const chk=d3.select('#chk').html('');
+  if(!cur.web||!cur.pos.length){chk.append('div').html('<b>pattern</b><em>—</em>');el('addCI').disabled=true;d3.select('#webviz').html('');el('bN').textContent=cur.web?`${cur.web}" web · click an order`:'pick a web, fill the knives, set the run';return;}
+  const s=finishPattern({web:cur.web,pos:cur.pos.map(p=>({o:p.o,k:p.k}))});
+  const item=(b,v,cls)=>chk.append('div').attr('class',cls||'').html(`<b>${b}</b><em>${v}</em>`);
+  item('web',s.web+'"');item('used',s.used+'"',s.used>s.web?'bad':'ok');item('trim / side',f1((s.web-s.used)/2)+'"',s.web-s.used>2*CHUTE||s.used>s.web?'bad':'ok');item('shafts',s.shafts+' / 3',s.shafts>SHAFTS?'bad':'ok');item('speed',Math.round(s.speed)+' fpm');
+  const maxFt=Math.min(INV[s.web]-SCHED.filter(c=>c.s.web===s.web).reduce((a,c)=>a+c.r,0),Math.max(500,Math.round(Math.max(...s.pos.map((p,j)=>1.1*p.o.q/s.p[j]))/100)*100));
+  el('run').max=Math.max(500,maxFt);if(+el('run').value>maxFt)el('run').value=maxFt;el('runV').textContent=fmtN(+el('run').value)+' ft';
+  const ok=!s.problems.length;el('addCI').disabled=!ok;el('bN').textContent=ok?`feasible · ${s.pos.map(p=>p.o.id+'×'+p.k).join(' + ')} on ${s.web}"`:s.problems.join(' · ');
+  // the web, centered, with the outs
+  const svg=d3.select('#webviz').html('').append('svg').attr('viewBox','0 0 680 64');const x=d3.scaleLinear().domain([-MACHINE/2,MACHINE/2]).range([10,670]);
+  svg.append('rect').attr('x',x(-MACHINE/2)).attr('y',8).attr('width',x(MACHINE/2)-x(-MACHINE/2)).attr('height',40).attr('fill','none').attr('stroke',css('--rule'));
+  svg.append('rect').attr('x',x(-s.web/2)).attr('y',10).attr('width',x(s.web/2)-x(-s.web/2)).attr('height',36).attr('fill',css('--code-bg')).attr('stroke',css('--ink-3'));
+  let xx=-s.used/2;s.pos.forEach((p,pi)=>{for(let k=0;k<p.k;k++){svg.append('rect').attr('x',x(xx)).attr('y',12).attr('width',x(xx+p.o.w)-x(xx)).attr('height',32).attr('fill',COLS[p.o.idx]).attr('opacity',.8);if(p.o.w>20)svg.append('text').attr('x',x(xx+p.o.w/2)).attr('y',31).attr('text-anchor','middle').attr('font-size',9).attr('fill','#fff').text(`${p.o.id} HQM${pi+1}`);xx+=p.o.w;}});
+  svg.append('text').attr('x',x(-MACHINE/2)).attr('y',60).attr('font-size',9).attr('fill',css('--ink-3')).text('operator side');svg.append('text').attr('x',x(MACHINE/2)).attr('y',60).attr('text-anchor','end').attr('font-size',9).attr('fill',css('--ink-3')).text('drive side');
+  if(s.used<=s.web){svg.append('text').attr('x',x(-s.web/2)+3).attr('y',60).attr('font-size',9).attr('fill',s.web-s.used>2*CHUTE?'#b94a3c':css('--accent')).text(`${f1((s.web-s.used)/2)}" trim`);}}
+function renderSched(){const ev=evaluate(ORDERS,INV,SCHED);const box=d3.select('#sched').html('');if(!SCHED.length){box.append('div').attr('class','n').text('nothing scheduled yet');}
+  SCHED.forEach((c,i)=>{const d=box.append('div').attr('class','ci');const t=d.append('div').attr('class','t');t.html(`<b>CI ${i+1}</b> · ${c.s.web}" · ${fmtN(c.r)} ft · ${Math.round(c.s.speed)} fpm<small>${c.s.pos.map((p,j)=>`HQM${j+1} ${p.o.id}×${p.k}`).join(' · ')} · trim ${f1((c.s.web-c.s.used)/2)}"/side</small>`);
+    if(ev.steps[i].chg)t.append('div').attr('class','chg').text(`web change ${SCHED[i-1].s.web}"→${c.s.web}" · +${ev.steps[i].chg} min`);
+    const a=d.append('div').attr('class','a');a.append('button').attr('type','button').attr('aria-label','move up').text('↑').attr('disabled',i===0||finished?true:null).on('click',()=>{[SCHED[i-1],SCHED[i]]=[SCHED[i],SCHED[i-1]];renderAll();});
+    a.append('button').attr('type','button').attr('aria-label','move down').text('↓').attr('disabled',i===SCHED.length-1||finished?true:null).on('click',()=>{[SCHED[i+1],SCHED[i]]=[SCHED[i],SCHED[i+1]];renderAll();});
+    a.append('button').attr('type','button').attr('aria-label','remove').text('×').attr('disabled',finished?true:null).on('click',()=>{SCHED.splice(i,1);renderAll();});});
+  el('sN').textContent=SCHED.length?`${SCHED.length} CIs · ${fmtN(ev.lineal)} ft`:'';el('finish').disabled=!SCHED.length||finished;renderScore(ev);}
+function renderScore(ev){const b=BOTEVAL;const sc=d3.select('#score').html('');const cell=(lab,mine,bot,fmt,lowerBetter)=>{const cls=!SCHED.length?'':(lowerBetter?mine<=bot+1e-9:mine>=bot)?'win':'lose';sc.append('div').attr('class',cls).html(`<b>${lab}</b><em>${SCHED.length?fmt(mine):'—'}</em><i>solver ${fmt(bot)}</i>`);};
+  cell('trim',ev.trim,b.trim,v=>f1(v*100)+'%',true);cell('hours',ev.hours,b.hours,v=>f1(v)+' h',true);cell('on time',ev.onTime,b.onTime,v=>v+'/'+ORDERS.length,false);
+  const notes=[];if(ev.overInv.length)notes.push(`not enough ${ev.overInv.join('", ')}" paper for that`);if(ev.butt.length)notes.push(`butt roll on ${ev.butt.join('", ')}"`);const ov=ev.over.map((v,i)=>v>0?ORDERS[i].id:null).filter(Boolean);if(ov.length)notes.push(`over 110% on ${ov.join(', ')}`);
+  if(!finished)el('verdict').textContent=notes.join(' · ');}
+function renderAll(){renderInv();renderBuild();renderOrders();renderSched();}
+
+// ---------------- actions
+el('run').addEventListener('input',()=>{el('runV').textContent=fmtN(+el('run').value)+' ft';renderOrders();});
+el('autoRun').onclick=()=>{if(!cur.web||!cur.pos.length)return;const s=finishPattern({web:cur.web,pos:cur.pos.map(p=>({o:p.o,k:p.k}))});const ev=evaluate(ORDERS,INV,SCHED);const need=Math.min(...s.pos.map((p,j)=>Math.max(0,p.o.q-ev.prod[p.o.idx])/s.p[j]));el('run').value=Math.min(+el('run').max,Math.max(500,Math.round(need/100)*100));el('runV').textContent=fmtN(+el('run').value)+' ft';renderOrders();};
+el('addCI').onclick=()=>{const s=finishPattern({web:cur.web,pos:cur.pos.map(p=>({o:p.o,k:p.k}))});if(s.problems.length)return;SCHED.push({s,r:+el('run').value});cur={web:null,pos:[]};renderAll();};
+el('clearCI').onclick=()=>{cur={web:null,pos:[]};renderAll();};
+el('finish').onclick=()=>{finished=true;const ev=evaluate(ORDERS,INV,SCHED),b=BOTEVAL;const wins=[ev.trim<=b.trim+1e-9,ev.hours<=b.hours+1e-9,ev.onTime>=b.onTime&&ev.onTime===ORDERS.length];const n=wins.filter(Boolean).length;const won=n>=2&&!ev.overInv.length;
+  el('verdict').textContent=ev.overInv.length?`You ran paper you don't have (${ev.overInv.join('", ')}"). The solver wins by default.`:won?`You beat the solver on ${n} of 3. ${ev.onTime<ORDERS.length?'But '+(ORDERS.length-ev.onTime)+' order(s) were late — the superintendent would like a word.':'And everything shipped on time.'}`:`The solver wins today, ${3-n} of 3. ${ev.trim>b.trim?'Your trim was higher. ':''}${ev.hours>b.hours?'You took longer. ':''}${ev.onTime<ORDERS.length?(ORDERS.length-ev.onTime)+' late. ':''}Reorder, resize, or try a different web.`;
+  const sq=wins.map(w=>w?'🟩':'🟥').join('');const txt=`Beat the Scheduler #${practice?'practice':puzzle} ${sq}\ntrim ${f1(ev.trim*100)}% (solver ${f1(b.trim*100)}%) · ${f1(ev.hours)} h (${f1(b.hours)} h) · on time ${ev.onTime}/${ORDERS.length} (${b.onTime}/${ORDERS.length})\n${SCHED.length} CIs on ${[...new Set(SCHED.map(c=>c.s.web))].join('/')}" · justfetz.github.io/play`;
+  el('sharebox').textContent=txt;el('sharebox').hidden=false;el('share').disabled=false;el('share').onclick=()=>{try{navigator.clipboard.writeText(txt);el('share').textContent='copied';}catch(e){}};
+  if(!practice){try{const k='bts-'+puzzle;if(!localStorage.getItem(k)){localStorage.setItem(k,won?'W':'L');const prev=+(localStorage.getItem('bts-streak')||0);const last=+(localStorage.getItem('bts-last')||0);const streak=won?(last===puzzle-1?prev+1:1):0;localStorage.setItem('bts-streak',String(streak));localStorage.setItem('bts-last',String(puzzle));el('streak').textContent='streak '+streak;}}catch(e){}}
+  renderAll();showRun(SCHED,ev);};
+el('reveal').onclick=()=>{const box=el('sharebox');box.hidden=false;box.textContent='The solver\'s schedule:\n'+BOT.map((c,i)=>`CI ${i+1} · ${c.s.web}" · ${fmtN(c.r)} ft · ${c.s.pos.map((p,j)=>`HQM${j+1} ${p.o.id}×${p.k}`).join(' + ')} · trim ${f1((c.s.web-c.s.used)/2)}"/side`).join('\n')+`\n→ trim ${f1(BOTEVAL.trim*100)}% · ${f1(BOTEVAL.hours)} h · on time ${BOTEVAL.onTime}/${ORDERS.length}`;if(!SCHED.length){showRun(BOT,BOTEVAL);}};
+el('practice').onclick=()=>{practice=true;newPuzzle(Math.floor(Math.random()*1e6)+1,'practice');};
+
+// ---------------- the run (ported from the explorer, whole-schedule view)
+const rcv=el('rcv'),rctx=rcv.getContext('2d');let RW=0,RH=0,playing=false,playFt=0,lastT=0,raf=null,RUN=null,REV=null;
+const RM={l:46,r:10,t:22,b:26};
+function showRun(sel,ev){RUN=sel;REV=ev;el('runSec').hidden=false;playFt=0;playing=false;el('runBtn').textContent='▶ play';rresize();el('runSec').scrollIntoView({behavior:'smooth',block:'start'});}
+function rresize(){const r=rcv.parentElement.getBoundingClientRect();RW=r.width;RH=r.height;const dpr=Math.min(2,window.devicePixelRatio||1);rcv.width=RW*dpr;rcv.height=RH*dpr;rctx.setTransform(dpr,0,0,dpr,0,0);rdraw();}
+function layout(){let x=0;return RUN.map((c,i)=>{const o={ci:c,i,x0:x,x1:x+c.r};x+=c.r;return o;});}
+function rdraw(){if(!RUN)return;const total=Math.max(1,REV.lineal);const x=d3.scaleLinear().domain([0,total]).range([RM.l,RW-RM.r]),y=d3.scaleLinear().domain([-MACHINE/2,MACHINE/2]).range([RH-RM.b,RM.t]);rctx.clearRect(0,0,RW,RH);
+  const web=css('--code-bg'),line=css('--rule'),ink3=css('--ink-3'),acc2='#c86a2a';
+  rctx.strokeStyle=line;rctx.strokeRect(RM.l,y(MACHINE/2),RW-RM.l-RM.r,y(-MACHINE/2)-y(MACHINE/2));
+  layout().forEach(({ci,i,x0:a,x1:b})=>{const {s,r}=ci;const px0=x(a),px1=x(b);rctx.fillStyle=web;rctx.fillRect(px0,y(s.web/2),px1-px0,y(-s.web/2)-y(s.web/2));
+    let yy=s.used/2;const pxPerIn=(px1-px0)/r/12;
+    s.pos.forEach((p,pi)=>{for(let k=0;k<p.k;k++){const yTop=y(yy),yBot=y(yy-p.o.w);rctx.fillStyle=COLS[p.o.idx];rctx.globalAlpha=0.75;rctx.fillRect(px0,yTop,px1-px0,yBot-yTop);rctx.globalAlpha=1;
+      const sheetPx=p.o.L*pxPerIn;if(sheetPx>=2.5){rctx.strokeStyle=css('--bg');rctx.lineWidth=sheetPx>12?1.4:0.8;rctx.beginPath();const end=Math.floor(r*12/p.o.L);for(let c=0;c<=end;c++){const cx=px0+c*sheetPx;rctx.moveTo(cx,yTop);rctx.lineTo(cx,yBot);}rctx.stroke();}
+      if(yBot-yTop>6){const sc=[];if(p.o.sc>=2)sc.push(p.o.flap,p.o.w-p.o.flap);if(p.o.sc>=4)sc.push(p.o.w/2-0.75,p.o.w/2+0.75);if(p.o.sc>=6)sc.push(p.o.w/2-2.25,p.o.w/2+2.25);rctx.strokeStyle='rgba(255,255,255,0.75)';rctx.lineWidth=1;rctx.setLineDash([4,3]);rctx.beginPath();sc.forEach(v=>{const sy=y(yy-v);rctx.moveTo(px0,sy);rctx.lineTo(px1,sy);});rctx.stroke();rctx.setLineDash([]);}
+      rctx.strokeStyle=css('--ink');rctx.lineWidth=1.2;rctx.beginPath();rctx.moveTo(px0,yBot);rctx.lineTo(px1,yBot);rctx.stroke();
+      if(px1-px0>60&&yBot-yTop>11){rctx.fillStyle='#fff';rctx.font='10px JetBrains Mono, monospace';rctx.fillText(`${p.o.id} HQM${pi+1} · ${p.o.L}"`,px0+4,yTop+11);}
+      yy-=p.o.w;}});
+    rctx.strokeStyle=css('--ink');rctx.lineWidth=1.2;rctx.beginPath();rctx.moveTo(px0,y(s.used/2));rctx.lineTo(px1,y(s.used/2));rctx.stroke();
+    rctx.strokeStyle=acc2;rctx.lineWidth=px1-px0>80?3:2;rctx.beginPath();rctx.moveTo(px1,y(s.web/2));rctx.lineTo(px1,y(-s.web/2));rctx.stroke();
+    rctx.strokeStyle=ink3;rctx.setLineDash([3,3]);rctx.beginPath();rctx.moveTo(px1,RM.t);rctx.lineTo(px1,RH-RM.b);rctx.stroke();rctx.setLineDash([]);
+    rctx.fillStyle=css('--ink-2');rctx.font='10px JetBrains Mono, monospace';if(px1-px0>140)rctx.fillText(`CI ${i+1} · ${s.web}" · ${fmtN(Math.round(r))} ft`,px0+4,RM.t-6);else if(px1-px0>36)rctx.fillText(`CI ${i+1}`,px0+4,RM.t-6);});
+  if(playFt>0){const pxp=x(playFt);rctx.fillStyle='rgba(0,0,0,0.18)';rctx.fillRect(RM.l,RM.t,pxp-RM.l,RH-RM.t-RM.b);rctx.strokeStyle=acc2;rctx.lineWidth=2;rctx.beginPath();rctx.moveTo(pxp,RM.t);rctx.lineTo(pxp,RH-RM.b);rctx.stroke();}
+  const ya=d3.axisLeft(y).ticks(5).tickFormat(d=>d+'"');const g=d3.select(rcv.parentElement).select('svg.axis');/* no svg; draw ticks manually */
+  rctx.fillStyle=ink3;rctx.font='9px JetBrains Mono, monospace';[-55,-27.5,0,27.5,55].forEach(v=>{rctx.fillText(v+'"',4,y(v)+3);});}
+function hud(){if(!RUN)return;const L=layout().find(o=>playFt>=o.x0&&playFt<o.x1)||layout()[layout().length-1];let min=0,msf=0;layout().forEach(o=>{const ft=Math.max(0,Math.min(o.ci.r,playFt-o.x0));if(ft>0){min+=ft/o.ci.s.speed+SETUP_MIN;msf+=ft*o.ci.s.used/12/1000;}});
+  el('hFt').textContent=fmtN(Math.round(playFt));el('hMin').textContent=Math.round(min)+' min';el('hMsf').textContent=f1(msf);el('hCi').textContent='CI '+(L.i+1);el('hSpd').textContent=Math.round(L.ci.s.speed)+' fpm';el('hWeb').textContent=L.ci.s.web+'"';}
+function tick(t){if(!playing)return;const dt=lastT?(t-lastT)/1000:0;lastT=t;const L=layout().find(o=>playFt>=o.x0&&playFt<o.x1);const spd=L?L.ci.s.speed:600;playFt+=spd/60*dt*(+el('kSpeed').value);if(playFt>=REV.lineal){playFt=REV.lineal;playing=false;el('runBtn').textContent='▶ play';}rdraw();hud();if(playing)raf=requestAnimationFrame(tick);}
+el('runBtn').onclick=()=>{if(!RUN)return;playing=!playing;el('runBtn').textContent=playing?'❚❚ pause':'▶ play';if(playing){if(playFt>=REV.lineal)playFt=0;lastT=0;raf=requestAnimationFrame(tick);}};
+el('runReset').onclick=()=>{playing=false;playFt=0;el('runBtn').textContent='▶ play';rdraw();hud();};
+el('kSpeed').addEventListener('input',()=>el('vSpeed').textContent=el('kSpeed').value+'×');
+window.addEventListener('resize',()=>{if(RUN)rresize();});
+
+// ---------------- go
+try{el('streak').textContent='streak '+(localStorage.getItem('bts-streak')||0);}catch(e){}
+newPuzzle(seed,'#'+puzzle);
+window.__bts={get ORDERS(){return ORDERS},get INV(){return INV},get BOT(){return BOT},get SCHED(){return SCHED},evaluate,solve,finishPattern,setSched(sel){SCHED=sel.map(c=>({s:c.s,r:c.r}));renderAll();},newPuzzle};
+})();
+</script>
+</body>
+</html>
