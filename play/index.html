@@ -220,16 +220,18 @@ function renderOrders(){const ev=fulfilled();const t=d3.select('#otab').html('')
     tr.append('td').html(`<i style="background:${COLS[o.idx]}"></i>${o.id}${onKnife?' ●':''}`);[o.w,o.L,fmtN(o.q),o.sc+' '+o.depth,'S'+o.due].forEach(v=>tr.append('td').text(v));
     const pct=Math.min(1.15,ev.prod[o.idx]/o.q);tr.append('td').html(`<div class="ful" style="width:52px"><b style="width:${Math.min(100,pct/1.15*100)}%"></b><u style="left:${0.9/1.15*100}%"></u><u style="left:${1.1/1.15*100}%"></u></div>`);});
   el('oN').textContent=`${ev.complete.filter(Boolean).length}/${ORDERS.length} complete`;}
-function renderInv(){const ev=evaluate(ORDERS,INV,SCHED);const usedBy={};SCHED.forEach(c=>usedBy[c.s.web]=(usedBy[c.s.web]||0)+c.r);const box=d3.select('#inv').html('');
-  WEBS.forEach(W=>{const left=INV[W]-(usedBy[W]||0);const b=box.append('button').attr('type','button').attr('aria-pressed',cur.web===W).attr('disabled',INV[W]<=0||left<=0?true:null).on('click',()=>{cur.web=W;renderBuild();})
+function webLeft(W){return INV[W]-SCHED.filter(c=>c.s.web===W).reduce((a,c)=>a+c.r,0);}
+function pickWeb(W){if(finished)return;cur.web=cur.web===W?null:W;renderAll();}
+function renderInv(){const box=d3.select('#inv').html('');
+  WEBS.forEach(W=>{const left=webLeft(W);box.append('button').attr('type','button').attr('aria-pressed',cur.web===W?'true':'false').attr('disabled',INV[W]<=0||left<=0?true:null).on('click',()=>pickWeb(W))
     .html(`${W}"<small>${INV[W]<=0?'none today':fmtN(Math.max(0,left))+' ft left'}</small>`);});}
-function addToKnife(o){if(finished)return;if(cur.pos.some(p=>p.o===o)){cur.pos=cur.pos.filter(p=>p.o!==o);renderAll();return;}if(cur.pos.length>=3)return;if(!cur.web)cur.web=WEBS.filter(W=>INV[W]>0).slice(-1)[0];cur.pos.push({o,k:1});renderAll();}
+function addToKnife(o){if(finished)return;if(cur.pos.some(p=>p.o===o)){cur.pos=cur.pos.filter(p=>p.o!==o);renderAll();return;}if(cur.pos.length>=3)return;if(!cur.web)cur.web=WEBS.filter(W=>webLeft(W)>0).slice(-1)[0]||null;cur.pos.push({o,k:1});renderAll();}
 function renderBuild(){const kn=d3.select('#knives').html('');for(let i=0;i<3;i++){const p=cur.pos[i];const d=kn.append('div').attr('class','knife'+(p?'':' empty'));d.append('b').text('HQM'+(i+1));
     if(!p){d.append('span').text('empty — click an order');continue;}
     const row=d.append('div').attr('class','o');row.append('span').html(`<i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${COLS[p.o.idx]}"></i>${p.o.id} ${p.o.w}"×${p.o.L}"`);
     const ctl=row.append('span');ctl.append('button').attr('type','button').text('−').on('click',()=>{p.k=Math.max(1,p.k-1);renderAll();});ctl.append('span').text(p.k+' out');ctl.append('button').attr('type','button').text('+').on('click',()=>{p.k=Math.min(Math.floor(MACHINE/p.o.w),p.k+1);renderAll();});ctl.append('button').attr('type','button').attr('aria-label','remove').text('×').on('click',()=>{cur.pos.splice(i,1);renderAll();});}
   const chk=d3.select('#chk').html('');
-  if(!cur.web||!cur.pos.length){chk.append('div').html('<b>pattern</b><em>—</em>');el('addCI').disabled=true;d3.select('#webviz').html('');el('bN').textContent=cur.web?`${cur.web}" web · click an order`:'pick a web, fill the knives, set the run';return;}
+  if(!cur.web||!cur.pos.length){chk.append('div').html('<b>pattern</b><em>—</em>');el('addCI').disabled=true;d3.select('#webviz').html('');el('bN').textContent=cur.web?`${cur.web}" web · click an order`:cur.pos.length?`pick a web for ${cur.pos.map(p=>p.o.id).join(' + ')}`:'pick a web, fill the knives, set the run';return;}
   const s=finishPattern({web:cur.web,pos:cur.pos.map(p=>({o:p.o,k:p.k}))});
   const item=(b,v,cls)=>chk.append('div').attr('class',cls||'').html(`<b>${b}</b><em>${v}</em>`);
   item('web',s.web+'"');item('used',s.used+'"',s.used>s.web?'bad':'ok');item('trim / side',f1((s.web-s.used)/2)+'"',s.web-s.used>2*CHUTE||s.used>s.web?'bad':'ok');item('shafts',s.shafts+' / 3',s.shafts>SHAFTS?'bad':'ok');item('speed',Math.round(s.speed)+' fpm');
