@@ -150,7 +150,7 @@ static List&lt;Stack&gt; plan(List&lt;Unit&gt; dock) {
 </footer>
 
 </main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/three.r128.min.js"></script>
 <script src="../assets/theme.js"></script>
 <script src="../assets/viz.js"></script>
 <script>
@@ -204,31 +204,68 @@ function msfMax(){
   return {placements,left:DOCK.filter(u=>!loadedIds.has(u.id))};
 }
 
-// ---------- three.js scene
+// ---------- three.js scene (falls back to a 2D side elevation if WebGL or three.js is unavailable)
 const stage=S('stage');
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));stage.appendChild(renderer.domElement);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x0f1412);
-const camera=new THREE.PerspectiveCamera(38,16/9,10,5000);
 const sc=0.1; // inches → units
-const center=new THREE.Vector3(TL*sc/2,TH*sc/2,TW*sc/2);
+let renderer=null,scene,camera,group,center;
 let theta=-0.75,phi=1.08,dist=80;
 function placeCam(){camera.position.set(center.x+dist*Math.sin(phi)*Math.cos(theta),center.y+dist*Math.cos(phi),center.z+dist*Math.sin(phi)*Math.sin(theta));camera.lookAt(center);}
-placeCam();
-scene.add(new THREE.AmbientLight(0xffffff,0.55));
-const sun=new THREE.DirectionalLight(0xffffff,0.8);sun.position.set(40,80,30);scene.add(sun);
-const sun2=new THREE.DirectionalLight(0xbfd4ff,0.3);sun2.position.set(-40,30,-50);scene.add(sun2);
-// trailer: floor + wire box + door marker
-const floor=new THREE.Mesh(new THREE.BoxGeometry(TL*sc,0.4,TW*sc),new THREE.MeshStandardMaterial({color:0x2a2f2c,roughness:.9}));floor.position.set(TL*sc/2,-0.2,TW*sc/2);scene.add(floor);
-const box=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TL*sc,TH*sc,TW*sc)),new THREE.LineBasicMaterial({color:0x5b6b64}));box.position.copy(center);scene.add(box);
-const wallMat=new THREE.MeshStandardMaterial({color:0x1b2320,transparent:true,opacity:.35,side:THREE.DoubleSide});
-const nose=new THREE.Mesh(new THREE.PlaneGeometry(TW*sc,TH*sc),wallMat);nose.rotation.y=Math.PI/2;nose.position.set(0,TH*sc/2,TW*sc/2);scene.add(nose);
-const side=new THREE.Mesh(new THREE.PlaneGeometry(TL*sc,TH*sc),wallMat);side.position.set(TL*sc/2,TH*sc/2,0);scene.add(side);
-// row ticks
-for(let r=0;r<=ROWS;r++){const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(r*FL*sc,0.05,0),new THREE.Vector3(r*FL*sc,0.05,TW*sc)]);scene.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x3a443f})));}
-// door label (sprite-free: a small bright frame at the rear)
-const door=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(TW*sc,TH*sc)),new THREE.LineBasicMaterial({color:0x7fd1b9}));door.rotation.y=Math.PI/2;door.position.set(TL*sc,TH*sc/2,TW*sc/2);scene.add(door);
+function init3D(){
+  if(typeof THREE==='undefined')throw new Error('three.js did not load');
+  renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x0f1412);
+  camera=new THREE.PerspectiveCamera(38,16/9,10,5000);
+  center=new THREE.Vector3(TL*sc/2,TH*sc/2,TW*sc/2);
+  placeCam();
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  const sun=new THREE.DirectionalLight(0xffffff,0.8);sun.position.set(40,80,30);scene.add(sun);
+  const sun2=new THREE.DirectionalLight(0xbfd4ff,0.3);sun2.position.set(-40,30,-50);scene.add(sun2);
+  // trailer: floor + wire box + door marker
+  const floor=new THREE.Mesh(new THREE.BoxGeometry(TL*sc,0.4,TW*sc),new THREE.MeshStandardMaterial({color:0x2a2f2c,roughness:.9}));floor.position.set(TL*sc/2,-0.2,TW*sc/2);scene.add(floor);
+  const box=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TL*sc,TH*sc,TW*sc)),new THREE.LineBasicMaterial({color:0x5b6b64}));box.position.copy(center);scene.add(box);
+  const wallMat=new THREE.MeshStandardMaterial({color:0x1b2320,transparent:true,opacity:.35,side:THREE.DoubleSide});
+  const nose=new THREE.Mesh(new THREE.PlaneGeometry(TW*sc,TH*sc),wallMat);nose.rotation.y=Math.PI/2;nose.position.set(0,TH*sc/2,TW*sc/2);scene.add(nose);
+  const side=new THREE.Mesh(new THREE.PlaneGeometry(TL*sc,TH*sc),wallMat);side.position.set(TL*sc/2,TH*sc/2,0);scene.add(side);
+  // row ticks
+  for(let r=0;r<=ROWS;r++){const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(r*FL*sc,0.05,0),new THREE.Vector3(r*FL*sc,0.05,TW*sc)]);scene.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x3a443f})));}
+  // door label (sprite-free: a small bright frame at the rear)
+  const door=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(TW*sc,TH*sc)),new THREE.LineBasicMaterial({color:0x7fd1b9}));door.rotation.y=Math.PI/2;door.position.set(TL*sc,TH*sc/2,TW*sc/2);scene.add(door);
+  group=new THREE.Group();scene.add(group);
+  stage.appendChild(renderer.domElement);
+}
+let gl=true;
+try{init3D();}catch(err){gl=false;renderer=null;console.warn('3D view unavailable, using 2D elevation:',err&&err.message);}
 
-const group=new THREE.Group();scene.add(group);
+// 2D fallback: side elevation of each lane (driver, curb), nose on the left, roof at 110"
+let cv2d=null,ctx2d=null,last2d=null;
+if(!gl){
+  cv2d=document.createElement('canvas');cv2d.style.cssText='display:block;width:100%;height:100%';stage.insertBefore(cv2d,hud);
+  ctx2d=cv2d.getContext('2d');stage.style.cursor='default';
+  S('hint').textContent='3D needs WebGL, which this browser blocked · showing the side elevation';
+}
+const hex=c=>'#'+c.toString(16).padStart(6,'0');
+function draw2D(placements,upto){
+  if(!ctx2d)return;last2d={placements,upto};
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=stage.clientWidth,H=stage.clientHeight||W*9/16;
+  if(cv2d.width!==Math.round(W*dpr)||cv2d.height!==Math.round(H*dpr)){cv2d.width=Math.round(W*dpr);cv2d.height=Math.round(H*dpr);}
+  const c=ctx2d;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#0f1412';c.fillRect(0,0,W,H);
+  const padL=14,padR=14,padT=44,padB=26,gap=30,laneH=(H-padT-padB-gap)/2,sx=(W-padL-padR)/TL,sy=laneH/TH;
+  c.font='11px JetBrains Mono,ui-monospace,monospace';
+  ['driver side','curb side'].forEach((name,col)=>{
+    const y0=padT+col*(laneH+gap),yf=y0+laneH;
+    c.fillStyle='#161c19';c.fillRect(padL,y0,TL*sx,laneH);
+    c.strokeStyle='#2a332e';c.lineWidth=1;for(let r=1;r<ROWS;r++){const x=padL+r*FL*sx;c.beginPath();c.moveTo(x+.5,y0);c.lineTo(x+.5,yf);c.stroke();}
+    placements.slice(0,upto).filter(p=>p.col===col).forEach(p=>{
+      const x=padL+p.row*FL*sx+1,w=FL*sx-2,h=Math.max(1,p.u.h*sy-1),y=yf-(p.z+p.u.h)*sy;
+      c.fillStyle=hex(FLUTE[p.u.f].col);c.fillRect(x,y,w,h);c.strokeStyle='#2a1d10';c.strokeRect(x+.5,y+.5,w-1,h-1);
+    });
+    c.strokeStyle='#5b6b64';c.strokeRect(padL+.5,y0+.5,TL*sx-1,laneH-1);
+    c.strokeStyle='#7fd1b9';c.lineWidth=2;c.beginPath();c.moveTo(padL+TL*sx,y0);c.lineTo(padL+TL*sx,yf);c.stroke();c.lineWidth=1;
+    c.fillStyle='#7f8a85';c.textAlign='left';c.fillText('nose · '+name+' · roof 110"',padL,y0-6);
+    c.fillStyle='#7fd1b9';c.textAlign='right';c.fillText('door →',padL+TL*sx,y0-6);
+  });
+}
+
 function unitMesh(u){
   const g=new THREE.BoxGeometry(FL*sc-0.15,u.h*sc-0.15,FW*sc-0.15);
   const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:FLUTE[u.f].col,roughness:.85}));
@@ -250,12 +287,13 @@ function setStats(placements,left,upto){
 }
 function run(strategy,instant){
   current=strategy;clearTimeout(timer);
-  while(group.children.length)group.remove(group.children[0]);
+  if(gl)while(group.children.length)group.remove(group.children[0]);
   const res=strategy==='dock'?dockOrder():msfMax();
   const {placements,left}=res;
   S('bDock').setAttribute('aria-pressed',strategy==='dock');S('bOpt').setAttribute('aria-pressed',strategy!=='dock');
   let i=0;
   function place(k,animate){
+    if(!gl){draw2D(placements,k+1);return;}
     const p=placements[k],m=unitMesh(p.u);const t=target(p);
     if(animate){m.position.set(TL*sc+12,t.y+3,t.z);group.add(m);
       const start=performance.now(),from=m.position.clone();
@@ -268,14 +306,18 @@ function run(strategy,instant){
 S('bDock').onclick=()=>run('dock');S('bOpt').onclick=()=>run('opt');S('bReplay').onclick=()=>run(current);S('bInstant').onclick=()=>run(current,true);
 
 // ---------- controls
-let drag=false,lx=0,ly=0;
-stage.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;stage.setPointerCapture(e.pointerId);});
-stage.addEventListener('pointermove',e=>{if(!drag)return;theta-=(e.clientX-lx)*0.006;phi=Math.max(0.2,Math.min(1.45,phi-(e.clientY-ly)*0.005));lx=e.clientX;ly=e.clientY;placeCam();});
-stage.addEventListener('pointerup',()=>drag=false);stage.addEventListener('pointercancel',()=>drag=false);
-stage.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(40,Math.min(200,dist+e.deltaY*0.08));placeCam();},{passive:false});
-function resize(){const w=stage.clientWidth,h=stage.clientHeight||w*9/16;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
-window.addEventListener('resize',resize);resize();
-(function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
+if(gl){
+  let drag=false,lx=0,ly=0;
+  stage.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;stage.setPointerCapture(e.pointerId);});
+  stage.addEventListener('pointermove',e=>{if(!drag)return;theta-=(e.clientX-lx)*0.006;phi=Math.max(0.2,Math.min(1.45,phi-(e.clientY-ly)*0.005));lx=e.clientX;ly=e.clientY;placeCam();});
+  stage.addEventListener('pointerup',()=>drag=false);stage.addEventListener('pointercancel',()=>drag=false);
+  stage.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(40,Math.min(200,dist+e.deltaY*0.08));placeCam();},{passive:false});
+  const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight||w*9/16;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};
+  window.addEventListener('resize',resize);resize();
+  (function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
+} else {
+  window.addEventListener('resize',()=>{if(last2d)draw2D(last2d.placements,last2d.upto);});
+}
 viz('truckviz',function(){ run('dock'); },[dockOrder,msfMax]);
 window.__truck={dockOrder,msfMax,DOCK};
 })();
