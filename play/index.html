@@ -36,10 +36,13 @@
 .inv button small{display:block;font-size:10px;color:var(--ink-3)}
 .inv button:disabled{opacity:.4;cursor:default}
 .knives{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
-.knife{border:1px dashed var(--rule);border-radius:8px;padding:8px;min-height:74px;font-family:var(--mono);font-size:11.5px}
+@media (max-width:460px){.knives{grid-template-columns:1fr 1fr}}
+.knife{border:1px dashed var(--rule);border-radius:8px;padding:8px;min-height:74px;font-family:var(--mono);font-size:11.5px;min-width:0}
 .knife b{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
-.knife .o{display:flex;justify-content:space-between;align-items:center;gap:6px}
-.knife .o span{display:flex;gap:4px;align-items:center}
+.knife .o{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+.knife .o span:last-child{margin-left:auto}
+.knife .o span{display:flex;gap:4px;align-items:center;white-space:nowrap;min-width:0}
+.knife .o>span:first-child{flex:1 1 100%;overflow:hidden;text-overflow:ellipsis}
 .knife button{font-family:var(--mono);font-size:12px;min-width:30px;min-height:30px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer}
 .knife.empty{color:var(--ink-3)}
 .web{margin:8px 0 4px}
