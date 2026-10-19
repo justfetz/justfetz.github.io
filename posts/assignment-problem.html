@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The assignment problem, priced — Jason Fetzer</title>
+<meta name="description" content="Six converting orders, six machines, one shift. Korte &amp; Vygen's assignment problem solved as the book does it: a min-cost flow by successive shortest paths, with the re-routes you can watch and the dual prices that prove the answer.">
+<meta property="og:title" content="The assignment problem: six orders, six machines, and the price of each">
+<meta property="og:description" content="Korte 11.1 in a box plant: successive shortest paths, the augmenting paths that re-route work, and the duals that certify 686 minutes is optimal.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:760px}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg);overflow-x:auto}
+.viz svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.bar button:disabled{opacity:.45;cursor:default}
+.st{font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6;margin-top:10px;min-height:3.2em}
+.st b{color:var(--ink);font-weight:500}
+.legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;margin-right:6px;vertical-align:3px}
+table.m{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+table.m th,table.m td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--rule)}
+table.m th{font-weight:500;color:var(--ink-3)}
+table.m th:first-child,table.m td:first-child{text-align:left;white-space:nowrap}
+table.m td.x{color:var(--ink-3);opacity:.5}
+table.m td.pick{background:var(--accent-soft, rgba(16,120,100,.12));color:var(--ink);font-weight:600}
+table.m td.zero{color:var(--accent);font-weight:600}
+table.m td.u,table.m th.u{color:var(--accent);border-left:1px solid var(--rule)}
+table.m tr.v td{color:var(--accent);border-bottom:0;border-top:2px solid var(--rule)}
+.cap{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:8px}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-19 · algorithms · combinatorial optimization · python · d3</p>
+<h1>The assignment problem: six orders, six machines, and the price of each</h1>
+<p class="lede">Chapter 11 of Korte &amp; Vygen opens with the assignment problem. In a box plant it is the morning question: which converting order goes on which machine this shift. Here it is solved the way the book solves it, as a minimum-cost flow by successive shortest paths, on an instance you can step through. Watch the algorithm re-route work it already placed, and then read the prices that prove the answer.</p>
+
+<h2>The instance</h2>
+<p>Six orders staged for the day shift. Six machines: two flexo folder-gluers (FFG-1 is new and fast, FFG-2 is older), two rotary die cutters (RDC-1, RDC-2), a flatbed die cutter (FBD) and a printer-slotter (PS). Each cell is the machine-minutes that order would take on that machine, setup plus run at the machine's speed. A dash means the machine cannot run the order: a die cutter has no gluer, a folder-gluer has no die.</p>
+<div class="viz" id="matrix"></div>
+<p>Each machine takes one order. Assign all six to minimize total machine-minutes. There are 6! = 720 assignments; a scheduler does this by instinct in about two minutes and is usually close. The algorithm takes six steps and is provably not just close.</p>
+
+<h2>Why the obvious shortcut fails</h2>
+<p>The shortcut everyone reaches for is cheapest-first: sort every (order, machine) pair by cost, take the cheapest, cross out its row and column, repeat.</p>
+<div class="viz" id="greedy"></div>
+<p>Greedy's second pick hands FFG-1 to order E, the cheapest cell left on the table, and its fourth gives A the other folder-gluer. Order C, which can only run on a folder-gluer, has nowhere to go. It isn't suboptimal; it's infeasible. Instinct avoids that particular trap because the scheduler knows C needs a gluer. But instinct makes the same kind of mistake quietly whenever the cheapest local choice uses up a machine something else needed more, and nobody notices because the shift still runs.</p>
+
+<h2>The book's move: it is a flow</h2>
+<p>Korte and Vygen don't give the assignment problem its own algorithm. They point out that it is a special case of something already solved. Draw a source <em>s</em> with an arc to every order, an arc from every order to every machine that can run it, with the minutes as its cost, and an arc from every machine to a sink <em>t</em>. Every arc has capacity 1. A flow of value 6 from <em>s</em> to <em>t</em> is a perfect matching, and its cost is the total minutes. Minimum-cost flow of value 6 is the answer, and section 9.4 already has the algorithm: <strong>successive shortest paths</strong>.</p>
+<p>The algorithm starts with nothing assigned and repeats six times: find the cheapest <em>s</em>→<em>t</em> path in the residual graph, push one unit of flow along it. The residual graph is where it gets interesting. Once an order is matched to a machine, the arc between them can be traversed backwards at negative cost, which means <em>un-matching</em> it. So a shortest path can run: free order → machine already taken → back to the order that held it → a different machine. That is a re-route, and it is the whole reason the method is exact where greedy isn't. Greedy never takes anything back.</p>
+<p>Two more details make it fast. Backward arcs have negative costs, which breaks Dijkstra, so the algorithm keeps a <em>potential</em> π on every node and runs Dijkstra on reduced costs c(u,v) + π(u) − π(v), which stay non-negative if π is updated with the Dijkstra distances after each step. Six augmentations, each one a Dijkstra: O(n(m + n log n)), the Hungarian method in modern dress.</p>
+
+<h2>Step through it</h2>
+<div class="viz" id="ssp"></div>
+<p>For three steps the algorithm and greedy agree: F to the flatbed, E to FFG-1, B to RDC-1, the three cheapest free cells. Step 4 is where they part. Greedy would put A on FFG-2 for 138 and move on. The shortest path instead runs A → FFG-1 → <em>back along E's arc</em> → FFG-2: 85 − 55 + 89 = 119. It takes the fast folder-gluer away from E and moves E to the slow one, because that is 19 minutes cheaper than leaving E alone. Step 5 is the long one. C can only run on the two folder-gluers and both are taken, so the path is C → FFG-1 → A → FFG-2 → E → PS: C takes FFG-1 from A, A takes FFG-2 from E, E goes to the printer-slotter, 115 − 85 + 138 − 89 + 116 = 195, and two orders move in a single step. Step 6 re-routes B to make room for D. Six augmentations, 686 minutes, and brute force over all 720 permutations agrees.</p>
+
+<h2>The prices</h2>
+<p>The potentials are not bookkeeping; they are the dual solution, and the dual is what makes 686 a proof rather than a result. Write <em>u<sub>i</sub></em> for a price on each order and <em>v<sub>j</sub></em> for a price on each machine. Any prices with <em>u<sub>i</sub> + v<sub>j</sub> ≤ c<sub>ij</sub></em> on every feasible cell give a lower bound: no assignment can cost less than Σ<em>u</em> + Σ<em>v</em>, because each assigned cell costs at least its two prices. When the algorithm stops, the potentials give prices whose sum is exactly 686, and every assigned cell is <em>tight</em>: <em>u<sub>i</sub> + v<sub>j</sub> = c<sub>ij</sub></em>. Switch the table above to <strong>slack</strong> and look: the chosen cells are the zeros, every other cell is positive, and the margins sum to the total. That table is the certificate. Anyone can check it in a minute without re-running anything.</p>
+<p>The prices mean something on the floor, too. The slack on a cell is the premium you'd pay to force that order onto that machine. Order C on FFG-2 has slack 23: if the superintendent insists on it, that is the cost of the insistence, and the algorithm has already priced it. Order D on the flatbed has slack 345; nobody should ever insist on that.</p>
+
+<h2>Where it shows up in a plant</h2>
+<ul>
+  <li><strong>Orders to machines per shift</strong>, as here. With more orders than machines, add a cost for leaving an order until tomorrow and the same flow solves it; machines that can take two orders get capacity 2 on their arc to the sink.</li>
+  <li><strong>Trucks to dock doors</strong>, cost = forklift travel from the door to where that load is staged.</li>
+  <li><strong>Crews to machines</strong>, cost = expected waste or speed loss for that crew on that machine, from the shift data.</li>
+  <li><strong>Rolls to roll stands</strong> on the corrugator, cost = the trim that roll would leave against the next order.</li>
+</ul>
+<p>And where it stops: the moment the cost of running an order depends on what ran <em>before</em> it, setups become sequence-dependent and this is no longer an assignment problem. That is a scheduling problem with a traveling-salesman inside it, which is why the <a href="https://github.com/justfetz">corrugator scheduler</a> needed branch and bound and this post needed six Dijkstras.</p>
+
+<h2>The Python</h2>
+<p>The core of <a href="../models/assignment/assignment.py">assignment.py</a>, which also carries the brute-force check and runs 400 random instances against it. The JavaScript behind the figures is the same algorithm; the <em>show the code</em> dropdown under each one has it.</p>
+<pre><code>def successive_shortest_paths(cost):
+    n = len(cost)
+    S, T, N = 2*n, 2*n + 1, 2*n + 2          # source, sink, node count
+    match_l, match_r = [-1]*n, [-1]*n          # order -&gt; machine, machine -&gt; order
+    pi = [0.0]*N                               # potentials: reduced costs stay &gt;= 0
+    total = 0.0
+
+    def residual(x):                           # (neighbour, cost) under the current matching
+        if x == S:
+            for i in range(n):
+                if match_l[i] == -1: yield i, 0.0
+        elif x &lt; n:                            # order: forward to any machine it isn't on
+            for j in range(n):
+                if cost[x][j] is not None and match_l[x] != j: yield n + j, cost[x][j]
+        elif x &lt; 2*n:                          # machine: to the sink if free, else BACK to its order
+            j = x - n
+            if match_r[j] == -1: yield T, 0.0
+            else: yield match_r[j], -cost[match_r[j]][j]
+
+    for _ in range(n):
+        dist, prev = [INF]*N, [-1]*N           # 1. Dijkstra on reduced costs
+        dist[S] = 0.0; heap = [(0.0, S)]
+        while heap:
+            d, x = heapq.heappop(heap)
+            if d &gt; dist[x]: continue
+            for y, c in residual(x):
+                nd = d + c + pi[x] - pi[y]
+                if nd &lt; dist[y]:
+                    dist[y], prev[y] = nd, x; heapq.heappush(heap, (nd, y))
+        if dist[T] == INF: raise ValueError("no perfect matching")
+        y = T                                  # 2. augment: flip the path's order-machine arcs
+        while y != S:
+            x = prev[y]
+            if x &lt; n and n &lt;= y &lt; 2*n:
+                match_l[x], match_r[y - n] = y - n, x
+            y = x
+        D = max(d for d in dist if d &lt; INF)    # 3. potentials += distances
+        pi = [p + (d if d &lt; INF else D) for p, d in zip(pi, dist)]
+
+    total = sum(cost[i][match_l[i]] for i in range(n))
+    u = [-pi[i] for i in range(n)]            # the dual: u_i + v_j &lt;= c_ij, tight on the matching,
+    v = [pi[n + j] for j in range(n)]         # and sum(u) + sum(v) == total
+    return match_l, total, u, v</code></pre>
+<p>The test that matters is the last three lines: after every solve, the code asserts <code>u[i] + v[j] &lt;= cost[i][j]</code> on every feasible cell, equality on the matched ones, and <code>sum(u) + sum(v) == total</code>. If any of those fails, the matching might still be optimal, but the program could no longer prove it, and a result without its certificate is a guess with good manners.</p>
+
+<hr>
+<p class="meta">Instance, costs and code are mine; machine speeds and setups are representative, not a specific plant's. Korte &amp; Vygen, <em>Combinatorial Optimization</em>, §11.1 (the assignment problem as a minimum-cost flow) and §9.4 (successive shortest paths). The next stop in the book is the general weighted matching algorithm, where the graph isn't bipartite and the blossoms come back.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script>
+(function(){
+// ---------- the instance (minutes = setup + quantity / speed; null = cannot run)
+const ORDERS=[
+  {id:'A',desc:'RSC, 2-color, 12,000'},{id:'B',desc:'die-cut tray, 3,500'},{id:'C',desc:'RSC, 1-color, 20,000'},
+  {id:'D',desc:'die-cut wrap, 15,000'},{id:'E',desc:'HSC, no glue, 8,000'},{id:'F',desc:'fine die-cut, 600'}];
+const MACHINES=['FFG-1','FFG-2','RDC-1','RDC-2','FBD','PS'];
+const COST=[
+  [85,138,null,null,null,null],
+  [null,null,65,83,185,null],
+  [115,191,null,null,null,null],
+  [null,null,180,255,645,null],
+  [55,89,null,null,null,116],
+  [null,null,66,69,54,null]];
+const n=6, S=2*n, T=2*n+1, NN=2*n+2, INF=Infinity;
+
+// ---------- successive shortest paths with potentials; returns every step for the figure
+function ssp(cost){
+  const n=cost.length, S=2*n, T=2*n+1, NN=2*n+2;
+  const ml=Array(n).fill(-1), mr=Array(n).fill(-1); let pi=Array(NN).fill(0); const steps=[];
+  const residual=x=>{const out=[];
+    if(x===S){for(let i=0;i<n;i++)if(ml[i]===-1)out.push([i,0]);}
+    else if(x<n){for(let j=0;j<n;j++)if(cost[x][j]!=null&&ml[x]!==j)out.push([n+j,cost[x][j]]);}
+    else if(x<2*n){const j=x-n;if(mr[j]===-1)out.push([T,0]);else out.push([mr[j],-cost[mr[j]][j]]);}
+    return out;};
+  for(let k=0;k<n;k++){
+    const dist=Array(NN).fill(INF), prev=Array(NN).fill(-1), done=Array(NN).fill(false); dist[S]=0;
+    for(;;){ // Dijkstra, O(N^2) is plenty here
+      let x=-1; for(let v=0;v<NN;v++)if(!done[v]&&dist[v]<INF&&(x<0||dist[v]<dist[x]))x=v;
+      if(x<0)break; done[x]=true;
+      for(const [y,c] of residual(x)){const nd=dist[x]+c+pi[x]-pi[y]; if(nd<dist[y]-1e-9){dist[y]=nd;prev[y]=x;}}
+    }
+    if(dist[T]===INF)throw new Error('no perfect matching');
+    const path=[]; for(let y=T;y!==-1;y=prev[y])path.push(y); path.reverse();
+    const before=ml.slice(), rerouted=[];
+    for(let q=0;q+1<path.length;q++){const a=path[q],b=path[q+1];
+      if(a<n&&b>=n&&b<2*n){ml[a]=b-n;mr[b-n]=a;} else if(a>=n&&a<2*n&&b<n)rerouted.push(b);}
+    const D=Math.max(...dist.filter(d=>d<INF)); pi=pi.map((p,v)=>p+(dist[v]<INF?dist[v]:D));
+    const total=ml.reduce((s,j,i)=>s+(j<0?0:cost[i][j]),0);
+    steps.push({k:k+1,path,before,match:ml.slice(),rerouted,total,pi:pi.slice()});
+  }
+  const total=ml.reduce((s,j,i)=>s+cost[i][j],0);
+  let u=Array.from({length:n},(_,i)=>-pi[i]), v=Array.from({length:n},(_,j)=>pi[n+j]);
+  // normalise each connected block so its smallest order price is 0 (prices are only pinned up to a constant per block)
+  const seen=new Set();
+  for(let s0=0;s0<n;s0++){if(seen.has(s0))continue;const os=new Set(),ms=new Set(),st=[['o',s0]];
+    while(st.length){const [t,x]=st.pop();
+      if(t==='o'){if(os.has(x))continue;os.add(x);for(let j=0;j<n;j++)if(cost[x][j]!=null)st.push(['m',j]);}
+      else{if(ms.has(x))continue;ms.add(x);for(let i=0;i<n;i++)if(cost[i][x]!=null)st.push(['o',i]);}}
+    const sh=Math.min(...[...os].map(i=>u[i])); os.forEach(i=>{u[i]-=sh;seen.add(i);}); ms.forEach(j=>{v[j]+=sh;});}
+  return {match:ml,total,u,v,steps};
+}
+function greedy(cost){
+  const n=cost.length, pairs=[]; for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(cost[i][j]!=null)pairs.push([cost[i][j],i,j]);
+  pairs.sort((a,b)=>a[0]-b[0]); const ui=new Set(),uj=new Set(),picks=[];
+  for(const [c,i,j] of pairs){if(ui.has(i)||uj.has(j))continue;ui.add(i);uj.add(j);picks.push({i,j,c});}
+  return {picks,stranded:[...Array(n).keys()].filter(i=>!ui.has(i))};
+}
+const SOL=ssp(COST);
+const fmt=x=>Math.round(x).toLocaleString();
+
+// ---------- figure 1: the cost matrix, with a slack view
+viz('matrix',function(){
+  const root=d3.select('#matrix'); let mode='cost';
+  const bar=root.append('div').attr('class','bar');
+  const bC=bar.append('button').text('minutes').attr('aria-pressed','true');
+  const bS=bar.append('button').text('slack = minutes − u − v').attr('aria-pressed','false');
+  const tbl=root.append('table').attr('class','m'); const cap=root.append('p').attr('class','cap');
+  function draw(){
+    bC.attr('aria-pressed',mode==='cost'); bS.attr('aria-pressed',mode==='slack'); tbl.html('');
+    const head=tbl.append('thead').append('tr'); head.append('th').text('order');
+    MACHINES.forEach(m=>head.append('th').text(m)); if(mode==='slack')head.append('th').attr('class','u').text('u');
+    const body=tbl.append('tbody');
+    ORDERS.forEach((o,i)=>{const tr=body.append('tr'); tr.append('td').html(`<b>${o.id}</b> · ${o.desc}`);
+      MACHINES.forEach((m,j)=>{const c=COST[i][j]; const td=tr.append('td');
+        if(c==null){td.attr('class','x').text('—');return;}
+        if(mode==='cost'){td.text(c); if(SOL.match[i]===j)td.attr('class','pick');}
+        else{const s=c-SOL.u[i]-SOL.v[j]; td.text(fmt(s)); td.attr('class',Math.abs(s)<1e-6?(SOL.match[i]===j?'pick':'zero'):'');}
+      });
+      if(mode==='slack')tr.append('td').attr('class','u').text(fmt(SOL.u[i]));
+    });
+    if(mode==='slack'){const tr=body.append('tr').attr('class','v'); tr.append('td').text('v');
+      MACHINES.forEach((m,j)=>tr.append('td').text(fmt(SOL.v[j]))); tr.append('td').attr('class','u').html(`<b>${fmt(SOL.u.reduce((a,b)=>a+b,0)+SOL.v.reduce((a,b)=>a+b,0))}</b>`);}
+    cap.text(mode==='cost'
+      ?`Highlighted: the optimal assignment, ${fmt(SOL.total)} machine-minutes. Found by successive shortest paths; brute force over 720 permutations agrees.`
+      :`Every feasible cell is ≥ 0 and the chosen cells are exactly 0. Σu + Σv = ${fmt(SOL.total)} = the cost of the assignment: the certificate. (Prices in a block are only pinned up to a constant; each block is shifted so its smallest u is 0, which is why a machine price can be negative.)`);
+  }
+  bC.on('click',()=>{mode='cost';draw();}); bS.on('click',()=>{mode='slack';draw();}); draw();
+},[ssp]);
+
+// ---------- figure 2: greedy cheapest-first
+viz('greedy',function(){
+  const g=greedy(COST), root=d3.select('#greedy');
+  const tbl=root.append('table').attr('class','m'); const h=tbl.append('thead').append('tr');
+  ['pick','order','machine','minutes','why'].forEach(t=>h.append('th').text(t));
+  const b=tbl.append('tbody');
+  g.picks.forEach((p,k)=>{const tr=b.append('tr'); tr.append('td').text(k+1); tr.append('td').html(`<b>${ORDERS[p.i].id}</b>`); tr.append('td').text(MACHINES[p.j]); tr.append('td').text(p.c);
+    tr.append('td').style('text-align','left').style('color','var(--ink-3)').text(k===0?'cheapest cell in the table':k===1?'cheapest left; takes the fast folder-gluer':`cheapest cell with both row and column still open`);});
+  g.stranded.forEach(i=>{const tr=b.append('tr'); tr.append('td').text('—'); tr.append('td').html(`<b>${ORDERS[i].id}</b>`); tr.append('td').style('color','var(--accent)').text('none left'); tr.append('td').text('∞');
+    tr.append('td').style('text-align','left').style('color','var(--accent)').text('needs a folder-gluer; both are taken');});
+  root.append('p').attr('class','cap').text(`Cheapest-first places five orders for ${fmt(g.picks.reduce((s,p)=>s+p.c,0))} minutes and strands ${g.stranded.map(i=>ORDERS[i].id).join(', ')}. The optimum places all six for ${fmt(SOL.total)}.`);
+},[greedy]);
+
+// ---------- figure 3: step through successive shortest paths
+viz('ssp',function(){
+  const root=d3.select('#ssp'), W=560, H=330, xL=165, xR=410, y0=34, dy=52;
+  const bar=root.append('div').attr('class','bar');
+  const bReset=bar.append('button').text('↺ reset'), bStep=bar.append('button').text('next augmentation ▶'), bAll=bar.append('button').text('run all');
+  const svg=root.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Orders on the left, machines on the right; the matching grows one shortest augmenting path at a time');
+  const st=root.append('div').attr('class','st');
+  root.append('div').attr('class','legend').html('<span><i style="border-color:var(--ink)"></i>matched</span><span><i style="border-color:var(--accent)"></i>augmenting path (forward = match)</span><span><i style="border-color:#c0392b;border-top-style:dashed"></i>backward = un-match (re-route)</span><span>π = potential</span>');
+  const yO=i=>y0+i*dy, yM=j=>y0+j*dy;
+  const edges=[]; for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(COST[i][j]!=null)edges.push({i,j,c:COST[i][j]});
+  const gE=svg.append('g'), gL=svg.append('g'), gP=svg.append('g'), gN=svg.append('g');
+  gE.selectAll('line').data(edges).join('line').attr('x1',xL).attr('y1',d=>yO(d.i)).attr('x2',xR).attr('y2',d=>yM(d.j)).attr('stroke','var(--rule)').attr('stroke-width',1.2);
+  const nodeO=gN.selectAll('g.o').data(ORDERS).join('g').attr('transform',(d,i)=>`translate(${xL},${yO(i)})`);
+  nodeO.append('circle').attr('r',13).attr('fill','var(--bg)').attr('stroke','var(--ink)').attr('stroke-width',1.5);
+  nodeO.append('text').attr('text-anchor','middle').attr('dy',4).attr('font-size',12).attr('fill','var(--ink)').text(d=>d.id);
+  nodeO.append('text').attr('class','pi').attr('text-anchor','end').attr('x',-20).attr('dy',4).attr('font-size',10).attr('fill','var(--ink-3)');
+  nodeO.append('text').attr('text-anchor','end').attr('x',-60).attr('dy',4).attr('font-size',10).attr('fill','var(--ink-3)').text(d=>d.desc.split(',')[0]);
+  const nodeM=gN.selectAll('g.m').data(MACHINES).join('g').attr('transform',(d,j)=>`translate(${xR},${yM(j)})`);
+  nodeM.append('rect').attr('x',-30).attr('y',-12).attr('width',60).attr('height',24).attr('rx',4).attr('fill','var(--bg)').attr('stroke','var(--ink)').attr('stroke-width',1.5);
+  nodeM.append('text').attr('text-anchor','middle').attr('dy',4).attr('font-size',11).attr('fill','var(--ink)').text(d=>d);
+  nodeM.append('text').attr('class','pi').attr('x',38).attr('dy',4).attr('font-size',10).attr('fill','var(--ink-3)');
+  let k=0, timer=null;
+  function show(){
+    clearTimeout(timer);
+    const step=k>0?SOL.steps[k-1]:null, match=step?step.match:Array(n).fill(-1), pi=step?step.pi:Array(NN).fill(0);
+    gE.selectAll('line').attr('stroke',d=>match[d.i]===d.j?'var(--ink)':'var(--rule)').attr('stroke-width',d=>match[d.i]===d.j?3:1.2);
+    gP.html('');
+    if(step){const p=step.path; for(let q=1;q+2<p.length;q++){const a=p[q],b=p[q+1]; const fwd=a<n; const i=fwd?a:b, j=fwd?b-n:a-n;
+      gP.append('line').attr('x1',xL).attr('y1',yO(i)).attr('x2',xR).attr('y2',yM(j)).attr('stroke',fwd?'var(--accent)':'#c0392b').attr('stroke-width',4).attr('stroke-dasharray',fwd?null:'6 5').attr('opacity',.9);
+      const tx=xL+(xR-xL)*(0.5+0.12*((q%3)-1)), ty=yO(i)+(yM(j)-yO(i))*(0.5+0.12*((q%3)-1));
+      const lab=fwd?String(COST[i][j]):'−'+COST[i][j];
+      gP.append('rect').attr('x',tx-14).attr('y',ty-9).attr('width',28).attr('height',16).attr('rx',3).attr('fill','var(--bg)').attr('stroke',fwd?'var(--accent)':'#c0392b').attr('stroke-width',1);
+      gP.append('text').attr('x',tx).attr('y',ty+4).attr('text-anchor','middle').attr('font-size',10).attr('fill',fwd?'var(--accent)':'#c0392b').text(lab);}}
+    nodeO.select('.pi').text((d,i)=>'π '+fmt(pi[i])); nodeM.select('.pi').text((d,j)=>'π '+fmt(pi[n+j]));
+    bStep.property('disabled',k>=n); bAll.property('disabled',k>=n);
+    if(!step){st.html(`Nothing assigned. Every order is free, every potential is 0. Press <b>next augmentation</b>.`);return;}
+    const p=step.path.slice(1,-1).map(x=>x<n?ORDERS[x].id:MACHINES[x-n]).join(' → ');
+    const delta=step.total-(k>1?SOL.steps[k-2].total:0);
+    const moved=step.rerouted.map(i=>`${ORDERS[i].id} moves ${MACHINES[step.before[i]]} → ${MACHINES[step.match[i]]}`).join('; ');
+    const terms=[]; for(let q=1;q+2<step.path.length;q++){const a=step.path[q],b=step.path[q+1]; if(a<n)terms.push((terms.length?'+ ':'')+COST[a][b-n]); else terms.push('− '+COST[b][a-n]);}
+    st.html(`<b>step ${k} of ${n}</b> · shortest s→t path: <b>${p}</b> · ${terms.join(' ')} = <b>+${fmt(delta)}</b> min · total <b>${fmt(step.total)}</b>${moved?`<br>re-route: ${moved}`:''}${k===n?`<br><b>Done: ${fmt(step.total)} machine-minutes.</b> Σu + Σv in the slack table above is the same number; that is the proof.`:''}`);
+  }
+  bStep.on('click',()=>{if(k<n){k++;show();}}); bReset.on('click',()=>{k=0;show();});
+  bAll.on('click',()=>{clearTimeout(timer);(function tick(){if(k<n){k++;show();timer=setTimeout(tick,900);}})();});
+  show();
+},[ssp]);
+})();
+</script>
+</body>
+</html>
