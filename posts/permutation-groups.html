@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Permutation groups, applied: shuffles, box designs and a check digit that catches typos — Jason Fetzer</title>
+<meta name="description" content="Finite permutation groups from Gilbert's Modern Algebra, with the three places they earn their keep: how many riffle shuffles return a deck, how many box designs are really different (Burnside), and Verhoeff's check digit, which uses the dihedral group D5 to catch every transposition a mod-10 check misses.">
+<meta property="og:title" content="Permutation groups, applied: shuffles, box designs and a check digit that catches typos">
+<meta property="og:description" content="Burnside counts the designs. D5 checks the order numbers. Eight perfect shuffles bring the deck back. Every claim brute-forced in Python.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:760px}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg);overflow-x:auto}
+.viz svg{display:block;font-family:var(--mono)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.bar input{font-family:var(--mono);font-size:14px;min-height:40px;padding:0 12px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);width:12em}
+.bar .lab{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.st{font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.7;margin-top:10px}
+.st b{color:var(--ink);font-weight:500}
+.st .eq{display:block;padding:6px 10px;margin:6px 0;border-left:2px solid var(--accent);color:var(--ink)}
+.orbits{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:6px}
+.orbit{display:flex;gap:3px;padding:5px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg)}
+table.m{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin-top:8px;width:100%}
+table.m th,table.m td{padding:4px 9px;text-align:right;border-bottom:1px solid var(--rule)}
+table.m th{font-weight:500;color:var(--ink-3)}
+table.m td:first-child,table.m th:first-child{text-align:left}
+table.m td.ok{color:var(--accent)}
+table.m td.miss{color:#c0392b;font-weight:600}
+table.d5{width:auto;font-size:11.5px}
+table.d5 td,table.d5 th{padding:2px 6px;text-align:center}
+table.d5 th{color:var(--accent)}
+.big{font-family:var(--mono);font-size:22px;color:var(--ink);margin:4px 0}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-19 · algebra · permutation groups · python · d3</p>
+<h1>Permutation groups, applied: shuffles, box designs and a check digit that catches typos</h1>
+<p class="lede">A permutation is a rearrangement of n things. A permutation group is a set of rearrangements closed under doing one after another and under undoing. That is the whole definition from Gilbert's <em>Modern Algebra with Applications</em>, and it looks like pure bookkeeping until you ask three practical questions: how many times do I have to shuffle before the deck comes back, how many of these box designs are actually different, and how do I number my orders so a typo announces itself? Each one is a permutation group doing work. Every number below is computed on this page and brute-forced in Python.</p>
+
+<h2>1 · Orders: when does the deck come back?</h2>
+<p>Write a permutation as where each position goes. A perfect <em>out-shuffle</em> of 52 cards (cut in half, interleave exactly, top card stays on top) sends position 1 to 1, 2 to 3, 3 to 5, …, 27 to 2, 28 to 4. Follow each card until it returns to its seat and you get the permutation's <em>cycles</em>. The number of shuffles that restores the whole deck is the <em>order</em> of the permutation: the least common multiple of its cycle lengths, because every cycle has to come around at once.</p>
+<div class="viz" id="shuffle"></div>
+<p>Eight out-shuffles of a 52-card deck is the identity. The in-shuffle (top card moves down one) has a single 52-cycle and order 52. Same cards, same motion up to one card's width, and one of them is a party trick while the other is a mixing process. Nothing about the order is visible from the shuffle; you have to compute the cycles. The same arithmetic tells you the period of a crew rotation or a roll-stand sequence: write it as a permutation, take the cycles, take the lcm.</p>
+
+<h2>2 · Burnside: how many designs are really different?</h2>
+<p>An RSC has four side panels in a ring. Print each panel one of k colors. There are k⁴ colorings, but a box rotated a quarter turn is the same box, so the real count is the number of <em>orbits</em> under the rotation group C₄ (four rotations). If the box can also be flipped upside down (which reverses the ring), the group is the dihedral group D₄ with eight elements. Counting orbits by hand means listing and crossing out. Burnside's lemma does it with one sum:</p>
+<pre><code>number of orbits = (1/|G|) · Σ over g in G of  (number of colorings g leaves unchanged)
+                 = (1/|G|) · Σ over g in G of  k^(number of cycles of g)</code></pre>
+<p>A coloring is unchanged by g exactly when every cycle of g is one color, so each g contributes k to the power of its cycle count. For C₄ with two colors: the identity has 4 cycles (16), the quarter turns have 1 (2 each), the half turn has 2 (4). (16 + 2 + 4 + 2)/4 = <strong>6</strong>. Here are all 16 colorings sorted into those six orbits, and the same for the other groups and for three colors.</p>
+<div class="viz" id="burnside"></div>
+<p>Two colors: 6 designs whether or not you may flip. Three colors: 24 if you may only rotate, 21 if you may also flip, because three of the rotation-orbits are mirror images of each other. That is chirality showing up in a box plant, and it matters when the print has an orientation, which it always does. The second preset is the layout question: six die positions on a 2×3 sheet, each one a blank or waste; the sheet's symmetries are the Klein four-group (identity, a half turn, two flips), and 64 layouts collapse to 24 you would actually have to evaluate. On a real 6×10 layout the raw count is 2⁶⁰ and the lemma is the only way anyone counts.</p>
+
+<h2>3 · D₅: the check digit that catches transpositions</h2>
+<p>Order numbers get typed, read over the phone, and keyed from a label, and the two mistakes humans make are a wrong digit and two adjacent digits swapped. A check digit is a last digit computed from the rest so that both mistakes break it. The simplest scheme, make the digits sum to 0 mod 10, catches every wrong digit and <em>no</em> transpositions at all, because addition commutes: 3 + 7 = 7 + 3. Luhn's algorithm (credit cards) doubles every other digit and catches most transpositions, but not 09 ↔ 90. Jacobus Verhoeff's 1969 scheme catches all of both, and the trick is to replace addition with the multiplication of a non-commutative group of order 10: the dihedral group D₅, the symmetries of a pentagon. Five rotations, five reflections, and a reflection followed by a rotation is not a rotation followed by a reflection, which is exactly the property a transposition needs to trip over.</p>
+<div class="viz" id="verhoeff"></div>
+<p>The scheme walks the digits from the right, applies a fixed permutation p (and its powers p², p³, …) to each digit by position, and multiplies the results together in D₅. A wrong digit changes one factor, and in a group that always changes the product. A swap of neighbors changes x·p(y) into y·p(x), and p was chosen so those are never equal when x ≠ y. There is nothing to tune and nothing probabilistic; the 100% in the table is a theorem, and the Python asserts it over three hundred random numbers and every error you can make in each of them.</p>
+
+<h2>4 · Cayley, in one paragraph</h2>
+<p>D₅ was defined geometrically, but on this page it is a 10 × 10 table, and each row of that table is a permutation of ten symbols. That is Cayley's theorem in miniature: every finite group is a group of permutations, acting on itself by multiplication. The rotation group of the box, the symmetry group of the sheet, the check-digit group, and the shuffle are all the same kind of object, which is why one eighty-line Python file handles all of them with one <code>compose</code> function.</p>
+
+<h2>The Python</h2>
+<p><a href="../models/permutation-groups/perms.py">perms.py</a>: permutations as tuples, closure of generators, cycles and orders, Burnside against brute-force orbit enumeration, and the Verhoeff, Luhn and digit-sum schemes with the error catalog that scores them.</p>
+<pre><code>def compose(p, q):            # (p * q)(i) = p[q[i]]: do q, then p
+    return tuple(p[q[i]] for i in range(len(p)))
+
+def cycles(p):
+    seen, out = set(), []
+    for i in range(len(p)):
+        if i in seen: continue
+        c, j = [], i
+        while j not in seen:
+            seen.add(j); c.append(j); j = p[j]
+        out.append(tuple(c))
+    return out
+
+def order(p):                 # lcm of the cycle lengths
+    return reduce(lambda a, b: a * b // gcd(a, b), (len(c) for c in cycles(p)), 1)
+
+def generate(gens):           # the group generated: close under composition
+    group, frontier = {identity(len(gens[0]))}, [identity(len(gens[0]))]
+    while frontier:
+        frontier = [x for g in frontier for h in gens for x in (compose(g, h), compose(h, g))
+                    if x not in group and not group.add(x)]
+    return sorted(group)
+
+def burnside(group, k):       # orbits of k-colorings = average number of fixed colorings
+    return sum(k ** len(cycles(g)) for g in group) // len(group)
+
+def verhoeff_check(digits):   # multiply p^i(d_i) together in D5, from the right; return the inverse
+    c = 0
+    for i, d in enumerate(reversed(digits)):
+        c = D5[c][P[(i + 1) % 8][int(d)]]
+    return INV[c]</code></pre>
+
+<hr>
+<p class="meta">Gilbert &amp; Nicholson, <em>Modern Algebra with Applications</em>, the chapters on groups, permutation groups and group actions (Burnside's counting theorem); Verhoeff, <em>Error Detecting Decimal Codes</em>, 1969. The D₅ table and the permutation p are Verhoeff's. Shuffle orders: Diaconis, Graham &amp; Kantor, 1983.</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script id="data" type="application/json">{"C4":[[0,1,2,3],[1,2,3,0],[2,3,0,1],[3,0,1,2]],"D4":[[0,1,2,3],[0,3,2,1],[1,0,3,2],[1,2,3,0],[2,1,0,3],[2,3,0,1],[3,0,1,2],[3,2,1,0]],"V23":[[0,1,2,3,4,5],[2,1,0,5,4,3],[3,4,5,0,1,2],[5,4,3,2,1,0]],"V23_generators":{"turn 180":[5,4,3,2,1,0],"flip top-bottom":[3,4,5,0,1,2]},"burnside":{"C4":{"2":6,"3":24,"4":70},"D4":{"2":6,"3":21,"4":55},"V23":{"2":24,"3":216}},"shuffles":{"8":{"out":{"order":3,"cycles":[1,3,3,1]},"in":{"order":6,"cycles":[6,2]}},"10":{"out":{"order":6,"cycles":[1,6,2,1]},"in":{"order":10,"cycles":[10]}},"24":{"out":{"order":11,"cycles":[1,11,11,1]},"in":{"order":20,"cycles":[20,4]}},"52":{"out":{"order":8,"cycles":[1,8,8,8,8,8,2,8,1]},"in":{"order":52,"cycles":[52]}}},"D5":[[0,1,2,3,4,5,6,7,8,9],[1,2,3,4,0,6,7,8,9,5],[2,3,4,0,1,7,8,9,5,6],[3,4,0,1,2,8,9,5,6,7],[4,0,1,2,3,9,5,6,7,8],[5,9,8,7,6,0,4,3,2,1],[6,5,9,8,7,1,0,4,3,2],[7,6,5,9,8,2,1,0,4,3],[8,7,6,5,9,3,2,1,0,4],[9,8,7,6,5,4,3,2,1,0]],"P":[[0,1,2,3,4,5,6,7,8,9],[1,5,7,6,2,8,3,0,9,4],[5,8,0,3,7,9,6,1,4,2],[8,9,1,6,0,4,3,5,2,7],[9,4,5,3,1,2,6,8,7,0],[4,2,8,6,5,7,3,9,0,1],[2,7,9,3,8,0,6,4,1,5],[7,0,4,6,9,1,3,2,5,8]],"INV":[0,4,3,2,1,5,6,7,8,9],"rates":{"Verhoeff (D5)":{"single":1.0,"adjacent":1.0,"n_single":144000,"n_adjacent":12606},"Luhn (mod 10, doubling)":{"single":1.0,"adjacent":0.9767719354068889,"n_single":144000,"n_adjacent":12571},"plain digit sum mod 10":{"single":1.0,"adjacent":0.0,"n_single":144000,"n_adjacent":12566}}}</script>
+<script>
+(function(){
+const D=JSON.parse(document.getElementById('data').textContent);
+
+// ---------- permutations
+const compose=(p,q)=>p.map((_,i)=>p[q[i]]);
+const identity=n=>[...Array(n).keys()];
+function cycles(p){const seen=new Set(),out=[];for(let i=0;i<p.length;i++){if(seen.has(i))continue;const c=[];let j=i;while(!seen.has(j)){seen.add(j);c.push(j);j=p[j];}out.push(c);}return out;}
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const order=p=>cycles(p).reduce((o,c)=>o*c.length/gcd(o,c.length),1);
+function generate(gens){const key=p=>p.join(','); const n=gens[0].length; const group=new Map([[key(identity(n)),identity(n)]]); let frontier=[identity(n)];
+  while(frontier.length){const nxt=[];for(const g of frontier)for(const h of gens)for(const x of [compose(g,h),compose(h,g)]){const k=key(x);if(!group.has(k)){group.set(k,x);nxt.push(x);}}frontier=nxt;}
+  return [...group.values()];}
+const cyc=n=>generate([identity(n).map(i=>(i+1)%n)]);
+const dih=n=>generate([identity(n).map(i=>(i+1)%n),identity(n).map(i=>(n-i)%n)]);
+function rect(rows,cols){const idx=(r,c)=>r*cols+c;const turn=[],flip=[];for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){turn.push(idx(rows-1-r,cols-1-c));flip.push(idx(rows-1-r,c));}return generate([turn,flip]);}
+const burnside=(G,k)=>G.reduce((s,g)=>s+k**cycles(g).length,0)/G.length;
+function orbits(G,k,n){const seen=new Set(),out=[];const all=[];(function rec(pre){if(pre.length===n){all.push(pre);return;}for(let c=0;c<k;c++)rec([...pre,c]);})([]);
+  for(const col of all){const kk=col.join('');if(seen.has(kk))continue;const orb=new Map();for(const g of G){const img=col.map((_,i)=>col[g[i]]);orb.set(img.join(''),img);}for(const q of orb.keys())seen.add(q);out.push([...orb.values()]);}
+  return out;}
+function outShuffle(n){const h=n/2,p=Array(n);for(let i=0;i<h;i++){p[i]=2*i;p[h+i]=2*i+1;}return p;}
+function inShuffle(n){const h=n/2,p=Array(n);for(let i=0;i<h;i++){p[i]=2*i+1;p[h+i]=2*i;}return p;}
+const cycNote=p=>cycles(p).filter(c=>c.length>1).map(c=>'('+c.map(i=>i+1).join(' ')+')').join('')||'e';
+
+// ---------- 1. shuffles
+viz('shuffle',function(){
+  const root=d3.select('#shuffle'), bar=root.append('div').attr('class','bar');
+  bar.append('span').attr('class','lab').text('deck size');
+  const sizes=[8,10,24,52]; let n=52; const btns=sizes.map(s=>bar.append('button').text(s).on('click',()=>{n=s;draw();}));
+  const box=root.append('div');
+  function draw(){
+    btns.forEach((b,i)=>b.attr('aria-pressed',sizes[i]===n)); box.html('');
+    const tbl=box.append('table').attr('class','m'); const h=tbl.append('thead').append('tr'); ['shuffle','where card 1, 2, 3, … go','cycle lengths','order'].forEach(t=>h.append('th').text(t));
+    const b=tbl.append('tbody');
+    [['out-shuffle',outShuffle(n)],['in-shuffle',inShuffle(n)]].forEach(([name,p])=>{const tr=b.append('tr'); tr.append('td').text(name);
+      tr.append('td').style('text-align','left').style('color','var(--ink-3)').text(p.slice(0,8).map(v=>v+1).join(', ')+(n>8?', …':''));
+      const cl=cycles(p).map(c=>c.length).sort((a,b)=>a-b); tr.append('td').style('text-align','left').text(cl.join(' · '));
+      tr.append('td').html(`<b>${order(p)}</b>`);});
+    // trace card 2 under the out-shuffle
+    const p=outShuffle(n); let pos=1,trail=[2]; for(let k=0;k<order(p)&&k<60;k++){pos=p[pos];trail.push(pos+1);if(pos===1)break;}
+    box.append('div').attr('class','st').html(`<b>${n} cards.</b> Follow card 2 under the out-shuffle: seat ${trail.join(' → ')}. That cycle has length ${trail.length-1}; the deck is back when every cycle is, after lcm = <b>${order(p)}</b> shuffles.`);
+  }
+  draw();
+},[outShuffle,inShuffle,cycles,order]);
+
+// ---------- 2. Burnside
+viz('burnside',function(){
+  const root=d3.select('#burnside'), bar=root.append('div').attr('class','bar');
+  const presets=[
+    {id:'c4',label:'box panels · rotate (C₄)',G:cyc(4),n:4,kind:'box'},
+    {id:'d4',label:'box panels · rotate + flip (D₄)',G:dih(4),n:4,kind:'box'},
+    {id:'v',label:'2×3 sheet · blank/waste (V)',G:rect(2,3),n:6,kind:'sheet',kfixed:2}];
+  let pre=presets[0], k=2;
+  const pb=presets.map(p=>bar.append('button').text(p.label).on('click',()=>{pre=p;if(p.kfixed)k=p.kfixed;draw();}));
+  bar.append('span').attr('class','lab').style('margin-left','8px').text('colors');
+  const kb=[2,3].map(kk=>bar.append('button').text(kk).on('click',()=>{if(!pre.kfixed){k=kk;draw();}}));
+  const st=root.append('div').attr('class','st'), grid=root.append('div').attr('class','orbits');
+  const PAL=['#c9a06a','#f4efe6','#2a78d6'];
+  function tile(sel,col,kind){
+    const s=22; const svg=sel.append('svg').attr('width',s).attr('height',s).attr('viewBox',`0 0 ${s} ${s}`);
+    if(kind==='box'){ // four panels around a square: top, right, bottom, left
+      const c=s/2, o=2; const quads=[[[o,o],[s-o,o],[c,c]],[[s-o,o],[s-o,s-o],[c,c]],[[s-o,s-o],[o,s-o],[c,c]],[[o,s-o],[o,o],[c,c]]];
+      quads.forEach((q,i)=>svg.append('path').attr('d','M'+q.map(p=>p.join(',')).join('L')+'Z').attr('fill',PAL[col[i]]).attr('stroke','var(--ink-3)').attr('stroke-width',.6));
+    } else { // 2x3 sheet
+      const w=(s-2)/3,h=(s-2)/2; col.forEach((v,i)=>svg.append('rect').attr('x',1+(i%3)*w).attr('y',1+Math.floor(i/3)*h).attr('width',w).attr('height',h).attr('fill',v?'var(--accent)':PAL[1]).attr('stroke','var(--ink-3)').attr('stroke-width',.6));
+    }
+  }
+  function draw(){
+    pb.forEach((b,i)=>b.attr('aria-pressed',presets[i]===pre)); kb.forEach((b,i)=>b.attr('aria-pressed',[2,3][i]===k).property('disabled',!!pre.kfixed));
+    const G=pre.G, terms=G.map(g=>({g,c:cycles(g).length})); const total=terms.reduce((s,t)=>s+k**t.c,0), nOrb=total/G.length;
+    const byC={}; terms.forEach(t=>{byC[t.c]=(byC[t.c]||0)+1;});
+    const termStr=Object.entries(byC).sort((a,b)=>b[0]-a[0]).map(([c,m])=>`${m>1?m+'·':''}${k}^${c}`).join(' + ');
+    st.html(`|G| = ${G.length} · elements: ${G.map(cycNote).join(', ')}<span class="eq">orbits = (1/${G.length}) · (${termStr}) = ${total}/${G.length} = <b>${nOrb}</b></span>${k**pre.n} colorings sorted into <b>${nOrb} orbits</b>; each box below is one orbit, one genuinely different design.`);
+    const orbs=orbits(G,k,pre.n); grid.html('');
+    orbs.forEach(o=>{const d=grid.append('div').attr('class','orbit'); o.forEach(col=>tile(d,col,pre.kind));});
+    console.assert(orbs.length===nOrb,'Burnside disagrees with enumeration');
+  }
+  draw();
+},[cycles,generate,burnside,orbits]);
+
+// ---------- 3. Verhoeff
+const D5=D.D5, P=D.P, INV=D.INV;
+function verhoeffCheck(s){let c=0;const d=[...s].reverse();for(let i=0;i<d.length;i++)c=D5[c][P[(i+1)%8][+d[i]]];return INV[c];}
+function verhoeffValid(s){let c=0;const d=[...s].reverse();for(let i=0;i<d.length;i++)c=D5[c][P[i%8][+d[i]]];return c===0;}
+function luhnCheck(s){let t=0;const d=[...s].reverse();for(let i=0;i<d.length;i++){let v=+d[i];if(i%2===0){v*=2;if(v>9)v-=9;}t+=v;}return (10-t%10)%10;}
+function luhnValid(s){let t=0;const d=[...s].reverse();for(let i=0;i<d.length;i++){let v=+d[i];if(i%2===1){v*=2;if(v>9)v-=9;}t+=v;}return t%10===0;}
+function sumCheck(s){return (10-[...s].reduce((a,c)=>a+ +c,0)%10)%10;}
+function sumValid(s){return [...s].reduce((a,c)=>a+ +c,0)%10===0;}
+function errors(num){const subs=[],trans=[];for(let i=0;i<num.length;i++)for(let d=0;d<10;d++)if(String(d)!==num[i])subs.push(num.slice(0,i)+d+num.slice(i+1));
+  for(let i=0;i+1<num.length;i++)if(num[i]!==num[i+1])trans.push(num.slice(0,i)+num[i+1]+num[i]+num.slice(i+2));return {subs,trans};}
+viz('verhoeff',function(){
+  const root=d3.select('#verhoeff'), bar=root.append('div').attr('class','bar');
+  bar.append('span').attr('class','lab').text('order number');
+  const inp=bar.append('input').attr('type','text').attr('inputmode','numeric').attr('value','4471093').attr('aria-label','order number digits');
+  const out=root.append('div');
+  const schemes=[['Verhoeff (D₅)',verhoeffCheck,verhoeffValid],['Luhn (mod 10, doubling)',luhnCheck,luhnValid],['plain digit sum mod 10',sumCheck,sumValid]];
+  function draw(){
+    const num=(inp.property('value')||'').replace(/\D/g,'').slice(0,12); out.html('');
+    if(num.length<2){out.append('div').attr('class','st').text('Type at least two digits.');return;}
+    const tbl=out.append('table').attr('class','m'); const h=tbl.append('thead').append('tr'); ['scheme','with check digit','wrong-digit errors caught','adjacent swaps caught','a swap it misses'].forEach(t=>h.append('th').text(t));
+    const b=tbl.append('tbody');
+    schemes.forEach(([name,chk,valid])=>{const full=num+chk(num); const {subs,trans}=errors(full); const sc=subs.filter(e=>!valid(e)).length, tc=trans.filter(e=>!valid(e)).length; const miss=trans.find(e=>valid(e));
+      const tr=b.append('tr'); tr.append('td').text(name); tr.append('td').html(`${num}<b>${chk(num)}</b>`);
+      tr.append('td').attr('class',sc===subs.length?'ok':'miss').text(`${sc} / ${subs.length}`); tr.append('td').attr('class',tc===trans.length?'ok':'miss').text(`${tc} / ${trans.length}`);
+      tr.append('td').style('text-align','left').text(miss?miss:'none');});
+    const R=D.rates; const rate=n=>R[n]?`${(100*R[n].single).toFixed(1)}% / ${(100*R[n].adjacent).toFixed(1)}%`:'';
+    out.append('div').attr('class','st').html(`Over 2,000 random 7-digit numbers (wrong digit / adjacent swap): Verhoeff <b>${rate('Verhoeff (D5)')}</b>, Luhn <b>${rate('Luhn (mod 10, doubling)')}</b>, digit sum <b>${rate('plain digit sum mod 10')}</b>. The digit sum catches no swap at all because addition commutes; Luhn misses 09 ↔ 90; D₅ misses nothing, by construction.`);
+    // the D5 table
+    const wrap=out.append('div').style('margin-top','10px'); wrap.append('div').attr('class','st').html('<b>D₅</b>: 0–4 rotations of a pentagon, 5–9 reflections. Row times column. Notice 1·5 = 6 but 5·1 = 9: the group does not commute, and that is the whole point.');
+    const t=wrap.append('table').attr('class','m d5'); const hh=t.append('thead').append('tr'); hh.append('th').text('·'); for(let j=0;j<10;j++)hh.append('th').text(j);
+    const bb=t.append('tbody'); D5.forEach((row,i)=>{const tr=bb.append('tr'); tr.append('th').text(i); row.forEach(v=>tr.append('td').text(v));});
+  }
+  inp.on('input',draw); draw();
+},[verhoeffCheck,verhoeffValid,luhnCheck,luhnValid,errors]);
+})();
+</script>
+</body>
+</html>
