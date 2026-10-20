@@ -308,8 +308,23 @@ site/build_site.py              one HTML page + one 1.8 MB data file + a self-co
 </ul>
 
 
-<h2>9. Is the AI part right? Golden sets, evals and guardrails</h2>
-<p>Two parts of the project run on a language model, and they need different kinds of proof.</p>
+<h2>9. Correctness: how the model and the AI parts are evaluated</h2>
+<p>Three different things can be wrong here, and each gets its own kind of check: the optimization can be solved wrong, the inputs can be off, and the language model can say something the data does not support.</p>
+<h3>The solve</h3>
+<ul>
+  <li><strong>Optimality is certified, not hoped for.</strong> HiGHS returns a status with every solve, and the export aborts on anything but optimal. For a linear program "optimal" is a proof: a primal solution and a dual solution with zero gap. The duals the app shows are that certificate.</li>
+  <li><strong>Conservation is built in.</strong> Every market's demand constraint is an equality with an explicit unmet arc, so tons cannot vanish or appear; each scenario reports shipped, exported and unmet tons, and they must add to the demand that was asked for. Integrality comes free from the network structure, so no rounding step exists to introduce error.</li>
+  <li><strong>Twelve-month and knockout scenarios are differences of two solves</strong> with the same inputs, so a bug in an input would cancel out of the comparisons and show up in the levels. The outage calendar is checked the same way: the assignment problem's estimate is re-solved month by month and the realized penalty ($122M) is reported next to the estimate ($48M), not instead of it.</li>
+</ul>
+<h3>The inputs</h3>
+<ul>
+  <li><strong>Calibration against published totals</strong>, the table in section 6: national capacity within 4%, the named companies within 1–5%, shipments landing on production, integration shares near disclosures. These are checks, not fits, because the demand side was set from box shipments and trade rather than from mill output.</li>
+  <li><strong>Measured error, not assumed error.</strong> The population proxy was scored against the EPA plant registry before it was replaced (0.45 RMS log error by state), and fourteen Monte Carlo draws on the inputs give the spread of every headline figure. The capacity duals are the fragile ones, and the page says so.</li>
+  <li><strong>A backtest that is allowed to fail.</strong> The 2025 closures are run against the 2024 footprint on their own tab; the model misses them, the surplus column does better, and the missing variable is named.</li>
+  <li><strong>Reproducibility.</strong> One command rebuilds every number from the committed inputs; every refresh re-solves and commits, so the history is the audit trail; each figure in the data folder carries its URL.</li>
+</ul>
+<h3>The language model</h3>
+<p>Two parts of the project run on a language model, and they need different kinds of proof. The first paid test is in: twenty EPA sites checked with web search cost $0.95 in total, about five cents a site; it called eighteen operating and two unknown, four corrugators, nine sheet plants, and caught a recycled-paperboard mill mis-coded as a box plant, with every confidence marked medium or low. That is the right kind of humility, and it is what the golden set will score.</p>
 <p><strong>The verification pass</strong> is a classifier with a search engine. The right question is not "is Claude smart" but "what is its accuracy per field against a labeled set, and what does it do when it does not know". The plan, part of which is in the repo under <code>evals/</code>:</p>
 <ul>
   <li><strong>A golden set from sources that cannot be wrong about themselves.</strong> The integrated producers publish their own plant lists; the 2025 and 2026 closures are in the press with dates. That is a few hundred sites with a known owner, type and status, and it costs an afternoon to assemble. Run the pass over them and you get precision and recall per field (operating, plant type, owner, shifts), a confusion matrix, and a calibration curve for the confidence field: does "high" mean 95% or 70%?</li>
