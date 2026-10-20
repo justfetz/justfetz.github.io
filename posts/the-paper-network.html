@@ -66,8 +66,8 @@ details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(-
 <p class="lede">A corrugated box starts as rolls of linerboard and medium from one of about sixty mills and ends, nine times in ten, back in a bale. The business runs on a map of mills, plants, freight and prices that everyone in it carries in their head and nobody publishes. The inputs are public. So I built the map, with Claude as the pair, from filings, registries and a weekly diesel number, and solved it as the one problem it has always been: a minimum-cost network flow.</p>
 
 <div class="open">
-  <a href="https://justfetz.github.io/the-paper-network/"><b>Open the app →</b><span>Nine tabs, 63 mills, 441 markets, every scenario below. Static page, no account.</span><small>justfetz.github.io/the-paper-network</small></a>
-  <a href="https://claude.ai/artifact/UCaPyJMWgrDAg94xakwn9w"><b>The copy that talks →</b><span>Same page on claude.ai with "Ask the network": a chat that answers from the model and shows which numbers it read.</span><small>claude.ai/artifact/UCaPyJMWgrDAg94xakwn9w</small></a>
+  <a href="https://justfetz.github.io/the-paper-network/"><b>Open the app →</b><span>Nine tabs, 63 mills, 441 markets, every scenario below, and "Ask the network". Static page, no account.</span><small>justfetz.github.io/the-paper-network</small></a>
+  <a href="https://claude.ai/artifact/UCaPyJMWgrDAg94xakwn9w"><b>The claude.ai copy →</b><span>Same page, same chat, running on the viewer's own Claude account instead of the project's budget.</span><small>claude.ai/artifact/UCaPyJMWgrDAg94xakwn9w</small></a>
   <a href="https://github.com/justfetz/the-paper-network"><b>The repo →</b><span>Model, data with a source on every row, ingest scripts, workflows, notes. MIT.</span><small>github.com/justfetz/the-paper-network</small></a>
 </div>
 
@@ -189,7 +189,7 @@ details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(-
 <tr><td>EDGAR_UA</td><td>A User-Agent string for SEC pulls: a name and an email, not a key</td><td>Free</td></tr>
 <tr><td>GOOGLE_MAPS_API_KEY</td><td>Places text search near each market</td><td>Free up to 5,000 calls a month on the Pro tier; the run uses 1,764</td></tr>
 <tr><td>ANTHROPIC_API_KEY</td><td>The site-by-site verification with web search</td><td>About $0.10 a site on Claude Opus 5.5, $0.06 on Sonnet 5.5, $0.02 on Haiku 5.5; roughly $160 for the whole list, half through the Batches API</td></tr>
-<tr><td>none</td><td>The chat on the hosted page</td><td>Runs on the viewer's own Claude account through the artifact runtime; the page holds no key</td></tr>
+<tr><td>ANTHROPIC_API_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID</td><td>The chat on the public page, through the proxy described in section 8</td><td>Tokens per round, a few cents on Opus; the proxy caps rounds per day and the console caps the month. The claude.ai copy needs none of these: it runs on the viewer's own account</td></tr>
 </tbody>
 </table>
 
@@ -279,9 +279,9 @@ details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(-
 <figure><img src="../models/the-paper-network/shots/method.png" alt="The Method tab: the model's assumptions, the calibration table and the source list." loading="lazy"><figcaption>The assumptions, the calibration table above, the error bars, and a source for every anchor. If a number on another tab looks wrong, this is where to check what it was built from.</figcaption></figure>
 
 <div class="text"><h3>Ask the network</h3></div>
-<figure><img src="../models/the-paper-network/shots/chat.png" alt="The chat drawer open over the Flows tab, answering what happens if the Mansfield mill goes down, with a line underneath listing the page lookups the answer was built from." loading="lazy"><figcaption>On the claude.ai copy, a chat drawer answers from the model: it calls page functions (find a mill, find a market, the knockouts, a price shock, the scenario KPIs) and under every answer lists exactly which lookups it made, with the raw data one click away. An answer about the network with no lookup under it reads as unsupported, and says so.</figcaption></figure>
+<figure><img src="../models/the-paper-network/shots/chat.png" alt="The chat drawer open over the Flows tab, answering what happens if the Mansfield mill goes down, with a line underneath listing the page lookups the answer was built from." loading="lazy"><figcaption>The chat drawer answers from the model: it calls page functions (find a mill, find a market, the knockouts, a price shock, the scenario KPIs) and under every answer lists exactly which lookups it made, with the raw data one click away. An answer about the network with no lookup under it reads as unsupported, and says so.</figcaption></figure>
 <div class="text">
-<p>That provenance line is my answer to the obvious question about putting a language model in front of a model: how do you know it is not making the numbers up? You do not trust it; you check it. The chat cannot browse, has no memory between questions, and sees nothing about the network except what the page functions return. The functions run in your browser, on the same JSON the map is drawn from, and the trail shows the call and the result. It runs on the viewer's own Claude account, so there is no key anywhere in the page and nothing is sent to me.</p>
+<p>That provenance line is my answer to the obvious question about putting a language model in front of a model: how do you know it is not making the numbers up? You do not trust it; you check it. The chat cannot browse, has no memory between questions, and sees nothing about the network except what the page functions return. The functions run in your browser, on the same JSON the map is drawn from, and the trail shows the call and the result. On the public page it runs through a small proxy that holds the key and meters the budget (section 8); on the claude.ai copy it runs on the viewer's own account. Either way there is no key in the page and nothing is sent to me.</p>
 
 <h2>8. How it is built</h2>
 <p>One repository, one static page, one solver, no server. The pipeline, top to bottom:</p>
@@ -296,7 +296,8 @@ model/export_json.py            every scenario: 2 footprints, counterfactual, 3 
 model/corrugators.py            the sheet tier: counts → machines → capacity → the sheet trade as a transportation LP
 model/plants_layer.py           EPA + Census → measured demand weights, with the proxy error measured
 site/build_site.py              one HTML page + one 1.8 MB data file + a self-contained copy for claude.ai
-.github/workflows/              refresh (scheduled), plants, cbp, places, verify (on demand) · commits what changed</pre>
+.github/workflows/              refresh (scheduled), plants, cbp, places, verify, chat (on demand) · commits what changed
+chat/                           the Worker that holds the key for the public page's chat, its config and its tests</pre>
 
 <div class="text">
 <ul>
@@ -304,8 +305,27 @@ site/build_site.py              one HTML page + one 1.8 MB data file + a self-co
   <li><strong>The page.</strong> Plain HTML, d3 v7 from a CDN, an Albers USA basemap pre-projected to SVG paths so the map draws instantly, a light and a dark theme on the same tokens as this blog, and a layout that holds at phone width. No framework, no build step beyond the Python script that injects the data.</li>
   <li><strong>The AI pair.</strong> Claude did the research reads (the 10-K tables, the closure notices, the plant counts), wrote the model and the page with me, ran the calibration and wrote the notes that say where it is off. I set the problem, the assumptions, the industry sanity checks and the rule that nothing non-public goes in. Every figure in the data folder carries its URL, so the division of labor does not matter to a reader who wants to check a number: the check is the same either way.</li>
   <li><strong>The verification layer.</strong> The same model that wrote the code now reads the web for each plant through the API, with a strict output schema (operating, plant type, owner, shifts, evidence URL, confidence), a spend cap, and a ledger of what each site cost. It is an ingest script like the others, and its output is a CSV with a URL on every row, not an opinion.</li>
-  <li><strong>The chat.</strong> Thirty lines of page functions over the same data file, exposed to the claude.ai artifact runtime as tools, with the provenance trail above. The GitHub Pages copy shows the drawer with a link to the live one, because a static page cannot hold a key.</li>
+  <li><strong>The chat.</strong> Seven page functions over the same data file (find a mill, find a market, the knockouts, a price shock, the scenario KPIs, the EPA plant list, its owners), offered to the model as tools, with the provenance trail above. Where the model runs depends on which copy you open, which is the next subsection.</li>
 </ul>
+
+<h3>The chat proxy: how a static page talks to a model without a key</h3>
+<p>A page served from GitHub Pages is a file; anyone can read its source, so a key placed in it would be everyone's key within the hour. The claude.ai copy sidesteps this because the artifact runtime runs the chat on the viewer's own account. The public page needs a middleman, and the middleman is a Cloudflare Worker, about 120 lines, in <code>chat/worker.js</code>:</p>
+</div>
+
+<pre class="flow">browser ──POST {messages, page digest}──▶ Worker (holds the key, free tier)
+                                          · origin must be justfetz.github.io
+                                          · 20 rounds a minute per visitor; 400 rounds a day for everyone (a KV counter)
+                                          · the system prompt and the seven tool definitions are fixed server-side
+                                          · forwards to the Messages API with max_tokens 1,200 and low effort
+browser ◀──content blocks: text, tool_use──┘
+browser runs the tool_use against its own data, appends the tool_result, POSTs again (a round)
+browser renders the answer and the trail of lookups</pre>
+
+<div class="text">
+<p>Five things follow from that shape. The key never leaves Cloudflare. The Worker cannot be used as a general chatbot, because it supplies the prompt and the tools and only accepts user turns, tool results and echoes of its own answers. The budget has three walls: the per-visitor limit, the daily cap, and the monthly spend limit in the Anthropic console. The lookups still run in the browser on the same JSON the map is drawn from, so the trail under each answer is the same on both copies. And it deploys from the repo: a workflow installs, creates the counter namespace, uploads the key as a Worker secret, publishes, writes the endpoint to a file the page build reads, and rebuilds the page. A round on Opus costs a few cents with the prompt cached, so the daily cap bounds the worst day at about ten dollars; one line in the config moves it to Sonnet for a tenth of that. The gate logic has a test with a stub model, so the limits are checked without spending anything.</p>
+</div>
+
+<div class="text">
 
 
 <h2>9. Correctness: how the model and the AI parts are evaluated</h2>
