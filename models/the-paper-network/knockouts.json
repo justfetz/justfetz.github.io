@@ -1,0 +1,202 @@
+[
+ {
+  "mill": "Mansfield",
+  "owner": "International Paper",
+  "state": "LA",
+  "capacity_tons": 1400000,
+  "network_cost_usd_per_year": 171161317,
+  "unmet_tons": 200900,
+  "owner_buys_tons": 1652673,
+  "d_haul_miles": -6.5
+ },
+ {
+  "mill": "Valliant",
+  "owner": "International Paper",
+  "state": "OK",
+  "capacity_tons": 1330000,
+  "network_cost_usd_per_year": 134060002,
+  "unmet_tons": 130900,
+  "owner_buys_tons": 1574741,
+  "d_haul_miles": -6.7
+ },
+ {
+  "mill": "Counce",
+  "owner": "Packaging Corp of America",
+  "state": "TN",
+  "capacity_tons": 1150000,
+  "network_cost_usd_per_year": 91267686,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1494420,
+  "d_haul_miles": -1.7
+ },
+ {
+  "mill": "DeRidder",
+  "owner": "Packaging Corp of America",
+  "state": "LA",
+  "capacity_tons": 1050000,
+  "network_cost_usd_per_year": 89629528,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1388511,
+  "d_haul_miles": 3.8
+ },
+ {
+  "mill": "Cedar River",
+  "owner": "International Paper",
+  "state": "IA",
+  "capacity_tons": 1020000,
+  "network_cost_usd_per_year": 115755765,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1348657,
+  "d_haul_miles": 17.2
+ },
+ {
+  "mill": "Monticello",
+  "owner": "Georgia-Pacific",
+  "state": "MS",
+  "capacity_tons": 1000000,
+  "network_cost_usd_per_year": 109357825,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1910228,
+  "d_haul_miles": -14.7
+ },
+ {
+  "mill": "Prattville",
+  "owner": "International Paper",
+  "state": "AL",
+  "capacity_tons": 1000000,
+  "network_cost_usd_per_year": 64052870,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1322993,
+  "d_haul_miles": 1.6
+ },
+ {
+  "mill": "Toledo",
+  "owner": "Georgia-Pacific",
+  "state": "OR",
+  "capacity_tons": 950000,
+  "network_cost_usd_per_year": 117291940,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1454691,
+  "d_haul_miles": 9.9
+ },
+ {
+  "mill": "Fernandina Beach",
+  "owner": "Smurfit Westrock",
+  "state": "FL",
+  "capacity_tons": 928000,
+  "network_cost_usd_per_year": 48074081,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1294592,
+  "d_haul_miles": -10.0
+ },
+ {
+  "mill": "West Point",
+  "owner": "Smurfit Westrock",
+  "state": "VA",
+  "capacity_tons": 922000,
+  "network_cost_usd_per_year": 64927781,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1344085,
+  "d_haul_miles": -5.7
+ },
+ {
+  "mill": "Pine Hill",
+  "owner": "International Paper",
+  "state": "AL",
+  "capacity_tons": 900000,
+  "network_cost_usd_per_year": 68266214,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1257578,
+  "d_haul_miles": 3.1
+ },
+ {
+  "mill": "Bogalusa",
+  "owner": "International Paper",
+  "state": "LA",
+  "capacity_tons": 895000,
+  "network_cost_usd_per_year": 46079206,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1205177,
+  "d_haul_miles": -2.2
+ },
+ {
+  "mill": "Riverdale (Selma)",
+  "owner": "International Paper",
+  "state": "AL",
+  "capacity_tons": 880000,
+  "network_cost_usd_per_year": 52153960,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1255734,
+  "d_haul_miles": 0.6
+ },
+ {
+  "mill": "Stevenson",
+  "owner": "Smurfit Westrock",
+  "state": "AL",
+  "capacity_tons": 864000,
+  "network_cost_usd_per_year": 72796583,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1326195,
+  "d_haul_miles": -1.7
+ },
+ {
+  "mill": "Rome",
+  "owner": "International Paper",
+  "state": "GA",
+  "capacity_tons": 850000,
+  "network_cost_usd_per_year": 64459050,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1220823,
+  "d_haul_miles": 5.9
+ },
+ {
+  "mill": "Biron",
+  "owner": "ND Paper",
+  "state": "WI",
+  "capacity_tons": 800000,
+  "network_cost_usd_per_year": 876650,
+  "unmet_tons": 0,
+  "owner_buys_tons": 898152,
+  "d_haul_miles": 0.4
+ },
+ {
+  "mill": "Hodge",
+  "owner": "Smurfit Westrock",
+  "state": "LA",
+  "capacity_tons": 790000,
+  "network_cost_usd_per_year": 80880916,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1309942,
+  "d_haul_miles": 4.0
+ },
+ {
+  "mill": "Solvay",
+  "owner": "Smurfit Westrock",
+  "state": "NY",
+  "capacity_tons": 770000,
+  "network_cost_usd_per_year": 65658179,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1249722,
+  "d_haul_miles": -0.8
+ },
+ {
+  "mill": "Florence",
+  "owner": "Smurfit Westrock",
+  "state": "SC",
+  "capacity_tons": 733000,
+  "network_cost_usd_per_year": 44001551,
+  "unmet_tons": 0,
+  "owner_buys_tons": 1223659,
+  "d_haul_miles": -6.0
+ },
+ {
+  "mill": "Whitby",
+  "owner": "Atlantic Packaging",
+  "state": "ON",
+  "capacity_tons": 700000,
+  "network_cost_usd_per_year": 915955,
+  "unmet_tons": 0,
+  "owner_buys_tons": 909352,
+  "d_haul_miles": -0.3
+ }
+]

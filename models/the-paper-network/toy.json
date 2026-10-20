@@ -1,0 +1,55 @@
+{
+ "mills": [
+  {
+   "n": "Gulf mill",
+   "cap": 60
+  },
+  {
+   "n": "Midwest mill",
+   "cap": 40
+  },
+  {
+   "n": "West mill",
+   "cap": 50
+  }
+ ],
+ "markets": [
+  {
+   "n": "Dallas",
+   "dem": 30
+  },
+  {
+   "n": "Chicago",
+   "dem": 40
+  },
+  {
+   "n": "Atlanta",
+   "dem": 35
+  },
+  {
+   "n": "Los Angeles",
+   "dem": 25
+  }
+ ],
+ "cost_usd_per_ton": [
+  [
+   22,
+   45,
+   30,
+   95
+  ],
+  [
+   48,
+   18,
+   42,
+   110
+  ],
+  [
+   70,
+   105,
+   120,
+   20
+  ]
+ ],
+ "note": "the toy instance animated in the post; successive shortest paths gives $3.17M, duals mills [48,75,0], markets [70,93,78,20]"
+}

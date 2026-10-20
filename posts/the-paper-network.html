@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The paper network: every containerboard mill, every box market, and the flow between them — Jason Fetzer</title>
+<meta name="description" content="A public model of the US containerboard and corrugated box business, built from free data and solved as a min-cost network flow: every mill from the 10-Ks, 441 box markets from the Census and the EPA registry, freight from distance and diesel, and the dual prices that say what a ton of capacity is worth, who would switch supplier for how much, which outage hurts most, and when to take maintenance. Page by page, source by source, with the code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:900px}
+:root{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;--other:#8a8a84;--land:#f1f1ec;--border:#d6d6d0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;--other:#7a7a74;--land:#1b1b1a;--border:#323230}}
+:root[data-theme="dark"]{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;--other:#7a7a74;--land:#1b1b1a;--border:#323230}
+.text{max-width:680px}
+.open{border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin:0 0 28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 22px}
+.open a{text-decoration:none;display:block}
+.open b{display:block;font-weight:600;color:var(--ink)}
+.open span{display:block;color:var(--ink-2);font-size:14.5px;margin-top:2px}
+.open small{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);display:block;margin-top:6px;word-break:break-all}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--rule);border-radius:10px}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg);position:relative}
+.viz svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.bar button{font-family:var(--mono);font-size:12px;min-height:36px;padding:0 12px;border:1px solid var(--rule);border-radius:6px;background:var(--code-bg);color:var(--ink);cursor:pointer}
+.bar button:hover{border-color:var(--accent);color:var(--accent)}
+.bar button:disabled{opacity:.45;cursor:default}
+.bar .st{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:auto}
+.steps{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin:10px 0 0;border-top:1px solid var(--rule);padding-top:8px;line-height:1.6}
+.steps b{color:var(--ink);font-weight:500}
+.steps .cur{color:var(--accent)}
+.lbl{fill:var(--ink);font-size:11.5px}.sub{fill:var(--ink-3);font-size:10px}.cost{fill:var(--ink-3);font-size:9.5px}.dual{fill:var(--accent);font-size:10.5px;font-weight:500}
+.e{stroke:var(--border);stroke-width:1;fill:none}.e.used{stroke:var(--s1);stroke-width:2.2}.e.path{stroke:var(--s2);stroke-width:3}.e.rev{stroke:var(--s2);stroke-width:3;stroke-dasharray:5 4}
+.node{fill:var(--land);stroke:var(--border)}.node.sat{stroke:var(--s2);stroke-width:1.6}
+.box{fill:var(--land);stroke:var(--border)}.box text{fill:var(--ink)}.arrow{stroke:var(--ink-3);fill:none;stroke-width:1.2}.arrow.pen{stroke:var(--s2);stroke-dasharray:4 3}
+.grid line{stroke:var(--rule)}.axis text{fill:var(--ink-3);font-size:10.5px}.axis path,.axis line{stroke:var(--rule)}
+.val{fill:var(--ink-2);font-size:10px}.lab{fill:var(--ink);font-size:10.5px}
+.legend{font-family:var(--mono);font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.cmd td:first-child{white-space:normal}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 18px;margin:0 0 24px}
+.kv div{border-top:1px solid var(--rule);padding-top:8px}
+.kv span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.kv b{display:block;font-size:20px;font-weight:500;letter-spacing:-.3px;margin-top:2px}
+.kv small{display:block;color:var(--ink-3);font-size:12.5px;margin-top:2px}
+details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--ink-3);min-height:32px;display:flex;align-items:center}
+.flow{font-family:var(--mono);font-size:12.5px;line-height:1.7;background:var(--code-bg);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;margin:0 0 20px;overflow-x:auto;white-space:pre}
+</style>
+</head>
+<body>
+<main class="page">
+
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+<p class="meta">2026-10-20 · containerboard · network flow · public data · claude</p>
+<h1>The paper network: every containerboard mill, every box market, and the flow between them</h1>
+<p class="lede">A corrugated box starts as rolls of linerboard and medium from one of about sixty mills and ends, nine times in ten, back in a bale. The business runs on a map of mills, plants, freight and prices that everyone in it carries in their head and nobody publishes. The inputs are public. So I built the map, with Claude as the pair, from filings, registries and a weekly diesel number, and solved it as the one problem it has always been: a minimum-cost network flow.</p>
+
+<div class="open">
+  <a href="https://justfetz.github.io/the-paper-network/"><b>Open the app →</b><span>Nine tabs, 63 mills, 441 markets, every scenario below. Static page, no account.</span><small>justfetz.github.io/the-paper-network</small></a>
+  <a href="https://claude.ai/artifact/UCaPyJMWgrDAg94xakwn9w"><b>The copy that talks →</b><span>Same page on claude.ai with "Ask the network": a chat that answers from the model and shows which numbers it read.</span><small>claude.ai/artifact/UCaPyJMWgrDAg94xakwn9w</small></a>
+  <a href="https://github.com/justfetz/the-paper-network"><b>The repo →</b><span>Model, data with a source on every row, ingest scripts, workflows, notes. MIT.</span><small>github.com/justfetz/the-paper-network</small></a>
+</div>
+
+<div class="text">
+<p>This post is the long version: why the problem is a network flow and what that buys you, where every number comes from, how the data was cleaned and how far off it still is, what each page of the app does, how the thing is built and refreshed, and what someone could do with it who wanted to dream a little. Every figure traces to a public page. Every chart on this post has a "show the code" under it, in the house style.</p>
+
+<h2>1. Why build a map the industry already has</h2>
+<p>Containerboard is a commodity that behaves like a relationship business. The price of 42-pound kraft liner is a published index. Freight is distance times diesel. Mill capacities are in the 10-K. Box plants are in the EPA's facility registry with an address. And yet "who ships to whom, at what delivered cost, and who would switch for how much" is treated as private knowledge, because the only people who have ever put the pieces together are the people whose job it is to keep them apart: the mill sales desk, the integrated producer's planning group, the broker.</p>
+<p>I spent eleven years on the box-plant side of that map. The asymmetry is real and it is expensive for everyone below the mill: independents pay it, box buyers pay it, and the people inside the integrated companies who want to argue with a transfer price pay it too. The inputs to the map are free. Putting them together is a week of work and one linear program. That is the whole thesis of the project: <strong>the public draft of this map is good enough to argue with, and arguing with it is the point.</strong></p>
+<p>What follows is what the public draft says, with its error bars printed next to it.</p>
+
+<h2>2. The network flow problem is the whole thing</h2>
+<p>Strip the business to its skeleton and it is this: a set of supply nodes (mills) with capacities, a set of demand nodes (box markets) with requirements, and an arc from every mill to every market with a cost per ton (freight). Choose the tons on each arc to meet every demand without exceeding any capacity, at minimum total cost. That is the <em>transportation problem</em>, the oldest special case of <em>minimum-cost flow</em>, and it is the problem Lecture 7 of a graduate algorithms course spends on successive shortest paths and network simplex.</p>
+<p>Three things make it the right tool rather than a convenient one.</p>
+<ol>
+  <li><strong>It is exactly solvable at full size.</strong> The real instance has 93,423 variables and 7,139 constraints once the expansions below are in. HiGHS, the open-source solver behind SciPy, finds the optimum in 1.9 seconds. No heuristics, no sampling, no "approximately".</li>
+  <li><strong>The answer is integral for free.</strong> The constraint matrix of a network flow is totally unimodular, so the LP optimum is already whole tons on whole arcs. You never round.</li>
+  <li><strong>The dual solution is the product.</strong> Every linear program has a shadow problem whose variables are prices. For a network flow those prices sit on the nodes: a price per ton of capacity at each mill, and a price per delivered ton at each market. They fall out of the same solve, and they are the numbers the industry actually trades on.</li>
+</ol>
+
+<h3>Watch the algorithm reroute a ton</h3>
+<p>Here is a toy instance you can step through: three mills, four markets, freight costs on the arcs. The algorithm is successive shortest paths: find the cheapest residual path from the source to the sink, push as much flow as it can carry, repeat. The moment to watch is the last step. Atlanta still needs five tons, the two cheap mills are full, and the only mill with capacity left is on the West Coast at $120 a ton. The algorithm does not pay $120. It finds a path that sends West Coast tons to Dallas <em>and takes five tons back off the Gulf mill's Dallas lane</em> (the dashed reverse arc) so the Gulf mill can serve Atlanta. Net cost $78 a ton. That reverse arc is the thing a greedy planner never sees, and in the real business it is the phone call where a mill tells one customer "we are moving you to the other machine so we can take the new account".</p>
+</div>
+
+<div class="viz" id="ssp"></div>
+
+<div class="text">
+<p>When the flow is optimal the same search gives the prices. Run one more shortest-path pass over the residual network and the distance to each node is its dual: the West mill has capacity to spare, so its scarcity value is $0; the Gulf mill is full and freeing one ton there costs the network $48 of rerouting, so a ton of Gulf capacity is worth $48; one more ton of demand in Chicago would cost $93 delivered, not the $18 of the direct lane, because the direct lane is spoken for. Check the complementary slackness yourself in the table: on every arc that carries flow, market price minus mill price equals the freight; on every empty arc it is less. That identity is what makes the duals prices rather than opinions.</p>
+
+<h3>The real network, expanded</h3>
+<p>The toy has one kind of ton and no owners. The real model needs four expansions, all of which stay inside the network-flow family so the solve stays fast and exact.</p>
+</div>
+
+<div class="viz" id="expansion"></div>
+
+<div class="text">
+<ul>
+  <li><strong>Owner copies of every market.</strong> Integrated producers ship their own board to their own plants first. Each of the 441 markets is split into an owner copy for International Paper, Smurfit Westrock, Packaging Corp of America, Georgia-Pacific, Pratt, Green Bay Packaging and Cascades, plus an open-market copy. The copies take fixed shares of the market's demand (31%, 20%, 15.5%, 9.5%, 6%, 3%, 2%, and 13% open), set from the companies' disclosed integration and their share of box shipments. A mill can serve its owner's copy at freight; it can serve another owner's copy only through the <em>premium arc</em>, a $150-a-ton penalty that stands in for "buying outside your own system".</li>
+  <li><strong>Grade split.</strong> Board is 65% linerboard and 35% medium by weight, and mills make one or both. Each market copy fans into a liner node and a medium node, and a mill's arcs go only to the grades it makes.</li>
+  <li><strong>Export sinks.</strong> 3.6 million tons leave through the ports. Ports are sink nodes with their own demands, fed by the mills nearest them.</li>
+  <li><strong>Unmet demand.</strong> Every demand node has an escape arc at $400 a ton, so the model never reports "infeasible"; it reports how many tons it could not place and where. In the October 2026 footprint that number is zero. In the counterfactual that runs 2026's mills against 2024's demand it is 2.1 million tons, which is the cleanest statement of what the 2025 closures did.</li>
+</ul>
+<p>Freight on each arc is a rule, not a quote: road miles are 1.2 times the great-circle distance, truck costs $8 plus $0.125 a mile and rail $35 plus $0.065 a mile per ton at $3.75 diesel, and the model takes the cheaper of the two, which puts the truck-to-rail break near 450 miles. Diesel moves the per-mile terms through the fuel share of each mode, so the live EIA price is a scenario rather than a parameter.</p>
+
+<h3>Why the duals matter more than the flows</h3>
+<p>The flows are a cost-minimizer's answer, not a record of who ships to whom today; a sales organization with history and contracts will differ from them everywhere. The duals are sturdier, because they describe the <em>margins</em> of the system rather than its interior:</p>
+<ul>
+  <li><strong>Capacity scarcity value.</strong> The dual on a mill's capacity constraint is what one more ton there is worth to the whole network. In the October 2026 run a ton of West Coast capacity carries a scarcity value of about $62 (nine mills, capacity-weighted) against $35 east of the Rockies. That spread is the entire business case for the recycled mills built on the West Coast, and the model produces it from freight alone.</li>
+  <li><strong>Delivered marginal cost.</strong> The dual on a market's demand is what the last ton costs to deliver there. Map it and you have the contour of the price a buyer can actually negotiate, before anyone has quoted anything.</li>
+  <li><strong>Switching gap.</strong> For each market, the model knows the cheapest mill by delivered freight and the one behind it. The gap between them is the price of loyalty. Median gap: $5.20 a ton. 49% of markets have a second mill within $5; 71% within $10.</li>
+  <li><strong>Outages as knockouts.</strong> Remove a mill, re-solve, and the objective's change is the yearly cost of that mill being down: extra freight, tons bought outside the system at the premium, tons that go unserved. Twenty mills, twenty numbers, no judgment required.</li>
+  <li><strong>Maintenance as an assignment problem.</strong> Twelve months, each with its own demand season and its own solve, give twelve sets of scarcity values. Assigning each mill's annual outage to a month is then a small integer program priced by those duals, with caps on how many mills (nine) and how many of one owner's mills (two) can be down at once. The model's own best calendar costs the network $122 million a year in outage effects against $276 million for a staggered calendar drawn by hand.</li>
+  <li><strong>The fiber loop.</strong> Thirty million tons of old corrugated containers come back. Route them from where boxes are used to the recycled mills and the export docks and it is the same network run in reverse, with its own duals: what a ton of OCC is worth in each county.</li>
+</ul>
+<p>That is why the algorithm is the post and the map is the illustration. Everything the app shows is either a flow, a dual, or a difference between two solves.</p>
+
+<h2>3. What the model says</h2>
+</div>
+
+<div class="kv">
+  <div><span>Freight bill, Oct 2026</span><b>$2.10B</b><small>32.2 Mt domestic + 3.6 Mt export</small></div>
+  <div><span>Average haul</span><b>513 mi</b><small>42% of tons by rail</small></div>
+  <div><span>Freight per ton</span><b>$59.95</b><small>$58.76 at $3 diesel, $63.61 at $6.20</small></div>
+  <div><span>Mill utilization</span><b>98%</b><small>60 of 63 US mills at capacity</small></div>
+  <div><span>Scarcity, West vs East</span><b>$62 vs $35</b><small>per ton of capacity</small></div>
+  <div><span>Switching gap, median</span><b>$5.20/t</b><small>49% of markets within $5</small></div>
+  <div><span>Costliest outage</span><b>Mansfield, LA</b><small>$171M a year, 201 kt unserved</small></div>
+  <div><span>Maintenance calendar</span><b>$276M → $122M</b><small>staggered vs priced by duals</small></div>
+</div>
+
+<div class="text">
+<p>Some of the findings, in the order they surprised me.</p>
+<ul>
+  <li><strong>A unilateral price increase does not survive the model.</strong> Raise one producer's open-market price by $70 a ton with everyone else unchanged and the open-market tons leave: International Paper loses all 355 kt across 54 market-grade accounts for $4.4 million a year of extra cost to the rest of the network; Pratt loses 517 kt across 73. Increases hold in practice because everyone announces together and because the index covers only about 5% of consumption. The app turns each shock into a call sheet: which market, how many tons, from which mill to which.</li>
+  <li><strong>The 2025 closures were not where freight said they would be.</strong> Run 2024's footprint and the mills that actually closed (Cedar Springs, Riceboro, Savannah, Red River, Forney, Niagara Falls) sit 87% to 100% loaded, ranked 20th to 73rd of 77 on the idle list, because they are in the Southeast and on the Gulf next to the demand and the docks. Regional surplus does better: capacity within 300 miles of those mills ran 0.5 to 3.6 times the demand there. What they shared is in no free dataset: age, cash cost per ton, the capital they needed. The model says so on its own Backtest tab.</li>
+  <li><strong>The middle tier is the loose part.</strong> Board does not go from mills to markets; it goes to 458 corrugator plants, 70 sheet feeders and 634 sheet plants. Those counts are public (Fibre Box Association, AICC) and their locations are not, so the app allocates machines to markets statistically and prices the sheet trade at 1.8 times roll freight because sheets cube out a trailer. National corrugator utilization comes out at 71%, and 179 of the 441 markets have no corrugator at all and live on bought sheets. Whoever publishes the real corrugator list changes this tab.</li>
+  <li><strong>Diesel is a bigger lever on mode than on cost.</strong> From $3 to $6.20 a gallon the freight bill rises 8%; the rail share rises from 39% to 48%. The live weekly EIA price is a scenario in the app.</li>
+</ul>
+</div>
+
+<div class="viz" id="knockouts"></div>
+<div class="viz" id="haul"></div>
+
+<div class="text">
+<h2>4. Where every number comes from</h2>
+<p>Nothing in the model requires a subscription, a membership or a relationship. Here is the full list, what each source gives, and how it gets in.</p>
+</div>
+
+<table class="cmd">
+<thead><tr><th>Source</th><th>What it gives the model</th><th>How it gets in</th></tr></thead>
+<tbody>
+<tr><td>SEC EDGAR 10-K filings (International Paper, Smurfit Westrock, Packaging Corp of America, Graphic Packaging, Greif, Cascades)</td><td>Mill lists, capacities by grade, closures and conversions, integration ("~80% to own plants"). The supply side of the model is reconciled to these tables.</td><td>Read and reconciled by hand with Claude, one row per mill with the citation; EDGAR pulls need only a User-Agent header (a name and an email).</td></tr>
+<tr><td>Company announcements and trade press (Packaging Dive, Recycling Today, PPI Pulp &amp; Paper Week as reported)</td><td>The 2025 and 2026 closures, new machines, acquisitions, index price moves, outage guidance.</td><td>Judgment layer: a monthly and a quarterly review that edits the CSVs and the price points, with sources, and appends to the changelog.</td></tr>
+<tr><td>EPA Facility Registry Service</td><td>Every facility coded NAICS 322211 (corrugated boxes) with name, address and coordinates: 1,796 records, 1,605 distinct sites after de-duplication, plus 498 paper and board mills.</td><td><code>plants.yml</code> downloads the national file and filters it; no key.</td></tr>
+<tr><td>Census County Business Patterns 2023</td><td>Establishments and employment for NAICS 322211 by state (1,159 establishments, 90,228 employees) and by county where not suppressed. Sets each state's share of box demand.</td><td><code>cbp.yml</code> reads the bulk county and state files; no key.</td></tr>
+<tr><td>US Atlas / Census TIGER centroids and population</td><td>3,142 counties, aggregated to 441 demand markets (metro clusters) with population as the within-state fallback weight.</td><td>Static files in <code>data/</code>.</td></tr>
+<tr><td>AF&amp;PA and Fibre Box Association totals</td><td>Industry production, box shipments, operating rate, end-use shares (food and beverage 36%, e-commerce 16–20%), the 458 / 1,092 plant counts. The model's national totals are calibrated to these.</td><td>Quarterly, from the press summaries of the reports.</td></tr>
+<tr><td>AICC</td><td>634 sheet plants (86% independent), about 70 sheet feeders.</td><td>Public statements; counts only.</td></tr>
+<tr><td>EIA weekly on-highway diesel</td><td>National and regional price, every Monday. The live price is a scenario and the series is on the Prices tab.</td><td><code>refresh.yml</code>, Mondays, with a free EIA key.</td></tr>
+<tr><td>FRED (St. Louis Fed)</td><td>Producer price indexes for paperboard mills and corrugated boxes, industrial production of paper, retail and e-commerce sales: the demand backdrop.</td><td><code>refresh.yml</code>, monthly, with a free FRED key.</td></tr>
+<tr><td>BLS QCEW</td><td>County employment for 322211, quarterly, a second opinion on the Census weights.</td><td><code>refresh.yml</code>, quarterly, open endpoint.</td></tr>
+<tr><td>Published containerboard index points as they reach the press</td><td>42-lb kraft liner East and West, 26-lb medium, OCC national and regional: the mill-price inputs on the Prices tab.</td><td>Judgment layer, monthly.</td></tr>
+<tr><td>Google Places (New) text search</td><td>Names, addresses, coordinates, place types and an operational / permanently-closed flag for box plants near each market: a second source against the EPA list.</td><td><code>places.yml</code> on demand, 1,764 calls, inside the free tier.</td></tr>
+<tr><td>Claude with web search</td><td>For each EPA site: operating or closed, corrugator or sheet plant, owner today, whether it is hiring for a second or third shift. Retires the stale third of the EPA list.</td><td><code>verify.yml</code> on demand, budget-capped, about ten cents a site.</td></tr>
+</tbody>
+</table>
+
+<div class="text">
+<h3>The keys, and what they cost</h3>
+<p>Five keys, all stored as GitHub repository secrets, none in the code or the page. Each workflow step is skipped when its key is absent, so the repo runs with none of them.</p>
+</div>
+
+<table class="cmd">
+<thead><tr><th>Key</th><th>Used by</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>EIA_API_KEY</td><td>Weekly diesel</td><td>Free</td></tr>
+<tr><td>FRED_API_KEY</td><td>Price and production series</td><td>Free</td></tr>
+<tr><td>BLS_API_KEY</td><td>QCEW county employment (optional; the open slice works without it)</td><td>Free</td></tr>
+<tr><td>EDGAR_UA</td><td>A User-Agent string for SEC pulls: a name and an email, not a key</td><td>Free</td></tr>
+<tr><td>GOOGLE_MAPS_API_KEY</td><td>Places text search near each market</td><td>Free up to 5,000 calls a month on the Pro tier; the run uses 1,764</td></tr>
+<tr><td>ANTHROPIC_API_KEY</td><td>The site-by-site verification with web search</td><td>About $0.10 a site on Claude Opus 5.5, $0.06 on Sonnet 5.5, $0.02 on Haiku 5.5; roughly $160 for the whole list, half through the Batches API</td></tr>
+<tr><td>none</td><td>The chat on the hosted page</td><td>Runs on the viewer's own Claude account through the artifact runtime; the page holds no key</td></tr>
+</tbody>
+</table>
+
+
+<div class="text">
+<h2>5. What each API actually returns</h2>
+<p>"Free public data" is a slogan until you see the fields. This is what each endpoint gives back, so you can judge what else could be built on it.</p>
+</div>
+
+<table class="cmd">
+<thead><tr><th>API</th><th>What comes back</th><th>Grain, cadence, limits</th></tr></thead>
+<tbody>
+<tr><td>EIA v2, <code>petroleum/pri/gnd/data</code></td><td>Weekly retail on-highway diesel, dollars a gallon, for the US, the five PADD districts, their sub-districts and a few states. The model uses the national series; the regional ones are a diesel-by-region freight factor waiting to happen.</td><td>Weekly since 1994, Monday afternoons. 5,000 rows a request. Free key.</td></tr>
+<tr><td>FRED, <code>series/observations</code></td><td>Date and value for any of roughly 800,000 series. In the model: producer price indexes for paperboard mills and for corrugated boxes, industrial production of paper, e-commerce retail sales, retail sales ex food service. Also available and not yet used: trucking PPI, rail carload indexes, manufacturing employment by state, housing starts.</td><td>Monthly or quarterly; 120 requests a minute. Free key.</td></tr>
+<tr><td>BLS QCEW, open CSV slices and API v2</td><td>Establishments, employment and wages by county, by NAICS code, by quarter. The 322211 slice is the fastest-moving public measure of where box plants are adding or shedding people.</td><td>Quarterly, five months behind. Open slices need no key; the API allows 50 series a query and 500 queries a day with one.</td></tr>
+<tr><td>Census County Business Patterns, API and bulk files</td><td>Establishments, employment, payroll and size-class counts by county and state and NAICS. Employment is suppressed where one plant would be identifiable, which is why the state file is complete and the county file is thin.</td><td>Annual, two years behind. Bulk files need no key.</td></tr>
+<tr><td>EPA Facility Registry Service, national files</td><td>About three million facilities: registry id, names, address, coordinates with a stated accuracy, NAICS and SIC codes, and the ids of every environmental program the site reports under (air permits, TRI, RCRA, water). No operating-status field in the facility file; the program files carry active flags per program, which is the next thing to join.</td><td>Updated continuously, published as a bulk zip. No key. Envirofacts REST serves single-facility queries.</td></tr>
+<tr><td>SEC EDGAR</td><td>Per company: the submissions index (every filing, with its accession number and primary document), the XBRL company-facts file (every tagged financial number by period: revenue, capex, segment data), full-text search across filings, and the documents themselves. Mill lists and capacity appendices live in the 10-K text, which is why that part is read rather than parsed.</td><td>Continuous. Ten requests a second with a User-Agent header. No key.</td></tr>
+<tr><td>Google Places API (New), Text Search</td><td>For a query biased to a point: up to 20 places a page with id, display name, formatted address, coordinates, types and primary type, and a <code>businessStatus</code> of operational, temporarily closed or permanently closed. Website, phone and hours cost more. The permanently-closed flag is the cheapest signal there is against the EPA list's stale third.</td><td>Billed by field tier: 5,000 free calls a month on the Pro tier, then $32 a thousand; website or phone move a call to the Enterprise tier with 1,000 free. The run takes 1,764 calls.</td></tr>
+<tr><td>Google Routes API, route matrix</td><td>Real driving distance and time for each origin-destination pair, with traffic if asked. Would replace the model's 1.2 × great-circle road factor with measured road miles for all 27,783 mill-market pairs.</td><td>Billed per element; a one-time run over every pair is a few hundred dollars. Not yet used; listed because it is the obvious next freight upgrade.</td></tr>
+<tr><td>Anthropic Messages API</td><td>Content blocks: the text, the tool calls, the server-side web searches with the URLs and titles they returned, and citations into them; a usage object with input, output and cached tokens and the count of searches; a stop reason. With a strict tool schema the answer is a typed record, not prose. The Batches endpoint takes the same requests at half the token price with a 24-hour window.</td><td>Billed per token and per search; see the key table. The model's calls are capped by the workflow budget and logged per site.</td></tr>
+</tbody>
+</table>
+
+<div class="text">
+<h3>What stays behind the wall</h3>
+<p>Mill cash costs. Contract prices and the discounts off the index. The index series themselves (Fastmarkets RISI is the record; only the moves reach the press). FBA's regional shipment detail. Which plants a corrugator list actually contains. Those four things are the difference between this model and the one the planning groups run, and the Method tab says so.</p>
+
+<h2>6. Cleaning, and how far off it still is</h2>
+<p>Transparency means the misses are on the page next to the hits. In order of effort:</p>
+<ul>
+  <li><strong>The mill table.</strong> Ninety mills in the US and Canada, from the 10-K property lists and capacity appendices, the Smurfit Westrock mill table, PCA's capacity disclosures, company sites for the privates (Pratt, Green Bay Packaging, New-Indy, Cascades) and the closure notices for everything that changed in 2025 and 2026. Each row carries its source and a confidence grade. Mexican mills were dropped after the first run showed them feeding Texas with a fan of arcs that no one in Texas would recognize; Canadian mills serve the US at 35% of capacity. Geocoding ran through a free ZIP database with a dozen manual fixes (Solvay, Gladstone, the Ontario towns) that would otherwise have silently dropped 770 kt from the model.</li>
+  <li><strong>Demand.</strong> The first version put box demand where people live, scaled by state manufacturing shares. Against the EPA plant registry that proxy had an RMS log error of 0.45 by state: Florida at twice its real weight, Illinois and New Jersey at half. The second version replaced it: Census employment for 322211 sets each state's share exactly, the EPA plant counts place 70% of it within the state and population 30%. Moving the demand shortened the average haul from 568 to 514 miles and cut freight from $64 to $60 a ton; the switching gaps barely moved, which is the kind of stability you want from a finding.</li>
+  <li><strong>The EPA list.</strong> 1,796 records collapse to 1,605 sites once duplicate registrations at the same coordinates are merged. The registry has no operating-status field, so the list is a superset of the roughly 1,100 plants the FBA and the Census count: about a third are closed, mis-coded or an office. The Claude verification pass exists to retire those one by one, with a URL on each verdict.</li>
+  <li><strong>The sheet tier.</strong> Counts are public; locations are not. The corrugator layer is statistical and the tab says "allocated" wherever it is.</li>
+</ul>
+<p>And the calibration, which is the honest scoreboard:</p>
+</div>
+
+<table class="cmd">
+<thead><tr><th>Check</th><th>Model</th><th>Reported</th></tr></thead>
+<tbody>
+<tr><td>US containerboard capacity, 2024</td><td>39.6 Mt</td><td>~41.4 Mt (AF&amp;PA), −4%; most of the gap is Canadian imports the LP under-pulls</td></tr>
+<tr><td>International Paper US capacity</td><td>12.8 Mt</td><td>12.98 Mt (10-K), −1%</td></tr>
+<tr><td>Packaging Corp of America</td><td>5.59 Mt</td><td>5.8 Mt</td></tr>
+<tr><td>Smurfit Westrock</td><td>7.23 Mt</td><td>the 10-K mill table, by construction</td></tr>
+<tr><td>2024 tons shipped</td><td>38.8 Mt</td><td>37.7 Mt produced; demand was set from box shipments and trade, so landing on production is a check, not a fit</td></tr>
+<tr><td>Operating rate</td><td>98%</td><td>~95%</td></tr>
+<tr><td>IP board to own plants</td><td>88% own + 9% exported</td><td>~80% own (10-K)</td></tr>
+<tr><td>Smurfit Westrock integration</td><td>86%</td><td>~81% implied</td></tr>
+<tr><td>Demand by state</td><td>exact</td><td>by construction, from Census employment; what remains is within-state placement</td></tr>
+<tr><td>Fourteen Monte Carlo draws on the inputs</td><td colspan="2">average haul 544 ± 26 mi, rail share 0.43 ± 0.02, freight $62 ± 2/t, IP integration 0.87 ± 0.04; the capacity duals are the unstable part, because the network runs within 3% of sold out and a small demand shift flips which mill is marginal</td></tr>
+</tbody>
+</table>
+
+<div class="text">
+<h2>7. A tour, page by page</h2>
+<p>Nine tabs and a chat. Each one is a view of the same solved network; the scenario picker on the right (2024 footprint, 2026 footprint, the counterfactual, diesel at three prices, twelve maintenance months, twenty knockouts) changes every number on the page.</p>
+
+<h3>Flows</h3>
+</div>
+<figure><img src="../models/the-paper-network/shots/flows.png" alt="The Flows tab: a map of the US with 63 mills as colored dots by owner and the min-cost flows to 441 markets drawn as arcs; cards below show tons by distance band and integration by owner." loading="lazy"><figcaption>Every ton of board, mill to market, October 2026 footprint. Hover a mill for its utilization and scarcity value, a market for its delivered marginal cost and suppliers. The bars below give tons by distance band (truck under 450 miles, rail beyond) and the integration table compares the model's own-plant share with what each company discloses.</figcaption></figure>
+<div class="text"><p>The legend doubles as a filter. Knock out a mill from the dropdown and the arcs redraw from the re-solved network; pick a maintenance month and the mills down that month hollow out.</p>
+
+<h3>Corrugators</h3></div>
+<figure><img src="../models/the-paper-network/shots/corrugators.png" alt="The Corrugators tab: markets colored by corrugator load, sheet flows between markets, and a calculator for corrugator capacity." loading="lazy"><figcaption>The middle tier. Markets colored by how loaded their corrugators are, sheet flows from feeders to the markets without a machine, and a calculator that turns width, speed, hours and OEE into tons a year, so you can argue with the assumptions.</figcaption></figure>
+
+<div class="text"><h3>Throughput</h3></div>
+<figure><img src="../models/the-paper-network/shots/throughput.png" alt="The Throughput tab: a chain diagram from mills through corrugators to boxes, with tons per day at each stage and a table of truckloads and railcars." loading="lazy"><figcaption>Each piece of the chain in the units its operators use: tons a day at the mills, million square feet a day on the corrugators, truckloads and railcars on the lanes. Per calendar day or per year.</figcaption></figure>
+
+<div class="text"><h3>Will you switch?</h3></div>
+<figure><img src="../models/the-paper-network/shots/switch.png" alt="The Will you switch tab: markets with their cheapest and second-cheapest mills, and the call sheet after International Paper raises its open-market price by $70 a ton." loading="lazy"><figcaption>For every market, the cheapest mill by delivered freight and the one behind it. Pick a producer and raise its open-market price $70; the call sheet lists each account that moves, the tons, and the mill that takes them. The gap column is the price of loyalty.</figcaption></figure>
+
+<div class="text"><h3>Prices and delivered cost</h3></div>
+<figure><img src="../models/the-paper-network/shots/prices.png" alt="The Prices tab: a map colored by delivered paper cost per thousand square feet, with a calculator for ECT and Mullen specs, liner and medium prices and diesel." loading="lazy"><figcaption>What a thousand square feet of board costs delivered in every market: mill prices from the published index, freight from the model, diesel from the EIA. Switch between an ECT spec and a Mullen spec, type your own prices, and see the freight share of delivered cost by market. The FRED series sit below.</figcaption></figure>
+
+<div class="text"><h3>Fiber loop</h3></div>
+<figure><img src="../models/the-paper-network/shots/fiber.png" alt="The Fiber loop tab: OCC flows from where boxes are consumed to recycled mills and export ports." loading="lazy"><figcaption>The network in reverse. Thirty million tons of OCC routed from where boxes are used to the recycled mills and the docks: 18 Mt to mills, 8.4 Mt exported, 3.8 Mt the model cannot place at today's mill appetite. The county value is the dual: what a ton of OCC is worth where it is collected.</figcaption></figure>
+
+<div class="text"><h3>Demand</h3></div>
+<figure><img src="../models/the-paper-network/shots/demand.png" alt="The Demand tab with named plants on: 1,605 EPA box-plant sites as small dots over the market demand circles, with a search box." loading="lazy"><figcaption>Where the boxes are made. Census employment sets each state's share, the EPA registry places it within the state, and the plants themselves are on the map by name: search a company, a city or a state. The note on the card says plainly that the list is a superset and roughly a third of it is stale.</figcaption></figure>
+
+<div class="text"><h3>Backtest</h3></div>
+<figure><img src="../models/the-paper-network/shots/backtest.png" alt="The Backtest tab: the 2024 footprint with the mills that closed in 2025 and 2026 highlighted, and their rank on the model's idle list." loading="lazy"><figcaption>The honest miss. The 2024 network with the mills that closed in 2025 and 2026 marked: all of them loaded, none of them on the idle list, and the surplus column that does better.</figcaption></figure>
+
+<div class="text"><h3>Method and data</h3></div>
+<figure><img src="../models/the-paper-network/shots/method.png" alt="The Method tab: the model's assumptions, the calibration table and the source list." loading="lazy"><figcaption>The assumptions, the calibration table above, the error bars, and a source for every anchor. If a number on another tab looks wrong, this is where to check what it was built from.</figcaption></figure>
+
+<div class="text"><h3>Ask the network</h3></div>
+<figure><img src="../models/the-paper-network/shots/chat.png" alt="The chat drawer open over the Flows tab, answering what happens if the Mansfield mill goes down, with a line underneath listing the page lookups the answer was built from." loading="lazy"><figcaption>On the claude.ai copy, a chat drawer answers from the model: it calls page functions (find a mill, find a market, the knockouts, a price shock, the scenario KPIs) and under every answer lists exactly which lookups it made, with the raw data one click away. An answer about the network with no lookup under it reads as unsupported, and says so.</figcaption></figure>
+<div class="text">
+<p>That provenance line is my answer to the obvious question about putting a language model in front of a model: how do you know it is not making the numbers up? You do not trust it; you check it. The chat cannot browse, has no memory between questions, and sees nothing about the network except what the page functions return. The functions run in your browser, on the same JSON the map is drawn from, and the trail shows the call and the result. It runs on the viewer's own Claude account, so there is no key anywhere in the page and nothing is sent to me.</p>
+
+<h2>8. How it is built</h2>
+<p>One repository, one static page, one solver, no server. The pipeline, top to bottom:</p>
+</div>
+
+<pre class="flow">sources ──▶ ingest/            EPA FRS, Census CBP, EIA, FRED, BLS QCEW, EDGAR, Places, Claude verify
+            └─▶ data/*.csv      mills_final.csv (90 mills, a source per row), plants_frs_box.csv, counties.csv, prices
+model/netmodel.py               demand aggregation (3,142 counties → 441 markets) · freight rule · the LP with
+                                owner copies, grade split, premium and unmet arcs, export sinks · duals · prospects · OCC loop
+model/export_json.py            every scenario: 2 footprints, counterfactual, 3 diesel prices, 12 months, 20 knockouts,
+                                5 price shocks, the calendar MILP, the backtest · ~3 minutes on a laptop
+model/corrugators.py            the sheet tier: counts → machines → capacity → the sheet trade as a transportation LP
+model/plants_layer.py           EPA + Census → measured demand weights, with the proxy error measured
+site/build_site.py              one HTML page + one 1.8 MB data file + a self-contained copy for claude.ai
+.github/workflows/              refresh (scheduled), plants, cbp, places, verify (on demand) · commits what changed</pre>
+
+<div class="text">
+<ul>
+  <li><strong>The solver.</strong> <code>scipy.optimize.linprog</code> with the HiGHS backend for the flow LPs; <code>scipy.optimize.milp</code> for the maintenance calendar. Nothing proprietary, nothing that needs a license.</li>
+  <li><strong>The page.</strong> Plain HTML, d3 v7 from a CDN, an Albers USA basemap pre-projected to SVG paths so the map draws instantly, a light and a dark theme on the same tokens as this blog, and a layout that holds at phone width. No framework, no build step beyond the Python script that injects the data.</li>
+  <li><strong>The AI pair.</strong> Claude did the research reads (the 10-K tables, the closure notices, the plant counts), wrote the model and the page with me, ran the calibration and wrote the notes that say where it is off. I set the problem, the assumptions, the industry sanity checks and the rule that nothing non-public goes in. Every figure in the data folder carries its URL, so the division of labor does not matter to a reader who wants to check a number: the check is the same either way.</li>
+  <li><strong>The verification layer.</strong> The same model that wrote the code now reads the web for each plant through the API, with a strict output schema (operating, plant type, owner, shifts, evidence URL, confidence), a spend cap, and a ledger of what each site cost. It is an ingest script like the others, and its output is a CSV with a URL on every row, not an opinion.</li>
+  <li><strong>The chat.</strong> Thirty lines of page functions over the same data file, exposed to the claude.ai artifact runtime as tools, with the provenance trail above. The GitHub Pages copy shows the drawer with a link to the live one, because a static page cannot hold a key.</li>
+</ul>
+
+
+<h2>9. Is the AI part right? Golden sets, evals and guardrails</h2>
+<p>Two parts of the project run on a language model, and they need different kinds of proof.</p>
+<p><strong>The verification pass</strong> is a classifier with a search engine. The right question is not "is Claude smart" but "what is its accuracy per field against a labeled set, and what does it do when it does not know". The plan, part of which is in the repo under <code>evals/</code>:</p>
+<ul>
+  <li><strong>A golden set from sources that cannot be wrong about themselves.</strong> The integrated producers publish their own plant lists; the 2025 and 2026 closures are in the press with dates. That is a few hundred sites with a known owner, type and status, and it costs an afternoon to assemble. Run the pass over them and you get precision and recall per field (operating, plant type, owner, shifts), a confusion matrix, and a calibration curve for the confidence field: does "high" mean 95% or 70%?</li>
+  <li><strong>Two models, one question.</strong> A random 5% of every run is re-checked by a second model (<code>evals/verify_audit.py</code>); the disagreement rate is the drift alarm, and the disagreements are the review queue.</li>
+  <li><strong>A fixed re-run set.</strong> The same fifty sites every month, so a change in the model, the prompt or the web shows up as a change in the answers before it shows up on the map.</li>
+  <li><strong>Guardrails that are rules, not hopes.</strong> The output schema is strict and "unknown" is a legal answer. The pass can only <em>remove</em> a site from the demand layer, never add one, and only when it says "closed" with high confidence and an evidence URL; everything else is a flag. Large sites and low-confidence verdicts go to a human list. Every call is budget-capped and every site's cost is in a ledger. The pipeline that consumes the CSV is deterministic code; the model never touches the model.</li>
+</ul>
+<p><strong>The chat</strong> is a different animal: open questions, no fixed answer key, a reader who may take the number at face value. Its correctness rests on the tools, so the evals test the tools' use rather than the prose:</p>
+<ul>
+  <li><strong>A generated golden set.</strong> <code>evals/chat_golden.py</code> writes a few dozen questions whose answers are computed from the data file itself: what the Mansfield outage costs, who supplies Chicago, what International Paper loses at +$70, the freight bill at $6.20 diesel, plus a handful of questions whose correct answer is "that is not public". <code>evals/run_chat_eval.py</code> asks them through the API with the same five tools implemented in Python and scores three things: does the expected number appear, did a lookup happen before any number was stated, and did the non-public questions get a refusal instead of an invention.</li>
+  <li><strong>The provenance trail as a guardrail.</strong> Under every answer the drawer lists the lookups it made and the raw data they returned. A deterministic check in the page flags any answer that quotes dollars, tons or percentages about the network without a single lookup behind it. The reader does not have to trust the model; the page tells them when there is nothing to check.</li>
+  <li><strong>What the chat cannot do by construction.</strong> No browsing, no memory between questions, no system prompt but the page's rules, no data but the page functions' results, and the viewer's own account paying, which bounds abuse.</li>
+</ul>
+<p>The honest summary is that the deterministic model is the product and the language model is a clerk with a search engine on one side and a reading assistant on the other. Both are checked the way you would check a clerk: against a labeled sample, by a second clerk, on a schedule, with the authority to flag but not to decide.</p>
+
+<h2>10. How it stays current</h2>
+<p>Two kinds of refresh. Sources with an API or a bulk file are machine work on a schedule; things that only exist as announcements are judgment work, done on a calendar by a Claude session with a narrow brief and a hard rule to change only data and notes, never the model.</p>
+</div>
+
+<table class="cmd">
+<thead><tr><th>When</th><th>What lands</th><th>Who</th></tr></thead>
+<tbody>
+<tr><td>Every Monday</td><td>EIA diesel, national and regional; the live price scenario and the Prices series</td><td>machine</td></tr>
+<tr><td>9th of the month</td><td>Index moves (liner, medium, OCC), closures and capacity announcements since the last run, FRED series; model re-run; site rebuilt</td><td>judgment + machine</td></tr>
+<tr><td>28th of Jan, Apr, Jul, Oct</td><td>AF&amp;PA quarterly, the three earnings releases, QCEW; outage guidance and mill status; demand totals re-set</td><td>judgment + machine</td></tr>
+<tr><td>March</td><td>New 10-Ks: the mill table re-reconciled; plant counts</td><td>machine pulls, judgment reconciles</td></tr>
+<tr><td>June, annually</td><td>Census County Business Patterns, EPA registry: demand weights and the plant list</td><td>machine, on demand</td></tr>
+<tr><td>On the day</td><td>A closure, a conversion, a price increase: the row changes and the model re-runs on the push</td><td>judgment</td></tr>
+</tbody>
+</table>
+
+<div class="text">
+<p>Every push to the model or the data re-solves everything and redeploys the page; the commit history is the audit trail. The first scheduled run with the keys in place landed 10,207 weekly diesel observations, 716 FRED rows and a 610-county QCEW slice without anyone touching it.</p>
+
+<h2>11. Dream big</h2>
+<p>The model is a public draft. Here is what it becomes with one more layer, in roughly the order the layers are available.</p>
+<ul>
+  <li><strong>A verified plant list.</strong> Run the Claude pass across all 1,605 sites and the EPA superset becomes a list of operating plants with a plant type, an owner and a shift signal each. Corrugator operators are hard to hire; a plant posting for a third-shift corrugator crew is telling you its order book. That is the "corrugator shift" layer, and it costs about $160.</li>
+  <li><strong>A named corrugator map.</strong> Places results plus the verification plus the permit records that list machine widths turn the statistical sheet tier into a real one: which markets are long sheets and which are short, by machine.</li>
+  <li><strong>A cash-cost layer.</strong> Mill age, furnish, energy source and capital history are mostly scattered across public filings, permits and press. Put a cost-per-ton estimate on each mill and the closure backtest stops missing, because the model finally has the variable the closures shared.</li>
+  <li><strong>Demand that moves.</strong> County Business Patterns by end-use industry (food, beverage, chemicals, furniture, e-commerce fulfillment) gives each market its own mix instead of a national one; QCEW and the FRED retail series let the demand map breathe quarterly rather than annually.</li>
+  <li><strong>A sales engine.</strong> The "will you switch" tab already produces a list of accounts and gaps. With a named plant list it becomes a ranked list of plants, with the mill that could serve them cheaper and by how much, refreshed every Monday with diesel. A sales manager with that list and a phone is dangerous.</li>
+  <li><strong>A buyer's counter.</strong> The same numbers run the other way: a box buyer with the delivered-cost contour and the scarcity map knows which mills need the volume and which do not, before the negotiation starts.</li>
+  <li><strong>The fiber arbitrage.</strong> Regional OCC prices against the loop's county values show where recovered fiber is mispriced relative to where it is wanted; with Nine Dragons' US mills in the table, the export docks compete with them explicitly.</li>
+  <li><strong>A scheduler.</strong> The calendar tab is a start. With real outage durations and per-machine grades it becomes the thing the planning groups actually run, on public data, in the open.</li>
+  <li><strong>An analyst that cites.</strong> The chat with its provenance trail is a pattern, not a feature: any public model can be put in front of a reader this way, with every answer carrying the lookups it was built from.</li>
+</ul>
+<p>None of that requires a single private number. All of it requires the public draft to exist first, which is why it is public.</p>
+
+<h2>12. What it is not</h2>
+<ul>
+  <li>It does not know who ships to whom today. The flows are what a cost minimizer would do, and sales history differs from that everywhere.</li>
+  <li>It does not price a contract. The mill prices on the Prices tab are the index points that reached the press, and the index covers a sliver of consumption.</li>
+  <li>It does not replace a RISI subscription, an FBA membership or a planning group. It is the map those things are drawn on, with its error bars showing.</li>
+  <li>The sheet tier is allocated, the EPA list is a superset, and the capacity duals move when a demand assumption moves, because the network runs within 3% of sold out.</li>
+</ul>
+<p>The real risk of a public model is not that it is wrong; it is that someone treats a $5.20 median gap as a quote. The page is written against that, and so is this post.</p>
+
+<h2>13. Use it, break it, fix a row</h2>
+<p>The repository is MIT. <code>NEEDS.md</code> lists what the project still wants from outside and why; <code>ROADMAP.md</code> is the layer list above with the next step on each; <code>REFRESH.md</code> is the calendar; the notes folder has the calibration write-up, the market anchors with their links, and the changelog. The fastest contribution is a row: a mill capacity you know is wrong, a plant that closed, a closure the press missed. Open an issue with the source and it is in the next run.</p>
+<p>Treat the app as a public draft of a map the industry already has in pieces. Every number carries its source. The ones that are wrong are the ones worth telling me about.</p>
+
+<h3>Sources</h3>
+<ul>
+  <li>SEC EDGAR 10-K filings: International Paper, Smurfit Westrock, Packaging Corp of America, Graphic Packaging, Greif, Cascades; mill lists and capacity appendices.</li>
+  <li>EPA Facility Registry Service, national facility file, NAICS 322211, 322130, 322120.</li>
+  <li>US Census Bureau, County Business Patterns 2023, NAICS 322211, county and state files.</li>
+  <li>Bureau of Labor Statistics, Quarterly Census of Employment and Wages, NAICS 322211.</li>
+  <li>US Energy Information Administration, weekly retail on-highway diesel prices, national and PADD.</li>
+  <li>Federal Reserve Bank of St. Louis, FRED: PCU322130322130, PCU322211322211, IPG322S, ECOMSA, RSXFS.</li>
+  <li>American Forest &amp; Paper Association and Fibre Box Association, published totals and press summaries; AICC member counts.</li>
+  <li>Trade press for closures, conversions and index moves: Packaging Dive, Recycling Today, PPI Pulp &amp; Paper Week as reported.</li>
+  <li>Korte &amp; Vygen, Combinatorial Optimization, ch. 9 (minimum-cost flows); Ahuja, Magnanti &amp; Orlin, Network Flows, ch. 9–11; HiGHS (Huangfu &amp; Hall) via SciPy.</li>
+  <li>Full list with URLs and confidence grades: <code>notes/industry_calibration.md</code> and <code>notes/market_anchors.md</code> in the repo.</li>
+</ul>
+</div>
+
+<footer><span>Jason Fetzer</span><span>Built with Claude as the pair. Every number carries its source.</span></footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script>
+(function(){
+// ---------- the toy instance: three mills, four markets, freight $/t ----------
+const TOY={mills:[{n:'Gulf mill',cap:60},{n:'Midwest mill',cap:40},{n:'West mill',cap:50}],markets:[{n:'Dallas',dem:30},{n:'Chicago',dem:40},{n:'Atlanta',dem:35},{n:'Los Angeles',dem:25}],
+  cost:[[22,45,30,95],[48,18,42,110],[70,105,120,20]]};
+
+// min-cost flow by successive shortest paths on a residual graph (Bellman-Ford, so reverse arcs with negative cost are fine)
+function buildGraph(T){
+  const S=0, M=i=>1+i, K=j=>1+T.mills.length+j, Tt=1+T.mills.length+T.markets.length, n=Tt+1, edges=[];
+  const add=(u,v,cap,cost,tag)=>{edges.push({u,v,cap,cost,flow:0,tag}); edges.push({u:v,v:u,cap:0,cost:-cost,flow:0,rev:true,tag});};
+  T.mills.forEach((m,i)=>add(S,M(i),m.cap,0,'s'+i));
+  T.mills.forEach((m,i)=>T.markets.forEach((k,j)=>add(M(i),K(j),1e9,T.cost[i][j],'a'+i+'_'+j)));
+  T.markets.forEach((k,j)=>add(K(j),Tt,k.dem,0,'t'+j));
+  return {n,S,T:Tt,M,K,edges};
+}
+function shortest(G,src){ // Bellman-Ford over residual edges (cap-flow>0); returns distances and the edge used to reach each node
+  const dist=Array(G.n).fill(Infinity), via=Array(G.n).fill(-1); dist[src]=0;
+  for(let it=0;it<G.n;it++){let ch=false; G.edges.forEach((e,id)=>{ if(e.cap-e.flow>0&&dist[e.u]+e.cost<dist[e.v]-1e-9){dist[e.v]=dist[e.u]+e.cost; via[e.v]=id; ch=true;} }); if(!ch)break;}
+  return {dist,via};
+}
+function ssp(T){ // every augmentation, recorded for the animation; then the duals from one more shortest-path pass
+  const G=buildGraph(T), steps=[]; let total=0;
+  for(;;){ const {dist,via}=shortest(G,G.S); if(dist[G.T]===Infinity)break;
+    const path=[]; for(let v=G.T; v!==G.S; v=G.edges[via[v]].u) path.unshift(via[v]);
+    const push=Math.min(...path.map(id=>G.edges[id].cap-G.edges[id].flow));
+    path.forEach(id=>{G.edges[id].flow+=push; G.edges[id^1].flow-=push;});
+    total+=push*dist[G.T]; steps.push({path:path.slice(),push,unit:dist[G.T],total});
+  }
+  const {dist}=shortest(G,G.S); // potentials: the dual prices
+  const duals={mill:T.mills.map((m,i)=>dist[G.M(i)]),market:T.markets.map((k,j)=>dist[G.K(j)])};
+  return {G,steps,duals};
+}
+
+viz('ssp',function(){
+  const T=TOY, W=760, H=370, root=d3.select('#ssp'), bar=root.append('div').attr('class','bar');
+  const bStep=bar.append('button').text('Step'), bRun=bar.append('button').text('Run'), bReset=bar.append('button').text('Reset'); const st=bar.append('span').attr('class','st');
+  const svg=root.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Three mills on the left, four markets on the right, freight costs on the arcs; successive shortest paths animate the augmenting paths');
+  const steps=root.append('div').attr('class','steps');
+  const res=ssp(T), G=res.G, mx=170, kx=590, my=i=>70+i*110, ky=j=>48+j*88;
+  // arcs mill->market
+  const arcs=svg.append('g').selectAll('path').data(T.mills.flatMap((m,i)=>T.markets.map((k,j)=>({i,j})))).join('path').attr('class','e')
+    .attr('d',d=>`M${mx+42},${my(d.i)} C${(mx+kx)/2},${my(d.i)} ${(mx+kx)/2},${ky(d.j)} ${kx-42},${ky(d.j)}`);
+  svg.append('g').selectAll('text').data(T.mills.flatMap((m,i)=>T.markets.map((k,j)=>({i,j})))).join('text').attr('class','cost')
+    .attr('x',d=>mx+42+(kx-42-mx-42)*(0.22+0.14*d.i)).attr('y',d=>{const t=0.22+0.14*d.i; const y0=my(d.i), y1=ky(d.j); const u=1-t; return u*u*u*y0+3*u*u*t*y0+3*u*t*t*y1+t*t*t*y1-3;}).text(d=>'$'+T.cost[d.i][d.j]);
+  // nodes
+  const mg=svg.append('g').selectAll('g').data(T.mills).join('g').attr('transform',(d,i)=>`translate(${mx},${my(i)})`);
+  mg.append('circle').attr('class','node').attr('r',40); mg.append('text').attr('class','lbl').attr('text-anchor','middle').attr('y',-4).text(d=>d.n);
+  const mSub=mg.append('text').attr('class','sub').attr('text-anchor','middle').attr('y',11).text(d=>`0 / ${d.cap} kt`);
+  const mDual=mg.append('text').attr('class','dual').attr('text-anchor','end').attr('x',-48).attr('y',4);
+  const kg=svg.append('g').selectAll('g').data(T.markets).join('g').attr('transform',(d,j)=>`translate(${kx},${ky(j)})`);
+  kg.append('circle').attr('class','node').attr('r',40); kg.append('text').attr('class','lbl').attr('text-anchor','middle').attr('y',-4).text(d=>d.n);
+  const kSub=kg.append('text').attr('class','sub').attr('text-anchor','middle').attr('y',11).text(d=>`0 / ${d.dem} kt`);
+  const kDual=kg.append('text').attr('class','dual').attr('x',48).attr('y',4);
+  svg.append('text').attr('class','sub').attr('x',mx).attr('y',H-10).attr('text-anchor','middle').text('mills: tons shipped / capacity');
+  svg.append('text').attr('class','sub').attr('x',kx).attr('y',H-10).attr('text-anchor','middle').text('markets: tons received / demand');
+  let k=0, timer=null;
+  function flows(upto){ const f=T.mills.map(()=>T.markets.map(()=>0)); res.steps.slice(0,upto).forEach(s=>s.path.forEach(id=>{const e=G.edges[id]; const m=e.tag.match(/^a(\d+)_(\d+)$/); if(!m)return; f[+m[1]][+m[2]]+=e.rev?-s.push:s.push;})); return f; }
+  function draw(){
+    const f=flows(k), cur=k>0?res.steps[k-1]:null, done=k>=res.steps.length;
+    arcs.attr('class',d=>{ if(cur){const onPath=cur.path.some(id=>{const e=G.edges[id]; return e.tag==='a'+d.i+'_'+d.j;}); if(onPath){const e=G.edges[cur.path.find(id=>G.edges[id].tag==='a'+d.i+'_'+d.j)]; return e.rev?'e rev':'e path';}} return f[d.i][d.j]>0?'e used':'e';});
+    mSub.text((d,i)=>`${d3.sum(f[i])} / ${d.cap} kt`); kSub.text((d,j)=>`${d3.sum(f.map(r=>r[j]))} / ${d.dem} kt`);
+    mg.select('circle').attr('class',(d,i)=>d3.sum(f[i])>=d.cap?'node sat':'node');
+    mDual.text((d,i)=>done?`worth $${res.duals.mill[i]}/t`:''); kDual.text((d,j)=>done?`last ton $${res.duals.market[j]}`:'');
+    st.text(cur?`step ${k} of ${res.steps.length}: ${cur.push} kt at $${cur.unit}/t, total $${(cur.total/1000).toFixed(2)}M`:'click Step');
+    steps.html(res.steps.map((s,i)=>{const names=s.path.map(id=>G.edges[id]).filter(e=>/^a/.test(e.tag)).map(e=>{const m=e.tag.match(/^a(\d+)_(\d+)$/); return (e.rev?'take back ':'')+T.mills[+m[1]].n+' → '+T.markets[+m[2]].n;}).join(', ');
+      return `<div class="${i===k-1?'cur':''}"><b>${i+1}.</b> ${names}: <b>${s.push} kt</b> at $${s.unit}/t</div>`;}).slice(0,k).join('')+(done?`<div><b>optimal</b>: $${(res.steps[res.steps.length-1].total/1000).toFixed(2)}M. Prices from one more shortest-path pass: a full mill's value is the cost of freeing a ton there; a market's price is the cost of one more ton delivered. On every arc that carries flow, market price − mill value = freight.</div>`:''));
+    bStep.property('disabled',done); bRun.property('disabled',done);
+  }
+  bStep.on('click',()=>{if(k<res.steps.length){k++;draw();}});
+  bRun.on('click',()=>{ if(timer)return; timer=setInterval(()=>{ if(k>=res.steps.length){clearInterval(timer);timer=null;return;} k++; draw(); },900); });
+  bReset.on('click',()=>{ if(timer){clearInterval(timer);timer=null;} k=0; draw(); });
+  draw();
+},[buildGraph,shortest,ssp]);
+
+// ---------- the expanded network of the real model ----------
+viz('expansion',function(){
+  const W=760,H=300, svg=d3.select('#expansion').append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','The expanded network: mills, owner copies of each market, grade split, demand, export ports, premium and unmet arcs');
+  const col=[{x:60,t:'mills',s:'63 US + 8 CA, capacity'},{x:270,t:'owner copies',s:'IP · SW · PCA · GP · Pratt · GBP · Cascades · open'},{x:480,t:'grade',s:'liner 65% · medium 35%'},{x:680,t:'demand',s:'441 markets + ports'}];
+  col.forEach(c=>{svg.append('text').attr('class','lbl').attr('x',c.x).attr('y',22).attr('text-anchor','middle').text(c.t); svg.append('text').attr('class','sub').attr('x',c.x).attr('y',36).attr('text-anchor','middle').text(c.s);});
+  const box=(x,y,w,h,t,cls)=>{const g=svg.append('g').attr('class','box'); g.append('rect').attr('x',x-w/2).attr('y',y-h/2).attr('width',w).attr('height',h).attr('rx',6).attr('class',cls||''); g.append('text').attr('x',x).attr('y',y+4).attr('text-anchor','middle').attr('font-size',10.5).text(t); return g;};
+  const arrow=(x1,y1,x2,y2,cls,label)=>{svg.append('path').attr('class','arrow '+(cls||'')).attr('d',`M${x1},${y1} C${(x1+x2)/2},${y1} ${(x1+x2)/2},${y2} ${x2},${y2}`); if(label)svg.append('text').attr('class','cost').attr('x',(x1+x2)/2).attr('y',(y1+y2)/2-5).attr('text-anchor','middle').text(label);};
+  ['IP mill','PCA mill','independent'].forEach((t,i)=>box(60,80+i*70,100,30,t));
+  ['IP copy','PCA copy','open market'].forEach((t,i)=>box(270,80+i*70,110,30,t));
+  box(480,100,90,28,'liner'); box(480,170,90,28,'medium');
+  box(680,135,100,30,'Dallas, TX'); box(680,230,100,30,'port: Houston');
+  arrow(110,80,215,80,'','freight'); arrow(110,150,215,150,'','freight'); arrow(110,220,215,220,'','freight');
+  arrow(110,80,215,220,'pen','+$150/t premium'); arrow(110,150,215,80,'pen','+$150/t');
+  [80,150,220].forEach(y=>{arrow(325,y,435,100); arrow(325,y,435,170);});
+  arrow(525,100,630,135); arrow(525,170,630,135); arrow(110,220,630,230,'','export at freight');
+  svg.append('path').attr('class','arrow pen').attr('d','M680,150 L680,190'); svg.append('text').attr('class','cost').attr('x',690).attr('y',175).text('unmet $400/t');
+  svg.append('text').attr('class','sub').attr('x',W/2).attr('y',H-8).attr('text-anchor','middle').text('shown for two owners and one market; the real instance has 7 owners × 441 markets × 2 grades = 93,423 variables');
+});
+
+// ---------- the twenty knockouts ----------
+const KO=[["Mansfield","International Paper","LA",171,201],["Valliant","International Paper","OK",134,131],["Cedar River","International Paper","IA",116,0],["Monticello","Georgia-Pacific","MS",109,0],["Counce","Packaging Corp of America","TN",91,0],["DeRidder","Packaging Corp of America","LA",90,0]];
+viz('knockouts',function(){
+  const root=d3.select('#knockouts'); root.append('div').attr('class','lab').style('font-family','var(--mono)').style('font-size','12px').style('color','var(--ink-3)').style('margin-bottom','8px').text('What a single-mill outage costs the network, $M a year, October 2026 footprint (top six of twenty)');
+  const W=760,rowH=26,H=KO.length*rowH+34, svg=root.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Bar chart of the six costliest single-mill outages');
+  const x=d3.scaleLinear().domain([0,d3.max(KO,d=>d[3])]).range([250,W-90]), color={'International Paper':'var(--s1)','Smurfit Westrock':'var(--s2)','Packaging Corp of America':'var(--s3)','Georgia-Pacific':'var(--s4)'};
+  const g=svg.append('g').selectAll('g').data(KO).join('g').attr('transform',(d,i)=>`translate(0,${i*rowH+6})`);
+  g.append('text').attr('class','lab').attr('x',240).attr('y',14).attr('text-anchor','end').text(d=>`${d[0]}, ${d[2]} (${d[1].replace('Packaging Corp of America','PCA').replace('International Paper','IP').replace('Georgia-Pacific','GP')})`);
+  g.append('rect').attr('x',250).attr('y',3).attr('height',rowH-9).attr('width',d=>x(d[3])-250).attr('fill',d=>color[d[1]]||'var(--other)').attr('rx',2);
+  g.append('text').attr('class','val').attr('x',d=>x(d[3])+6).attr('y',14).text(d=>`$${d[3]}M`+(d[4]?` · ${d[4]} kt unserved`:''));
+  svg.append('text').attr('class','sub').attr('x',250).attr('y',H-6).text('extra freight + open-market purchases at $150/t + unmet demand at $400/t, each mill removed and the network re-solved');
+});
+
+// ---------- tons by distance band ----------
+const HAUL=[["0–150",6.13,0],["150–300",8.37,0],["300–500",4.21,0.76],["500–800",0,5.17],["800–1200",0,4.84],["1200+",0,2.72]];
+viz('haul',function(){
+  const root=d3.select('#haul'); root.append('div').style('font-family','var(--mono)').style('font-size','12px').style('color','var(--ink-3)').style('margin-bottom','8px').text('Board moved by distance band, Mt a year, October 2026: truck below the break, rail above it');
+  const W=760,H=200,m={l:50,r:20,t:10,b:30}, svg=root.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Stacked bars of million tons by distance band, truck and rail');
+  const x=d3.scaleBand().domain(HAUL.map(d=>d[0])).range([m.l,W-m.r]).padding(.25), y=d3.scaleLinear().domain([0,d3.max(HAUL,d=>d[1]+d[2])]).nice().range([H-m.b,m.t]);
+  svg.append('g').attr('class','axis').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(x).tickSize(0)); svg.append('g').attr('class','axis').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4).tickFormat(d=>d+' Mt'));
+  const g=svg.append('g').selectAll('g').data(HAUL).join('g');
+  g.append('rect').attr('x',d=>x(d[0])).attr('width',x.bandwidth()).attr('y',d=>y(d[1])).attr('height',d=>y(0)-y(d[1])).attr('fill','var(--s1)');
+  g.append('rect').attr('x',d=>x(d[0])).attr('width',x.bandwidth()).attr('y',d=>y(d[1]+d[2])).attr('height',d=>y(d[1])-y(d[1]+d[2])).attr('fill','var(--s2)');
+  g.append('text').attr('class','val').attr('x',d=>x(d[0])+x.bandwidth()/2).attr('y',d=>y(d[1]+d[2])-4).attr('text-anchor','middle').text(d=>(d[1]+d[2]).toFixed(1));
+  root.append('div').attr('class','legend').html('<span><i style="background:var(--s1)"></i>truck</span><span><i style="background:var(--s2)"></i>rail</span><span>average haul 513 mi · 42% of tons by rail · the truck-to-rail break sits near 450 miles at $3.75 diesel</span>');
+});
+})();
+</script>
+</body>
+</html>

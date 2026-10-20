@@ -1,0 +1,32 @@
+[
+ {
+  "band": "0-150",
+  "truck_tons": 6129957,
+  "rail_tons": 0
+ },
+ {
+  "band": "150-300",
+  "truck_tons": 8367463,
+  "rail_tons": 0
+ },
+ {
+  "band": "300-500",
+  "truck_tons": 4207486,
+  "rail_tons": 763911
+ },
+ {
+  "band": "500-800",
+  "truck_tons": 0,
+  "rail_tons": 5170961
+ },
+ {
+  "band": "800-1200",
+  "truck_tons": 0,
+  "rail_tons": 4836394
+ },
+ {
+  "band": "1200+",
+  "truck_tons": 0,
+  "rail_tons": 2723827
+ }
+]
