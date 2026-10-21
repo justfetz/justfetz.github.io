@@ -1,0 +1,28 @@
+{
+ "before_10k": {
+  "published": "2026-10-17",
+  "note": "What the post said before the 10-K pass (Q2 2026 release, calls and trade press only; debt-like items set to zero).",
+  "fmt": {
+   "dcf_ps": "$40",
+   "dcf_ps2": "$40.25",
+   "sotp_ps": "$42",
+   "bear_ps": "$13",
+   "mid_ps": "$40",
+   "bull_ps": "$71",
+   "pw_ps": "$40",
+   "p_above": "65%",
+   "p_above_down": "5%",
+   "p_above_base": "91%",
+   "median": "$39",
+   "mean": "$38",
+   "p10": "$17",
+   "p90": "$56",
+   "market_odds": "48%",
+   "fair_odds": "53%",
+   "half_kelly": "0.43",
+   "half_kelly_about": "40%",
+   "median_at_me": "$39",
+   "n_checks": "19"
+  }
+ }
+}

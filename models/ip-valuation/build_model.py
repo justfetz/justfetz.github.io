@@ -89,7 +89,34 @@ inp("chg_ytd", "Share price change, year to date", -0.20, PCT, "MARKET", "Benzin
 inp("chg_12m", "Share price change, last 12 months", -0.23, PCT, "MARKET", "Benzinga, Oct 15, 2026 (rounded).")
 inp("gross_debt", "Gross debt", 9217, USD, "REPORTED", "Q2 2026 balance sheet: notes payable/current maturities $1,002M + long-term debt $8,215M. Excludes $2,131M nonrecourse VIE liabilities.")
 inp("cash", "Cash and temporary investments", 726, USD, "REPORTED", "Q2 2026 balance sheet.")
-inp("pension_other", "Other debt-like items (pension deficit, leases) — placeholder", 0, USD, "JUDGMENT", "Set to 0 pending the 10-K pension note; the Q2 release shows non-operating pension INCOME, so the plan may be near fully funded. Check before publishing.", judgment=True)
+blank()
+header(ws, row, "What behaves like debt but isn't in net debt (FY2025 10-K, filed Feb 2026; balances at Dec 31, 2025)", 5); row += 1
+inp("pen_us_q_assets", "Pension, U.S. qualified plan: assets", 8482, USD, "REPORTED", "10-K MD&A: 'U.S. qualified pension $ 8,116 $ 8,482' (benefit obligation, fair value of plan assets).")
+inp("pen_us_q_pbo", "Pension, U.S. qualified plan: obligation (PBO)", 8116, USD, "REPORTED", "Same table. The plan is overfunded: 'a surplus of $366 million'.")
+inp("pen_uk_surplus", "Pension, UK qualified plan (DS Smith): surplus", 112, USD, "REPORTED", "10-K MD&A: 'an overfunded UK qualified pension with a surplus of $112 million.'")
+inp("pen_us_nq", "Pension, U.S. nonqualified plans: obligation, no assets", 218, USD, "REPORTED", "10-K MD&A: 'U.S. nonqualified pension 218 —'. Paid as benefits come due ($49M in 2025).")
+inp("pen_net", "Pensions, all plans: assets above obligations (the filing's net)", 144, USD, "REPORTED",
+    "10-K MD&A: 'the projected benefit obligation ... was approximately $144 million lower than the fair value of plan assets.' (Risk Factors says $148M; the plan table gives 144.)")
+inp("pen_surplus", "Pension plans in surplus, total (not counted by default)", 486, USD, "REPORTED", "10-K balance sheet: Overfunded Pension Plan Assets $486M.")
+inp("pen_deficit", "Pension plans in deficit, total (counted, after tax)", 342, USD, "REPORTED",
+    "Surplus plans $486M less the $144M net = $342M owed by plans in deficit (balance sheet: Underfunded Pension Benefit Obligations $316M long-term, the rest current).")
+inp("opeb", "Retiree medical and postemployment benefits (counted, after tax)", 133, USD, "REPORTED", "10-K balance sheet: Postretirement and Postemployment Benefit Obligation $133M (long-term).")
+inp("op_leases", "Operating lease liabilities (not counted: the lease cost is already inside EBITDA)", 707, USD, "REPORTED",
+    "Dec 31, 2025: $221M current + $486M long-term (Q1 2026 10-Q lease table, December 31, 2025 column; the 10-K balance sheet shows Long-Term Lease Obligations $486M and Right of Use Assets $697M). Under U.S. GAAP operating lease cost is an operating expense, so EBITDA is after rent; adding the liability too would count it twice.")
+inp("fin_leases", "Finance lease liabilities (not counted again: already inside gross debt)", 71, USD, "REPORTED", "Dec 31, 2025: $17M in current maturities of debt + $54M in long-term debt (Q1 2026 10-Q lease table, December 31, 2025 column); the 10-K's debt maturities 'include financing lease obligations'.")
+inp("timber_dtl", "Deferred tax on the Temple-Inland timber notes, due 2027 (counted)", 487, USD, "REPORTED",
+    "10-K, contractual obligations: '$487 million deferred tax liability related to the Temple-Inland timber monetization, which will be settled with the maturity of the notes in 2027.'")
+inp("vie_assets", "Timber notes held by the special purpose entities (counted, net of the loans)", 2349, USD, "REPORTED", "10-K balance sheet: Long-Term Financial Assets of Variable Interest Entities $2,349M.")
+inp("vie_liab", "Nonrecourse loans against those notes", 2127, USD, "REPORTED",
+    "10-K balance sheet: Long-Term Nonrecourse Financial Liabilities of Variable Interest Entities $2,127M. Not in gross debt above; the notes repay them in 2027.")
+inp("debt_2027", "Regular debt maturing in 2027 (context, not added)", 2584, USD, "REPORTED", "10-K contractual obligations: debt maturities 2026 $992M, 2027 $2,584M, 2028 $739M.")
+inp("utb", "Unrecognized tax benefits (not counted: timing and amount uncertain)", 344, USD, "REPORTED", "10-K contractual obligations footnote: 'approximately $344 million of unrecognized tax benefits'.")
+inp("brazil_tax", "Brazil tax matter via the Sylvamo agreement, IP's share (not counted: contingent, not booked)", 274, USD, "REPORTED",
+    "10-K Risk Factors: 'our potential liability for such assessments would currently be approximately $274 million' (assessments total about $394M, 2007–2015 tax years).")
+inp("count_surplus", "Count the pension surplus too? (1 = yes, 0 = no)", 0, None, "JUDGMENT",
+    "Default no: a surplus can't be spent without an excise tax or years of contribution holidays. Set 1 to net it against the deficits.", judgment=True)
+inp("pension_other", "Debt-like items, after tax (from the 10-K lines above)", None, USD, "DERIVED",
+    "Pension deficits + retiree medical, after tax; minus the surplus if counted; plus the 2027 timber tax; minus the equity in the timber structure (notes less loans). Operating leases excluded.")
 blank()
 
 header(ws, row, "Latest reported and guided financials", 5); row += 1
@@ -151,6 +178,11 @@ blank()
 
 header(ws, row, "Scenario switch", 5); row += 1
 inp("scenario", "Active scenario (1 = Bear, 2 = Mid-cycle, 3 = Bull) — drives the Scenarios sheet overrides", 2, '0', "JUDGMENT", "The Model sheet uses the Inputs above directly; the Scenarios sheet runs all three side by side.", judgment=True)
+# the debt-like total is a formula over the 10-K lines, written once the tax rate's cell exists
+c = ws.cell(row=int(INP["pension_other"].split("$")[-1]), column=2,
+            value=f"=({INP['pen_deficit']}+{INP['opeb']})*(1-{INP['tax_rate']})-{INP['pen_surplus']}*(1-{INP['tax_rate']})*{INP['count_surplus']}"
+                  f"+{INP['timber_dtl']}-({INP['vie_assets']}-{INP['vie_liab']})")
+c.font = BLACK; c.number_format = USD
 # notes that quote other inputs are rewritten once every input exists, so they can't go stale
 _rev_na_26 = INV["rev_2026_h1"] * 2 * INV["rev_2025_na"] / (INV["rev_2025_na"] + INV["rev_2025_emea"])
 _note = (f"SW {INV['sw_margin']:.0%} LTM, PKG {INV['pkg_margin']:.0%} LTM, IP NA 2026E ~{INV['ebitda_2026_na_guide'] / _rev_na_26:.1%}. "
@@ -296,7 +328,8 @@ def drow(key, label, f, fmt=USD, note="", bold=False, col="B"):
     D[key] = f"{col}{r}"; r += 1
 
 drow("mcap", "Market capitalization", f"={I('price')}*{I('shares')}")
-drow("netdebt", "Net debt + debt-like", f"={I('gross_debt')}-{I('cash')}+{I('pension_other')}")
+drow("netdebt", "Net debt (gross debt − cash)", f"={I('gross_debt')}-{I('cash')}")
+drow("debtlike", "Debt-like items from the 10-K, after tax (Inputs)", f"={I('pension_other')}", note="Pension deficits and retiree medical after tax, the 2027 timber tax net of the notes' equity. Off the equity, not in the WACC weights: these aren't financing.")
 drow("we", "Weight of equity (market)", f"={D['mcap']}/({D['mcap']}+{D['netdebt']})", PCT)
 drow("wd", "Weight of debt (market)", f"=1-{D['we']}", PCT)
 drow("ke", "Cost of equity = rf + β × ERP", f"={I('rf')}+{I('beta')}*{I('erp')}", PCT)
@@ -339,7 +372,7 @@ header(d, r, "Enterprise value → equity value → per share", 7); r += 1
 drow("pv_sum", "Sum of PV of 2027–2030 UFCF", f"=SUM(B{pv_r}:E{pv_r})")
 drow("ev", "Enterprise value", f"={D['pv_sum']}+{D['pv_tv']}", bold=True)
 drow("tv_share", "  terminal value as % of EV", f"={D['pv_tv']}/{D['ev']}", PCT, note="Damodaran's honesty check: for a mature company 60–80% is normal; it means the answer IS the terminal assumptions.")
-drow("eq", "Equity value = EV − net debt − debt-like", f"={D['ev']}-{D['netdebt']}", bold=True)
+drow("eq", "Equity value = EV − net debt − debt-like", f"={D['ev']}-{D['netdebt']}-{D['debtlike']}", bold=True)
 drow("ps", "Value per share ($)", f"={D['eq']}/{I('shares')}", USD2, bold=True)
 drow("upside", "  vs. market price", f"={D['ps']}/{I('price')}-1", PCT)
 drow("impl_mult", "  implied EV / 2027E EBITDA", f"={D['ev']}/Model!D{R['ebitda']}", MULT)
@@ -400,7 +433,7 @@ srow_f("ufcf27", "UFCF 2027E (approx.)", lambda c: f"=({c}{S['ebitda27']}-({c}{S
 srow_f("pv_interim", "PV of 2027–2030 UFCF (linear ramp 2027→2030)", lambda c: f"={c}{S['ufcf27']}/(1+{c}{S['wacc']})^0.7+({c}{S['ufcf27']}*2/3+{c}{S['ufcf30']}/3)/(1+{c}{S['wacc']})^1.7+({c}{S['ufcf27']}/3+{c}{S['ufcf30']}*2/3)/(1+{c}{S['wacc']})^2.7+{c}{S['ufcf30']}/(1+{c}{S['wacc']})^3.7", USD, "Interpolates 2028–29 between the bridge year and the steady state.")
 srow_f("tv", "Terminal value (avg of Gordon and exit multiple)", lambda c: f"=AVERAGE({c}{S['ufcf30']}*(1+{I('g')})/({c}{S['wacc']}-{I('g')}),{c}{S['ebitda30']}*{c}{S['mult']})", USD)
 srow_f("ev", "Enterprise value", lambda c: f"={c}{S['pv_interim']}+{c}{S['tv']}/(1+{c}{S['wacc']})^3.7", USD, bold=True)
-srow_f("eq", "Equity value", lambda c: f"={c}{S['ev']}-DCF!{D['netdebt']}", USD)
+srow_f("eq", "Equity value", lambda c: f"={c}{S['ev']}-DCF!{D['netdebt']}-DCF!{D['debtlike']}", USD)
 srow_f("ps", "Value per share ($)", lambda c: f"={c}{S['eq']}/{I('shares')}", USD2, bold=True)
 srow_f("up", f"vs. ${INV['price']:.0f} market", lambda c: f"={c}{S['ps']}/{I('price')}-1", PCT)
 srow_f("tvs", "Terminal value share of EV", lambda c: f"={c}{S['tv']}/(1+{c}{S['wacc']})^3.7/{c}{S['ev']}", PCT)
@@ -444,7 +477,7 @@ for i, mg in enumerate(margins):
         # interim PV: reuse the mid scenario's 2027 UFCF, interpolate to this grid's UFCF30
         u27 = f"Scenarios!{mid}{S['ufcf27']}"
         pv = f"({u27}/(1+{w})^0.7+({u27}*2/3+{ufcf30}/3)/(1+{w})^1.7+({u27}/3+{ufcf30}*2/3)/(1+{w})^2.7+{ufcf30}/(1+{w})^3.7)"
-        f = f"=({pv}+{tv}/(1+{w})^3.7-DCF!{D['netdebt']})/{I('shares')}"
+        f = f"=({pv}+{tv}/(1+{w})^3.7-DCF!{D['netdebt']}-DCF!{D['debtlike']})/{I('shares')}"
         cell = v.cell(row=r, column=2 + j, value=f); cell.number_format = USD2
     r += 1
 v.cell(row=r, column=1, value=f"Market: ${INV['price']:.0f}. Rows are NA margin; EMEA held at the mid-cycle scenario's margin.").font = GREY
@@ -495,7 +528,7 @@ cps.cell(row=r, column=1, value="Corporate (capitalized)"); cps.cell(row=r, colu
 cps.cell(row=r, column=3, value=f"=C{C['na']}").number_format = MULT
 cps.cell(row=r, column=4, value=f"=B{r}*C{r}").number_format = USD; C["corp"] = r; r += 1
 cps.cell(row=r, column=1, value="Enterprise value (SOTP)").font = BOLD; cps.cell(row=r, column=4, value=f"=SUM(D{C['na']}:D{C['corp']})").number_format = USD; cps.cell(row=r, column=4).font = BOLD; C["ev"] = r; r += 1
-cps.cell(row=r, column=1, value="Less: net debt + debt-like"); cps.cell(row=r, column=4, value=f"=-DCF!{D['netdebt']}").number_format = USD; C["nd"] = r; r += 1
+cps.cell(row=r, column=1, value="Less: net debt + debt-like"); cps.cell(row=r, column=4, value=f"=-DCF!{D['netdebt']}-DCF!{D['debtlike']}").number_format = USD; C["nd"] = r; r += 1
 cps.cell(row=r, column=1, value="Less: separation costs and dis-synergies (one-time)"); cps.cell(row=r, column=4, value=f"=-{I('sep_costs_2026')}*1.5").number_format = USD; cps.cell(row=r, column=5, value="1.5 years of the Inputs run-rate; two public companies cost more to run than one.").font = GREY; C["sep"] = r; r += 1
 cps.cell(row=r, column=1, value="Equity value").font = BOLD; cps.cell(row=r, column=4, value=f"=D{C['ev']}+D{C['nd']}+D{C['sep']}").number_format = USD; cps.cell(row=r, column=4).font = BOLD; C["eq"] = r; r += 1
 cps.cell(row=r, column=1, value="Per share ($)").font = BOLD; cps.cell(row=r, column=4, value=f"=D{C['eq']}/{I('shares')}").number_format = USD2; cps.cell(row=r, column=4).font = BOLD; C["ps"] = r; r += 1
@@ -524,8 +557,8 @@ lines = [
     ("6. Comps_SOTP — PKG and SW multiples, and a sum-of-the-parts for the live separation of EMEA (DS Smith), including the EMEA multiple at which the parts equal today's price.", BLACK),
     ("", None),
     ("Conventions: blue = hardcoded input · black = formula · green = link to another sheet · yellow fill = judgment to check. No results are hardcoded; change an input and everything recalculates.", GREY),
-    ("Sources are cited on the Inputs sheet next to each number (Q2 2026 earnings release, Q1 and Q4 calls via Packaging Dive/MarketBeat, Fastmarkets RISI via Packaging Dive, Multiples.vc, Benzinga). Public information only.", GREY),
-    ("Known simplifications: enterprise DCF assumes EMEA is retained (the SOTP handles the separation); taxes on EBIT with no loss carryforwards; pension/lease debt-like items set to zero pending the 10-K; 2025A revenue split and D&A are pro forma approximations.", GREY),
+    ("Sources are cited on the Inputs sheet next to each number (FY2025 10-K, Q2 2026 earnings release, Q1 and Q4 calls via Packaging Dive/MarketBeat, Fastmarkets RISI via Packaging Dive, Multiples.vc, Benzinga). Public information only.", GREY),
+    ("Known simplifications: enterprise DCF assumes EMEA is retained (the SOTP handles the separation); taxes on EBIT with no loss carryforwards; debt-like items from the FY2025 10-K at Dec 31, 2025 balances against Q2 2026 debt and cash (pensions are only remeasured once a year); 2025A revenue split and D&A are pro forma approximations.", GREY),
 ]
 for i, (txt, f) in enumerate(lines, 1):
     c = rd.cell(row=i, column=1, value=txt)

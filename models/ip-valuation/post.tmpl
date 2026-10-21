@@ -43,6 +43,7 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-spac
 .bet .out em{font-style:normal;font-family:var(--mono);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
 .bet .verdict{font-size:15px;color:var(--ink);margin:4px 0 0}
 .bet svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+table.txt th:nth-child(2),table.txt th:nth-child(3),table.txt td:nth-child(2),table.txt td:nth-child(3){text-align:left}
 .note{border:1px solid var(--rule);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--ink-2);margin:0 0 24px}
 </style>
 </head>
@@ -59,15 +60,18 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-spac
 </nav>
 
 
-<p class="meta">2026-10-17 · money · manufacturing</p>
+<p class="meta">2026-10-17 · updated 2026-10-21 · money · manufacturing</p>
 <h1>A corrugator engineer values International Paper</h1>
 <p class="lede">I've stood next to the machine that makes this company's product for eleven years. I'd never valued the company. The stock is down {{chg_ytd_words}} this year, so I did it properly — Wall Street Prep's mechanics, Damodaran's discipline, and the one thing neither of them has: what the numbers look like from the floor.</p>
+
+<div class="note"><strong>Updated October 21.</strong> I went back and pulled IP's FY2025 10-K for one reason: pensions and leases are where a paper company keeps the debt that "net debt" leaves out. The pensions and the leases came back clean. A footnote didn't: a {{tk_dtl}} tax bill from a 2007 timberland sale, due in 2027. All in, the 10-K takes {{ps_total_abs}} a share off the DCF ({{was_dcf_ps2}} → {{dcf_ps2}}) and moves the down-cycle odds the market is pricing from {{was_market_odds}} to {{market_odds}}. Every number below has been rerun from the model; <a href="#debt">the line-by-line is here</a>.</div>
 
 <div class="kpis">
   <div class="kpi"><b>price</b><em>{{price}}</em><i>{{price_date}} · 52-wk {{wk52}}</i></div>
   <div class="kpi"><b>YTD</b><em>{{chg_ytd}}</em><i>{{chg_12m}} over 12 months</i></div>
   <div class="kpi"><b>yield</b><em>{{yield}}</em><i>{{dps}}/share · ~{{div_cost}}/yr</i></div>
   <div class="kpi"><b>net debt</b><em>{{net_debt_b}}</em><i>EV ≈ {{ev_mkt_b}}</i></div>
+  <div class="kpi"><b>debt-like, 10-K</b><em>{{debt_like}}</em><i>after tax · <span style="white-space:nowrap">{{ps_total}}/share</span></i></div>
   <div class="kpi"><b>2026 EBITDA guide</b><em>{{guide}}</em><i>was {{guide_jan}} in January</i></div>
   <div class="kpi"><b>2025 free cash flow</b><em>{{fcf25}}</em><i>the dividend wasn't covered</i></div>
 </div>
@@ -106,6 +110,25 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-spac
   <li><strong>{{costout}} of cost-out against {{infl}} of inflation.</strong> OCC is back to $80–100 a ton from the 2025 lows, freight is up, and 80/20 keeps finding money. Net of each other, it's roughly a wash — which is what a transformation looks like from the P&L two years in.</li>
   <li><strong>Then it comes back down.</strong> This is the Damodaran part people skip. 2027 is a price-increase year, and a price-increase year is a <em>peak</em>. A cyclical gets valued at mid-cycle, not at the peak. So 2028 onward I use a mid-cycle NA margin of {{na_margin}} — between Smurfit Westrock's {{sw_margin}} and Packaging Corp's {{pkg_margin}} — and the model deliberately shows EBITDA stepping <em>down</em> from 2027 to 2028. If that looks wrong to you, that's the assumption to argue with.</li>
 </ul>
+
+<div class="sect" id="debt">where the debt hides</div>
+<p>Net debt is what IP owes its lenders less its cash: {{net_debt_b}} at the end of June. A paper company owes more than that. It owes pensions to the people who ran its mills, health care it promised them, rent on its railcars and warehouses, and taxes it put off. None of it is in net debt, and all of it gets paid before a shareholder sees a dollar. That's why I went back and pulled the FY2025 10-K. Line by line:</p>
+<div style="overflow-x:auto"><table class="sens xl txt">
+  <tr><th>item</th><th>what the 10-K says (Dec 31, 2025)</th><th>how it's counted</th><th>per share</th></tr>
+  <tr><td>Pension plans in surplus</td><td>{{tk_surplus}}. The U.S. qualified plan holds {{tk_us_q_assets}} against {{tk_us_q_pbo}} owed; the UK plan is {{tk_uk_surplus}} over.</td><td>{{tk_surplus_counted}}: a surplus is hard to get back out (counting it adds {{ps_surplus_if}})</td><td class="n">{{ps_surplus}}</td></tr>
+  <tr><td>Pension plans in deficit</td><td>{{tk_deficit}}, including {{tk_us_nq}} of U.S. nonqualified plans with no assets behind them</td><td>after tax</td><td class="n">{{ps_deficit}}</td></tr>
+  <tr><td>Retiree medical and postemployment</td><td>{{tk_opeb}}</td><td>after tax</td><td class="n">{{ps_opeb}}</td></tr>
+  <tr><td>Operating leases</td><td>{{tk_op_leases}}</td><td>not added: the rent is already inside EBITDA</td><td class="n">{{ps_zero}}</td></tr>
+  <tr><td>Finance leases</td><td>{{tk_fin_leases}}</td><td>already inside the debt</td><td class="n">{{ps_zero}}</td></tr>
+  <tr><td>Tax on the Temple-Inland timber notes</td><td>{{tk_dtl}}, "settled with the maturity of the notes in 2027"</td><td>in full</td><td class="n">{{ps_dtl}}</td></tr>
+  <tr><td>The timber notes, net of their loans</td><td>{{tk_vie_assets}} of notes against {{tk_vie_liab}} of nonrecourse loans</td><td>what's left over is IP's</td><td class="n">{{ps_vie}}</td></tr>
+  <tr><td style="font-weight:600">What the 10-K takes off the value</td><td>{{debt_like}} after tax</td><td></td><td class="n" style="font-weight:600">{{ps_total}}</td></tr>
+</table></div>
+<p class="src">After tax at the model's {{tax}} rate, per share on {{shares}} shares. Pension and lease balances are at December 31, 2025, the last time IP measured them; debt and cash are from June 30, 2026. Every line is an input in the workbook with its quote from the filing, and two of the {{n_checks_word}} checks tie them back to the 10-K's own totals.</p>
+<p>The pensions came back clean. The U.S. plan holds {{tk_us_q_assets}} against {{tk_us_q_pbo}} owed, and the 10-K says IP's funded plans are "fully funded on a projected benefit obligation basis." I count the plans in deficit and give no credit for the plans in surplus. The leases came back clean in a different way: under U.S. GAAP the cost of an operating lease is an operating expense, so the rent is already inside the EBITDA the whole model runs on. Adding the {{tk_op_leases}} liability as debt too would count the same rent twice.</p>
+<p>The footnote is the part I didn't expect. In 2007 Temple-Inland sold its timberland for notes instead of cash and put off the tax; IP inherited both when it bought Temple-Inland in 2012. The 10-K says it plainly: "{{tk_dtl}} deferred tax liability related to the Temple-Inland timber monetization, which will be settled with the maturity of the notes in 2027." That year the notes ({{tk_vie_assets}}) pay off the loans taken against them ({{tk_vie_liab}}) and leave {{tk_vie_equity}}, and the tax takes {{tk_dtl}}. Net, {{ps_timber}} a share, due the same year {{tk_debt_2027}} of IP's regular debt matures.</p>
+<p>Two things I didn't count, so you can: about {{tk_utb}} of unrecognized tax benefits, which IP can't say when or whether it will pay ({{ps_utb}} a share if all of it were), and a Brazilian tax assessment IP agreed to share with Sylvamo, the printing-papers business it spun off. IP puts its potential share at about {{tk_brazil}} ({{ps_brazil}} a share); it's a contingency, not a liability on the books.</p>
+<div class="pull">All in, the 10-K takes {{ps_total_abs}} a share off the DCF, {{was_dcf_ps2}} to {{dcf_ps2}}, and moves the down-cycle odds the market is pricing from {{was_market_odds}} to {{market_odds}}. My edge narrows from {{was_edge}} to {{edge}}. What the bet is on doesn't change: the discount isn't hidden debt. It's the cycle.</div>
 
 <div class="sect">what the machine says</div>
 <p>Three independent routes, same inputs, and they land in the same place, which is the first thing worth knowing.</p>
@@ -185,7 +208,7 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-spac
 <details class="code"><summary>show the code (bet.py, as run)</summary><pre>{{include:bet.py}}</pre></details>
 
 <div class="sect">does it tie out</div>
-<p>A model that evaluates is not a model that's right. So the numbers are checked the way a reviewer would check them — every identity, every cross-check between methods, every claim against what the company itself said — and the checks run as a script that fails loudly. {{n_checks_Word}} checks; all pass. The ones that matter most: the 2026 cash flow lands inside the company's own guide, the Gordon terminal value implies an exit multiple the comps support, the Python reproduces the spreadsheet to the dollar, and the Monte Carlo's breakeven is where the arithmetic says it should be.</p>
+<p>A model that evaluates is not a model that's right. So the numbers are checked the way a reviewer would check them — every identity, every cross-check between methods, every claim against what the company itself said — and the checks run as a script that fails loudly. {{n_checks_Word}} checks; all pass. The ones that matter most: the 2026 cash flow lands inside the company's own guide, the Gordon terminal value implies an exit multiple the comps support, the Python reproduces the spreadsheet to the dollar, the Monte Carlo's breakeven is where the arithmetic says it should be, and the 10-K's pension lines tie to the filing's own totals.</p>
 <details class="code" open><summary>validation output</summary><pre>{{include:validate_out.txt}}</pre></details>
 <details class="code"><summary>show the checks (validate.py)</summary><pre>{{include:validate.py}}</pre></details>
 <p>What a green run proves and what it doesn't: the arithmetic is consistent and tied to its sources. It cannot prove the {{p_down}}, the {{na_margin}}, or the {{exit_mult0}}. Those are the judgment, and the log is where they get tested against time.</p>
@@ -205,10 +228,10 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-spac
 <p class="src" style="margin-top:10px">The browser panel above uses the same chain with a 3,000-draw simulation, so its percentages differ from the Python run by a point or two.</p>
 
 <div class="sect">the model and the code</div>
-<p>The spreadsheet is <a href="../models/ip-valuation/IP_valuation_model.xlsx">IP_valuation_model.xlsx</a>: {{n_formulas}} live formulas, a Dictionary sheet that explains every term in plant language, every input tagged with its source (Q2 2026 release, the Q1 and Q4 calls, Fastmarkets via Packaging Dive, Multiples.vc), and every judgment of mine in yellow so you can overwrite it. The Monte Carlo is <a href="../models/ip-valuation/montecarlo.py">montecarlo.py</a>, which mirrors the sheet's scenario chain line for line; <a href="../models/ip-valuation/build_model.py">build_model.py</a> generates the workbook, <a href="../models/ip-valuation/validate.py">validate.py</a> runs the {{n_checks_word}} tie-out checks, and <a href="../models/ip-valuation/bet.py">bet.py</a> maps the distribution onto the instruments. Public information only. Not investment advice; I'm an engineer who builds solvers, not a financial advisor, and I may hold or trade any of these names.</p>
+<p>The spreadsheet is <a href="../models/ip-valuation/IP_valuation_model.xlsx">IP_valuation_model.xlsx</a>: {{n_formulas}} live formulas, a Dictionary sheet that explains every term in plant language, every input tagged with its source (the FY2025 10-K, the Q2 2026 release, the Q1 and Q4 calls, Fastmarkets via Packaging Dive, Multiples.vc), and every judgment of mine in yellow so you can overwrite it. The Monte Carlo is <a href="../models/ip-valuation/montecarlo.py">montecarlo.py</a>, which mirrors the sheet's scenario chain line for line; <a href="../models/ip-valuation/build_model.py">build_model.py</a> generates the workbook, <a href="../models/ip-valuation/validate.py">validate.py</a> runs the {{n_checks_word}} tie-out checks, and <a href="../models/ip-valuation/bet.py">bet.py</a> maps the distribution onto the instruments. Public information only. Not investment advice; I'm an engineer who builds solvers, not a financial advisor, and I may hold or trade any of these names.</p>
 <p>The mechanics are the ones Wall Street Prep teaches — unlevered free cash flow, WACC, a terminal value two ways, comps and sum-of-the-parts. The discipline is Damodaran's: story first, mid-cycle for a cyclical, show what the terminal value carries, and treat the answer as a distribution because that's what it is. The floor is mine.</p>
 
-<p class="src">Written by Jason Fetzer, edited with Claude. Sources: IP Q2 2026 earnings release; Packaging Dive on the Q1 2026 call (Apr 30), the Savannah/Riceboro closures (Aug 2025) and Fastmarkets RISI pricing (Sept 18, 2026); MarketBeat Q4 2025 call summary (Jan 29, 2026); Investing.com on the EMEA sale process (Oct 15, 2026); Multiples.vc for PKG and SW; Benzinga quote (Oct 15, 2026).</p>
+<p class="src">Written by Jason Fetzer, edited with Claude. Sources: IP Form 10-K for 2025 (filed February 2026); IP Q2 2026 earnings release; Packaging Dive on the Q1 2026 call (Apr 30), the Savannah/Riceboro closures (Aug 2025) and Fastmarkets RISI pricing (Sept 18, 2026); MarketBeat Q4 2025 call summary (Jan 29, 2026); Investing.com on the EMEA sale process (Oct 15, 2026); Multiples.vc for PKG and SW; Benzinga quote (Oct 15, 2026).</p>
 
 <footer>
   <span>© 2026 Jason Fetzer</span>

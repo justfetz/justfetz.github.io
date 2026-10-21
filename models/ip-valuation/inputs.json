@@ -79,13 +79,149 @@
   "source": "Q2 2026 balance sheet.",
   "judgment": false
  },
- "pension_other": {
-  "label": "Other debt-like items (pension deficit, leases) — placeholder",
-  "value": 0,
+ "pen_us_q_assets": {
+  "label": "Pension, U.S. qualified plan: assets",
+  "value": 8482,
   "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K MD&A: 'U.S. qualified pension $ 8,116 $ 8,482' (benefit obligation, fair value of plan assets).",
+  "judgment": false
+ },
+ "pen_us_q_pbo": {
+  "label": "Pension, U.S. qualified plan: obligation (PBO)",
+  "value": 8116,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Same table. The plan is overfunded: 'a surplus of $366 million'.",
+  "judgment": false
+ },
+ "pen_uk_surplus": {
+  "label": "Pension, UK qualified plan (DS Smith): surplus",
+  "value": 112,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K MD&A: 'an overfunded UK qualified pension with a surplus of $112 million.'",
+  "judgment": false
+ },
+ "pen_us_nq": {
+  "label": "Pension, U.S. nonqualified plans: obligation, no assets",
+  "value": 218,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K MD&A: 'U.S. nonqualified pension 218 —'. Paid as benefits come due ($49M in 2025).",
+  "judgment": false
+ },
+ "pen_net": {
+  "label": "Pensions, all plans: assets above obligations (the filing's net)",
+  "value": 144,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K MD&A: 'the projected benefit obligation ... was approximately $144 million lower than the fair value of plan assets.' (Risk Factors says $148M; the plan table gives 144.)",
+  "judgment": false
+ },
+ "pen_surplus": {
+  "label": "Pension plans in surplus, total (not counted by default)",
+  "value": 486,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K balance sheet: Overfunded Pension Plan Assets $486M.",
+  "judgment": false
+ },
+ "pen_deficit": {
+  "label": "Pension plans in deficit, total (counted, after tax)",
+  "value": 342,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Surplus plans $486M less the $144M net = $342M owed by plans in deficit (balance sheet: Underfunded Pension Benefit Obligations $316M long-term, the rest current).",
+  "judgment": false
+ },
+ "opeb": {
+  "label": "Retiree medical and postemployment benefits (counted, after tax)",
+  "value": 133,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K balance sheet: Postretirement and Postemployment Benefit Obligation $133M (long-term).",
+  "judgment": false
+ },
+ "op_leases": {
+  "label": "Operating lease liabilities (not counted: the lease cost is already inside EBITDA)",
+  "value": 707,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Dec 31, 2025: $221M current + $486M long-term (Q1 2026 10-Q lease table, December 31, 2025 column; the 10-K balance sheet shows Long-Term Lease Obligations $486M and Right of Use Assets $697M). Under U.S. GAAP operating lease cost is an operating expense, so EBITDA is after rent; adding the liability too would count it twice.",
+  "judgment": false
+ },
+ "fin_leases": {
+  "label": "Finance lease liabilities (not counted again: already inside gross debt)",
+  "value": 71,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Dec 31, 2025: $17M in current maturities of debt + $54M in long-term debt (Q1 2026 10-Q lease table, December 31, 2025 column); the 10-K's debt maturities 'include financing lease obligations'.",
+  "judgment": false
+ },
+ "timber_dtl": {
+  "label": "Deferred tax on the Temple-Inland timber notes, due 2027 (counted)",
+  "value": 487,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K, contractual obligations: '$487 million deferred tax liability related to the Temple-Inland timber monetization, which will be settled with the maturity of the notes in 2027.'",
+  "judgment": false
+ },
+ "vie_assets": {
+  "label": "Timber notes held by the special purpose entities (counted, net of the loans)",
+  "value": 2349,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K balance sheet: Long-Term Financial Assets of Variable Interest Entities $2,349M.",
+  "judgment": false
+ },
+ "vie_liab": {
+  "label": "Nonrecourse loans against those notes",
+  "value": 2127,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K balance sheet: Long-Term Nonrecourse Financial Liabilities of Variable Interest Entities $2,127M. Not in gross debt above; the notes repay them in 2027.",
+  "judgment": false
+ },
+ "debt_2027": {
+  "label": "Regular debt maturing in 2027 (context, not added)",
+  "value": 2584,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K contractual obligations: debt maturities 2026 $992M, 2027 $2,584M, 2028 $739M.",
+  "judgment": false
+ },
+ "utb": {
+  "label": "Unrecognized tax benefits (not counted: timing and amount uncertain)",
+  "value": 344,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K contractual obligations footnote: 'approximately $344 million of unrecognized tax benefits'.",
+  "judgment": false
+ },
+ "brazil_tax": {
+  "label": "Brazil tax matter via the Sylvamo agreement, IP's share (not counted: contingent, not booked)",
+  "value": 274,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K Risk Factors: 'our potential liability for such assessments would currently be approximately $274 million' (assessments total about $394M, 2007–2015 tax years).",
+  "judgment": false
+ },
+ "count_surplus": {
+  "label": "Count the pension surplus too? (1 = yes, 0 = no)",
+  "value": 0,
+  "fmt": null,
   "prov": "JUDGMENT",
-  "source": "Set to 0 pending the 10-K pension note; the Q2 release shows non-operating pension INCOME, so the plan may be near fully funded. Check before publishing.",
+  "source": "Default no: a surplus can't be spent without an excise tax or years of contribution holidays. Set 1 to net it against the deficits.",
   "judgment": true
+ },
+ "pension_other": {
+  "label": "Debt-like items, after tax (from the 10-K lines above)",
+  "value": null,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "DERIVED",
+  "source": "Pension deficits + retiree medical, after tax; minus the surplus if counted; plus the 2027 timber tax; minus the equity in the timber structure (notes less loans). Operating leases excluded.",
+  "judgment": false
  },
  "rev_2025_na": {
   "label": "2025 pro forma net sales — Packaging Solutions NA",

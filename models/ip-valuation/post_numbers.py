@@ -40,7 +40,8 @@ grid_mults = [sv.cell(5, c).value for c in range(2, 8)]
 grid = [(sv.cell(r, 1).value, [sv.cell(r, c).value for c in range(2, 8)]) for r in range(6, 11)]
 
 price = V["price"]; shares = V["shares"]
-net_debt = V["gross_debt"] - V["cash"] + V["pension_other"]
+net_debt = D["Net debt (gross debt − cash)"]
+debt_like = D["Debt-like items from the 10-K, after tax (Inputs)"]   # pensions, retiree medical, the timber tax (a formula on Inputs)
 mcap = price * shares
 rev_na_26 = V["rev_2026_h1"] * 2 * V["rev_2025_na"] / (V["rev_2025_na"] + V["rev_2025_emea"])
 price_bridge = V["stick_pct"] * V["price_index_ytd"] * V["price_sens"] - V["price_in_2026"]
@@ -85,7 +86,7 @@ def chain_ps(w, margin=None):
     u27 = (e27 - rev27 * da) * (1 - t) + rev27 * da - V["capex_2027"] - V["sep_costs_2026"] * 0.5
     pv = u27 / (1 + w) ** 0.7 + (u27 * 2 / 3 + u30 / 3) / (1 + w) ** 1.7 + (u27 / 3 + u30 * 2 / 3) / (1 + w) ** 2.7 + u30 / (1 + w) ** 3.7
     tv = 0.5 * (u30 * (1 + V["g"]) / (w - V["g"]) + e30 * V["exit_mult"])
-    return (pv + tv / (1 + w) ** 3.7 - net_debt) / shares
+    return (pv + tv / (1 + w) ** 3.7 - net_debt - debt_like) / shares
 
 
 assert abs(chain_ps(S["WACC"][1]) - S["Value per share ($)"][1]) < 0.01, "Python chain no longer matches Scenarios mid column"
@@ -93,7 +94,8 @@ wacc_plus1 = 1 - chain_ps(S["WACC"][1] + 0.01) / chain_ps(S["WACC"][1])
 
 # --- the Monte Carlo and the bet
 pct = mc["percentiles"]
-me = next(r for r in pdown if abs(r["p_down"] - mc["p_down"]) < 1e-9)
+AT = {round(r["p_down"], 2): r for r in pdown}
+me = AT[round(mc["p_down"], 2)]
 # the probability of a down-cycle at which P(value > price) is a coin flip: where the market sits
 cross = next(a["p_down"] + (a["p_above"] - 0.5) / (a["p_above"] - b["p_above"]) * (b["p_down"] - a["p_down"])
              for a, b in zip(pdown, pdown[1:]) if a["p_above"] >= 0.5 > b["p_above"])
@@ -132,10 +134,10 @@ formulas = sum(1 for ws in load_workbook("IP_valuation_model.xlsx") for row in w
                if isinstance(c.value, str) and c.value.startswith("="))
 F = {
     # market and company facts (Inputs sheet)
-    "price": usd(price), "price_date": V["price_date"], "wk52": f"${V['wk52_lo']:.0f}–{V['wk52_hi']:.0f}",
+    "price": usd(price), "price_date": V["price_date"], "price_date_short": V["price_date"].rsplit(",", 1)[0], "wk52": f"${V['wk52_lo']:.0f}–{V['wk52_hi']:.0f}",
     "chg_ytd": pc(V["chg_ytd"]), "chg_12m": pc(V["chg_12m"]), "yield": pc(V["dps"] / price, 1), "dps": usd(V["dps"], 2),
     "div_cost": usd_m(V["dps"] * shares), "shares": f"{shares:,.1f}M", "mcap_b": usd_b(mcap), "mcap_b0": f"${mcap / 1000:,.0f}B",
-    "gross_debt": usd_m(V["gross_debt"]), "cash": usd_m(V["cash"]), "debt_like": usd_m(V["pension_other"]),
+    "gross_debt": usd_m(V["gross_debt"]), "cash": usd_m(V["cash"]), "debt_like": usd_m(debt_like), "net_debt_all": usd_m(net_debt + debt_like),
     "net_debt": usd_m(net_debt), "net_debt_b": usd_b(net_debt), "ev_mkt_b": usd_b(mcap + net_debt),
     "guide": f"${V['ebitda_2026_guide_lo'] / 1000:.1f}–{V['ebitda_2026_guide_hi'] / 1000:.1f}B",
     "guide_jan": f"${V['ebitda_2026_guide_jan_lo'] / 1000:.1f}–{V['ebitda_2026_guide_jan_hi'] / 1000:.1f}B",
@@ -168,13 +170,19 @@ F = {
     "p_above_base": pc(mc["p_above_price_given_base"]), "median": usd(pct["50"]), "mean": usd(mc["mean"]),
     "p10": usd(pct["10"]), "p90": usd(pct["90"]), "half_price": usd(price / 2), "double_price": usd(price * 2),
     "p_half": pc(mc["p_loss_half"]), "p_double": pc(mc["p_double"]), "sweep_lo": pc(pdown[0]["p_down"]), "sweep_hi": pc(pdown[-1]["p_down"]),
-    "median_at_me": usd(me["median"]), "market_odds": pc(cross), "fair_odds": pc(fair), "kelly": f"{mc['kelly']:.2f}",
+    "median_at_me": usd(me["median"]), **{f"med_{round(r['p_down'] * 100)}": usd(r["median"]) for r in pdown},
+    # each ten points I move toward the market's odds: my odds, +10, +20
+    "p_me10": pc(mc["p_down"] + 0.1), "p_me20": pc(mc["p_down"] + 0.2),
+    "med_me10": usd(AT[round(mc["p_down"] + 0.1, 2)]["median"]), "med_me20": usd(AT[round(mc["p_down"] + 0.2, 2)]["median"]),
+    "step1": usd(me["median"] - AT[round(mc["p_down"] + 0.1, 2)]["median"]),
+    "step2": usd(AT[round(mc["p_down"] + 0.1, 2)]["median"] - AT[round(mc["p_down"] + 0.2, 2)]["median"]),
+    "median_down": usd(mc["median_down"]), "median_base": usd(mc["median_base"]), "share_down": pc(mc["share_down"]), "share_base": pc(1 - mc["share_down"]), "market_odds": pc(cross), "fair_odds": pc(fair), "kelly": f"{mc['kelly']:.2f}",
     "half_kelly": f"{mc['half_kelly']:.2f}", "half_kelly_about": f"{math.floor(mc['half_kelly'] * 10) * 10}%",
     "convergence": pc(bet["convergence"]), "mkt_noise": pc(bet["noise"]),
     "put_win": pc(put_row["p_profit"]), "put_lose": pc(1 - put_row["p_profit"]), "put_worst_round": usd(math.floor(-put_row["worst"] / 100) * 100),
     "put_premium": usd(bet["premiums"]["put"] * 100), "spread_lose": pc(1 - spread_row["p_profit"]), "spread_wipe": pc(bet["spread_wipeout"]),
     "spread_cost": usd(spread_row["capital"]), "shares_odds": min(FRACTIONS, key=lambda f: abs(f[0] - shares_row["p_profit"]))[1],
-    "shares_roc": ("+" if shares_row["roc"] >= 0 else "") + pc(shares_row["roc"]), "spread_roc": "+" + pc(spread_row["roc"]),
+    "shares_roc": ("+" if shares_row["roc"] >= 0 else "") + pc(shares_row["roc"]), "spread_roc": "+" + pc(spread_row["roc"]), "spread_roc_abs": pc(spread_row["roc"]),
     "put_roc": ("+" if put_row["roc"] >= 0 else "") + pc(put_row["roc"]), "call_win": pc(call_row["p_profit"]),
     "chg_ytd_words": words(abs(V["chg_ytd"]) * 100) + " percent", "n_runs_words": words(mc["n"] / 1000) + " thousand",
     "n_runs_Words": (words(mc["n"] / 1000) + " thousand").capitalize(), "vol_signed": ("+" if V["vol_2027_na"] >= 0 else "") + pc(V["vol_2027_na"]),
@@ -185,13 +193,42 @@ F = {
     "n_checks": str(len(checks)), "n_checks_word": WORDS.get(len(checks), str(len(checks))),
     "n_checks_Word": WORDS.get(len(checks), str(len(checks))).capitalize(), "n_formulas": str(formulas),
 }
+# --- the 10-K pass: each line that behaves like debt, in value per share, and what the post said before it
+t = V["tax_rate"]
+TK = {"deficit": -V["pen_deficit"] * (1 - t), "opeb": -V["opeb"] * (1 - t), "dtl": -V["timber_dtl"], "vie": V["vie_assets"] - V["vie_liab"],
+      "surplus": V["pen_surplus"] * (1 - t) * V["count_surplus"]}
+assert abs(sum(TK.values()) + debt_like) < 0.5, "the 10-K lines no longer add up to the workbook's debt-like total"
+
+
+def ps(v):
+    v /= shares
+    return ("+" if v > 0.005 else "−" if v < -0.005 else "") + f"${abs(v):.2f}"
+
+
+F.update({
+    "tk_us_q_assets": usd_m(V["pen_us_q_assets"]), "tk_us_q_pbo": usd_m(V["pen_us_q_pbo"]),
+    "tk_us_q_surplus": usd_m(V["pen_us_q_assets"] - V["pen_us_q_pbo"]), "tk_uk_surplus": usd_m(V["pen_uk_surplus"]),
+    "tk_us_nq": usd_m(V["pen_us_nq"]), "tk_net": usd_m(V["pen_net"]), "tk_surplus": usd_m(V["pen_surplus"]), "tk_deficit": usd_m(V["pen_deficit"]),
+    "tk_opeb": usd_m(V["opeb"]), "tk_op_leases": usd_m(V["op_leases"]), "tk_fin_leases": usd_m(V["fin_leases"]), "tk_dtl": usd_m(V["timber_dtl"]),
+    "tk_vie_assets": usd_m(V["vie_assets"]), "tk_vie_liab": usd_m(V["vie_liab"]), "tk_vie_equity": usd_m(V["vie_assets"] - V["vie_liab"]),
+    "tk_debt_2027": usd_b(V["debt_2027"]), "tk_utb": usd_m(V["utb"]), "tk_brazil": usd_m(V["brazil_tax"]),
+    "tk_surplus_counted": "counted" if V["count_surplus"] else "not counted",
+    "ps_deficit": ps(TK["deficit"]), "ps_opeb": ps(TK["opeb"]), "ps_dtl": ps(TK["dtl"]), "ps_vie": ps(TK["vie"]),
+    "ps_timber": ps(TK["dtl"] + TK["vie"]), "ps_surplus": ps(TK["surplus"]), "ps_surplus_if": ps(V["pen_surplus"] * (1 - t)),
+    "ps_pensions": ps(TK["deficit"] + TK["opeb"] + TK["surplus"]), "ps_total": ps(-debt_like),
+    "ps_utb": ps(-V["utb"]), "ps_brazil": ps(-V["brazil_tax"]), "ps_zero": "$0.00", "ps_total_abs": f"${debt_like / shares:.2f}",
+    "edge": f"{round((cross - mc['p_down']) * 100)} points",
+    **{f"was_{k}": v for k, v in json.load(open("published.json"))["before_10k"]["fmt"].items()},
+})
+F["was_edge"] = f"{int(F['was_market_odds'].rstrip('%')) - round(mc['p_down'] * 100)} points"
+
 data = {
     "MC": {"price": mc["price"], "p_down": mc["p_down"], "p_above": mc["p_above_price"], "mean": mc["mean"], "pct": pct,
            "half_kelly": mc["half_kelly"], "p_half": mc["p_loss_half"], "p_double": mc["p_double"],
            "down": {"p": mc["p_above_price_given_down"], "mean": mc["mean_down"]}, "base": {"p": mc["p_above_price_given_base"], "mean": mc["mean_base"]},
            "hist": mc["hist"], "drivers": mc["drivers"], "pdown": pdown},
     "bridge": BRIDGE,
-    "calc": {"price": price, "shares": shares, "netDebt": net_debt, "revNA25": V["rev_2025_na"], "revEMEA25": V["rev_2025_emea"],
+    "calc": {"price": price, "shares": shares, "netDebt": net_debt + debt_like, "revNA25": V["rev_2025_na"], "revEMEA25": V["rev_2025_emea"],
              "revH1": V["rev_2026_h1"], "na26": V["ebitda_2026_na_guide"], "emea26": V["ebitda_2026_emea_guide"],
              "corp": (V["ebitda_2026_guide_lo"] + V["ebitda_2026_guide_hi"]) / 2 - V["ebitda_2026_na_guide"] - V["ebitda_2026_emea_guide"],
              "idx": V["price_index_ytd"], "sens": V["price_sens"], "inGuide": V["price_in_2026"], "contrib": V["contrib_margin"],

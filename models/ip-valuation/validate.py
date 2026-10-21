@@ -9,6 +9,10 @@ from openpyxl import load_workbook
 wb = load_workbook("IP_valuation_model.xlsx", data_only=True)
 inp = {r[0].value: r[1].value for r in wb["Inputs"].iter_rows(min_row=5) if r[0].value and r[1].value is not None}
 M, D, S, V = wb["Model"], wb["DCF"], wb["Scenarios"], wb["Sensitivity"]
+DCF = {}  # DCF sheet by label, so a new row can't silently shift what a check reads
+for row in D.iter_rows(min_row=1):
+    if isinstance(row[0].value, str) and row[1].value is not None:
+        DCF.setdefault(row[0].value.strip(), row[1].value)
 mc = json.load(open("mc.json")); pdown = json.load(open("mc_pdown.json"))
 fails = 0
 def check(name, ok, detail):
@@ -18,9 +22,19 @@ def check(name, ok, detail):
 
 # --- identities and tie-outs to what the company said
 price, shares = inp["Share price ($)"], inp["Diluted shares (millions)"]
-mcap, netdebt = D["B5"].value, D["B6"].value
+mcap, netdebt, debtlike = DCF["Market capitalization"], DCF["Net debt (gross debt − cash)"], DCF["Debt-like items from the 10-K, after tax (Inputs)"]
 check("market cap = price × shares", abs(mcap - price * shares) < 1, f"${mcap:,.0f}M vs ${price*shares:,.0f}M")
 check("net debt = gross debt − cash", abs(netdebt - (inp["Gross debt"] - inp["Cash and temporary investments"])) < 1, f"${netdebt:,.0f}M")
+L = lambda prefix: next(v for k, v in inp.items() if k.startswith(prefix))
+surplus, deficit = L("Pension plans in surplus"), L("Pension plans in deficit")
+check("10-K pension lines tie out: surplus plans − deficit plans = the filing's net, and the U.S. plan's table = its stated surplus",
+      abs((surplus - deficit) - L("Pensions, all plans")) < 1 and abs(L("Pension, U.S. qualified plan: assets") - L("Pension, U.S. qualified plan: obligation") - 366) < 1,
+      f"${surplus:,.0f}M − ${deficit:,.0f}M = ${surplus - deficit:,.0f}M (10-K: ${L('Pensions, all plans'):,.0f}M); U.S. qualified ${L('Pension, U.S. qualified plan: assets'):,.0f}M − ${L('Pension, U.S. qualified plan: obligation'):,.0f}M = $366M")
+dl = ((deficit + L("Retiree medical")) * (1 - inp["Cash tax rate"]) - surplus * (1 - inp["Cash tax rate"]) * L("Count the pension surplus")
+      + L("Deferred tax on the Temple-Inland") - (L("Timber notes held") - L("Nonrecourse loans")))
+check("debt-like items rebuild from the 10-K lines and come off the equity, not the WACC", abs(dl - debtlike) < 1 and abs(
+      DCF["Equity value = EV − net debt − debt-like"] - (DCF["Enterprise value"] - netdebt - debtlike)) < 1,
+      f"${debtlike:,.0f}M after tax = ${dl:,.0f}M from the lines; equity = EV − ${netdebt:,.0f}M − ${debtlike:,.0f}M")
 e26 = M["C14"].value
 check("2026E EBITDA = guidance midpoint", abs(e26 - (inp["2026 adj. EBITDA guidance — low"] + inp["2026 adj. EBITDA guidance — high"]) / 2) < 1, f"${e26:,.0f}M vs $3,300M guide midpoint")
 lfcf26 = M["C30"].value
@@ -30,15 +44,15 @@ check("dividend cost ≈ $980M", abs(div - 980) < 20, f"${div:,.0f}M = $1.85 × 
 check("2026E levered FCF does NOT cover the dividend", lfcf26 < div, f"{lfcf26/div:.2f}× coverage")
 
 # --- terminal value cross-checks (each method implies the other's parameter)
-tv_mult = D["B23"].value; tv_g = D["B24"].value
+tv_mult = DCF["implied exit multiple of the Gordon TV"]; tv_g = DCF["implied perpetual growth of the exit-multiple TV"]
 check("Gordon TV implies an exit multiple between SW and PKG", inp["Smurfit Westrock EV/EBITDA (LTM)"] <= tv_mult <= inp["PKG EV/EBITDA (LTM)"], f"{tv_mult:.1f}x (SW {inp['Smurfit Westrock EV/EBITDA (LTM)']}x, PKG {inp['PKG EV/EBITDA (LTM)']}x)")
 check("Exit-multiple TV implies a sane perpetual growth (0–4%)", 0 <= tv_g <= 0.04, f"{tv_g*100:.2f}%")
-check("WACC > terminal growth", D["B11"].value > inp["Terminal growth rate"], f"{D['B11'].value*100:.2f}% > {inp['Terminal growth rate']*100:.1f}%")
-tv_share = D["B31"].value
+check("WACC > terminal growth", DCF["WACC"] > inp["Terminal growth rate"], f"{DCF['WACC']*100:.2f}% > {inp['Terminal growth rate']*100:.1f}%")
+tv_share = DCF["terminal value as % of EV"]
 check("terminal value share of EV disclosed and in the mature-company band (60–90%)", 0.6 <= tv_share <= 0.9, f"{tv_share*100:.0f}%")
 
 # --- three routes agree
-dcf_ps, scen_mid_ps, sens_cell = D["B33"].value, S["C30"].value, V["D8"].value  # sensitivity row 17% × col 8.5x
+dcf_ps, scen_mid_ps, sens_cell = DCF["Value per share ($)"], S["C30"].value, V["D8"].value  # sensitivity row 17% × col 8.5x
 check("DCF sheet ≈ Scenarios mid-cycle column (same chain, two layouts)", abs(dcf_ps - scen_mid_ps) < 1.0, f"${dcf_ps:.2f} vs ${scen_mid_ps:.2f}")
 check("Sensitivity grid (17% × 8.5x) ≈ DCF within the interpolation error", abs(sens_cell - dcf_ps) < 3.0, f"${sens_cell:.2f} vs ${dcf_ps:.2f}")
 check("Bear < Mid < Bull", S["B30"].value < S["C30"].value < S["D30"].value, f"${S['B30'].value:.0f} < ${S['C30'].value:.0f} < ${S['D30'].value:.0f}")
@@ -55,7 +69,7 @@ with contextlib.redirect_stdout(io.StringIO()):
     exec(src, ns)
 import numpy as np
 # deterministic run of the same chain at the mid inputs
-a = dict(stick=0.5, margin=0.17, mult=8.0, wacc=D["B11"].value, vol=0.01, emea_m=0.11, emea_d=150.0, capex=0.065)
+a = dict(stick=0.5, margin=0.17, mult=8.0, wacc=DCF["WACC"], vol=0.01, emea_m=0.11, emea_d=150.0, capex=0.065)
 pd_ = a["stick"] * 170 * 9 - 175
 rev_na_27 = ns["rev_na_26"] * (1 + a["vol"]) + pd_; rev_emea_27 = ns["rev_emea_26"] * 1.025
 na27 = 2425 + pd_ + ns["rev_na_26"] * a["vol"] * 0.30 + (300 - 250) * ns["rev_na_26"] / ns["rev_26"]

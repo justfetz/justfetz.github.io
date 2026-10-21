@@ -107,10 +107,13 @@ drivers = {"down-cycle regime": spearman(down.astype(float), value), "price stic
            "2027 volume": spearman(vol, value), "capex intensity": spearman(capex_pct, value), "model noise": spearman(model_noise, value)}
 
 hist, edges = np.histogram(value, bins=np.arange(0, 100, 2.5))
+hist_down, _ = np.histogram(value[down], bins=edges)       # the same bins, split by regime: the two humps
+hist_base, _ = np.histogram(value[~down], bins=edges)
 out = {"n": N, "price": price, "p_down": p_down, "p_above_price_given_down": float((value[down] > price).mean()), "p_above_price_given_base": float((value[~down] > price).mean()),
        "mean_down": float(value[down].mean()), "mean_base": float(value[~down].mean()), "p_above_price": p_above, "mean": ev_value, "percentiles": pct,
        "kelly": kelly, "half_kelly": half_kelly, "drivers": drivers,
-       "hist": {"edges": edges.tolist(), "counts": hist.tolist()},
+       "hist": {"edges": edges.tolist(), "counts": hist.tolist(), "down": hist_down.tolist(), "base": hist_base.tolist()},
+       "median_down": float(np.median(value[down])), "median_base": float(np.median(value[~down])), "share_down": float(down.mean()),
        "model_noise_sd": MODEL_NOISE, "p_loss_half": float((value < price * 0.5).mean()), "p_double": float((value > price * 2).mean())}
 json.dump(out, open("mc.json", "w"), indent=1)
 print(f"P(value > ${price}) = {p_above:.1%}   mean ${ev_value:.1f}   median ${pct[50]:.1f}")

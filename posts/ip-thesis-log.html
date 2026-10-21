@@ -39,11 +39,30 @@ table.w td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowr
   </button>
 </nav>
 
-<p class="meta">started 2026-10-17 · money · a running record</p>
+<p class="meta">started 2026-10-17 · updated 2026-10-21 · money · a running record</p>
 <h1>IP thesis log</h1>
 <p class="lede">The valuation was a snapshot. This is the part that's actually the job: the number I own, what would change it, and what happened. Newest entry first. Every entry says which model version it used and what moved.</p>
 
 <div class="rule"><strong>Rules for this log.</strong> One number I'm accountable for: the probability of a containerboard down-cycle over the next three years. The model turns that into a value. I update the number only when evidence lands, I say what the evidence was, and I write the entry before I look at the stock price that day. Public information only. Not advice; I may hold or trade IP, PKG, or SW.</p>
+
+<div class="entry">
+  <div class="d"><span>2026-10-21</span><b>v2 · the 10-K pass</b><span>model: IP_valuation_model.xlsx v2 · montecarlo.py seed 2026 · 21 checks</span></div>
+  <h2>The pensions and leases came back clean. A $487M tax bill didn't. The 30% stands.</h2>
+  <div class="state">
+    <div><b>price</b><em>$32.00</em></div>
+    <div><b>my P(down-cycle)</b><em>30%</em></div>
+    <div><b>mid-case value</b><em>$39</em></div>
+    <div><b>P(value &gt; price)</b><em>63%</em></div>
+    <div><b>10th / 90th</b><em>$16 / $55</em></div>
+    <div><b>odds the price implies</b><em>45%</em></div>
+  </div>
+  <p><strong>What happened.</strong> I pulled IP's FY2025 10-K to look for the debt that net debt leaves out. Pensions: the U.S. qualified plan holds $8,482M against $8,116M owed, and all plans together are $144M overfunded. I count the $342M in plans that are underfunded and $133M of retiree medical, after tax, and give no credit for the surplus. Leases: the $707M of operating leases are already inside EBITDA, and the $71M of finance leases are already in debt. Then the contractual obligations footnote: a $487M deferred tax on the Temple-Inland timber notes, due when the notes mature in 2027, against $222M of equity left in the structure. Together, $626M after tax: $1.18 a share.</p>
+  <p><strong>What I expected.</strong> A pension hole; paper companies usually have one. This one doesn't. The surprise was the tax.</p>
+  <p><strong>What changed in the model.</strong> A debt-like line on Inputs, built from the 10-K lines and taken off the equity value, not the WACC weights, since none of it is financing. Mid-case $40.25 → $39.07; P(value &gt; price) 65% → 63%; the odds the price implies 48% → 45%. Two new tie-out checks, 21 in all, all pass. The post's numbers are now generated from the model, so they moved with it.</p>
+  <p><strong>My P(down).</strong> Unchanged at 30%. The 10-K is about the balance sheet, not the cycle, and this log's rule is that the number moves only on evidence about the cycle. The edge narrows from 18 points to 15 points because the company is worth a little less in every scenario.</p>
+  <p><strong>Not counted, on purpose.</strong> $344M of unrecognized tax benefits (timing unknown) and a Brazilian tax assessment shared with Sylvamo, IP's potential share about $274M (a contingency, not booked). Together they'd be another $0.65 and $0.52 a share if they landed in full.</p>
+  <p class="src">Entry sources: IP Form 10-K for 2025 (filed February 2026): MD&amp;A pension table and contractual obligations, the balance sheet, Risk Factors; IP Q1 2026 10-Q lease table (December 31, 2025 column) for the current/long-term lease split.</p>
+</div>
 
 <div class="entry">
   <div class="d"><span>2026-10-17</span><b>v1 · thesis</b><span>model: IP_valuation_model.xlsx v1 · montecarlo.py seed 2026</span></div>
