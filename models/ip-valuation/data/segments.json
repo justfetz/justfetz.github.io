@@ -1,0 +1,29 @@
+[
+ {
+  "year": 2025,
+  "segment": "Packaging Solutions North America",
+  "sales": 14987,
+  "op_profit": 572,
+  "da": 1724,
+  "filed": "2026-02",
+  "source": "IP Form 10-K for 2025, Note 21 Segment Information (net sales from external customers; Business Segment Operating Profit; depreciation and amortization)"
+ },
+ {
+  "year": 2024,
+  "segment": "Packaging Solutions North America",
+  "sales": 14178,
+  "op_profit": 891,
+  "da": 786,
+  "filed": "2026-02",
+  "source": "IP Form 10-K for 2025, Note 21 Segment Information (net sales from external customers; Business Segment Operating Profit; depreciation and amortization)"
+ },
+ {
+  "year": 2023,
+  "segment": "Packaging Solutions North America",
+  "sales": 14198,
+  "op_profit": 839,
+  "da": 1080,
+  "filed": "2026-02",
+  "source": "IP Form 10-K for 2025, Note 21 Segment Information (net sales from external customers; Business Segment Operating Profit; depreciation and amortization)"
+ }
+]

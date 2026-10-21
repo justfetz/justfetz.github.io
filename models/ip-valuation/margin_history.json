@@ -1,0 +1,36 @@
+{
+ "model_margin": 0.17,
+ "years": [
+  {
+   "year": 2023,
+   "segment": "Packaging Solutions North America",
+   "sales": 14198,
+   "ebitda": 1919,
+   "margin": 0.13515988167347515,
+   "source": "IP Form 10-K for 2025, Note 21 Segment Information (net sales from external customers; Business Segment Operating Profit; depreciation and amortization)"
+  },
+  {
+   "year": 2024,
+   "segment": "Packaging Solutions North America",
+   "sales": 14178,
+   "ebitda": 1677,
+   "margin": 0.11828184511214558,
+   "source": "IP Form 10-K for 2025, Note 21 Segment Information (net sales from external customers; Business Segment Operating Profit; depreciation and amortization)"
+  },
+  {
+   "year": 2025,
+   "segment": "Packaging Solutions North America",
+   "sales": 14987,
+   "ebitda": 2296,
+   "margin": 0.15319943951424567,
+   "source": "IP Form 10-K for 2025, Note 21 Segment Information (net sales from external customers; Business Segment Operating Profit; depreciation and amortization)"
+  }
+ ],
+ "mean": 0.1355470554332888,
+ "median": 0.13515988167347515,
+ "min": 0.11828184511214558,
+ "max": 0.15319943951424567,
+ "share_at_or_above_model": 0.0,
+ "rank": "3 of 3 years earned less than the model's mid-cycle margin",
+ "note": "EBITDA = segment operating profit + segment depreciation and amortization; segment definitions change in 2025 (NA vs Industrial Packaging incl. EMEA)."
+}
