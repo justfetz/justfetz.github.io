@@ -1,0 +1,32 @@
+Before I bet on International Paper's Q3, I went back to the 10-K for the debt that "net debt" leaves out: pensions and leases.
+
+Pensions: clean. The U.S. plan holds {{tk_us_q_assets}} against {{tk_us_q_pbo}} owed.
+Leases: clean too. {{tk_op_leases}}, but the rent is already inside EBITDA. Counting it as debt would count it twice.
+Then a footnote: a {{tk_dtl}} tax bill from a 2007 timberland sale, due in 2027, the same year {{tk_debt_2027}} of IP's debt matures.
+
+All in, the 10-K takes {{ps_total_abs}} a share off my DCF: {{was_dcf_ps2}} → {{dcf_ps2}}. The discount isn't hidden debt. It's the cycle.
+
+At {{price}}, the market is pricing close to a coin flip on a containerboard down-cycle ({{market_odds}}). I've spent 11 years next to the corrugators that run on this company's paper, and I put it at {{p_down}}. IP reports on October 28. Here's the model, and what I'm betting.
+
+How it's built, so you can check it:
+• Inputs from IP's 10-K, Q2 release, the Q4 and Q1 calls and the trade press, every one tagged with its source
+• A {{n_formulas}}-formula workbook, rebuilt line for line in Python, with {{n_checks}} tie-out checks that fail loudly
+• Three routes that land together: DCF {{dcf_ps}}, sum of the parts {{sotp_ps}}, bear/mid/bull {{bear_ps}} / {{mid_ps}} / {{bull_ps}}
+• {{n_runs}} Monte Carlo runs. My first version said 90% of outcomes beat {{price}}. It was lying: in a downturn, price, volume, margin and multiple fall together. Drawing the cycle first fixed it: {{p_above}}.
+• Built with Claude as my coding pair. The judgment calls are mine, and they're in yellow.
+
+For my old finance friends, the position: I'm not trading the print. I'm long the gap between my {{p_down}} and the market's {{market_odds}}. Q3 tells me who's right.
+• Price realization against the {{in_guide}} already in 2026 guidance
+• The 2026 EBITDA guide, {{guide}} (it was {{guide_jan}} in January). Another cut is the coin flip winning
+• Volume against the market. IP says it's beating it by three to four points
+• Free cash flow against a {{div_cost}} dividend. 2025 came in at {{fcf25}}
+• The EMEA sale. Unsolicited bids are in, and the DS Smith day is November 3
+Every ten points I move toward the market's odds costs about {{step1}} a share, then {{step2}}.
+
+Win rate isn't edge: the cash-secured put wins {{put_win}} of the time and earns the least on capital. Half-Kelly says put {{half_kelly_about}} of the portfolio in this. Half-Kelly has never stood next to a corrugator. Small position, long watch list.
+
+The model, the spreadsheet and the code are in the first comment. What's your number for a down-cycle? Tell me and I'll price it.
+
+Not investment advice. I may hold or trade IP.
+
+#containerboard #valuation #DCF #MonteCarlo #packaging #AI

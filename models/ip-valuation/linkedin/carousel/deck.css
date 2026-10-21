@@ -1,0 +1,79 @@
+@page{size:1200px 1500px;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fcfcfa;--ink:#161616;--ink2:#4a4a46;--ink3:#6a6a64;--mute:#8a8a84;--rule:#e4e4df;--band:#f1f1ec;--green:#00704f;--kick:#1f5f4e;--orange:#c8692b;--grey:#a8a8a1}
+html,body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.slide{width:1200px;height:1500px;padding:72px 72px 56px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);break-after:page;page-break-after:always}
+.slide:last-child{break-after:auto;page-break-after:auto}
+.kick{display:flex;justify-content:space-between;gap:24px;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:.12em;text-transform:uppercase;color:var(--kick);margin-bottom:26px}
+.kick .pg{color:var(--mute);letter-spacing:.04em;text-transform:none}
+h1{font-size:66px;line-height:1.08;font-weight:600;letter-spacing:-1.4px;margin-bottom:24px}
+h1 em{font-style:normal;color:var(--orange)}
+.sub{font-size:30px;line-height:1.35;color:var(--ink2);margin-bottom:30px;max-width:1040px}
+.chart{flex:1;min-height:0}
+.foot{display:flex;justify-content:space-between;align-items:flex-end;border-top:2px solid var(--rule);padding-top:22px;margin-top:auto;font-family:'JetBrains Mono',monospace;font-size:22px;color:var(--ink3)}
+.foot b{color:var(--ink);font-weight:600}
+svg text{font-family:'JetBrains Mono',monospace}
+.strip{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--ink2);padding:18px 0 26px;text-align:center}
+.strip b{color:var(--ink)}
+
+/* slide 5: the position */
+.rows{display:flex;flex-direction:column;gap:20px;margin-bottom:30px}
+.row{display:grid;grid-template-columns:56px 1fr;gap:18px;align-items:start}
+.row .n{width:48px;height:48px;border-radius:50%;background:var(--ink);color:var(--bg);font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.row b{display:block;font-size:31px;font-weight:600;line-height:1.2}
+.row span{display:block;font-size:26px;line-height:1.32;color:var(--ink2);margin-top:3px}
+.row i{display:block;font-style:normal;font-family:'JetBrains Mono',monospace;font-size:21px;color:var(--ink3);margin-top:6px}
+.ladder{border-top:2px solid var(--rule);padding-top:22px;margin-bottom:26px}
+.lt{font-size:27px;font-weight:600;margin-bottom:16px}
+.tiles{display:flex;align-items:center;gap:16px}
+.tile{flex:1;border:2px solid var(--rule);border-radius:10px;padding:12px 18px;background:#fff}
+.tile small{display:block;font-family:'JetBrains Mono',monospace;font-size:21px;color:var(--ink3)}
+.tile b{display:block;font-size:46px;font-weight:600;letter-spacing:-1px;line-height:1.15}
+.tile.me{border-color:var(--orange);border-width:4px}
+.tile.mk{border-color:var(--ink);border-width:4px}
+.ladder .step{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--ink2)}
+.lnote{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--ink3);margin-top:10px}
+
+/* slide 6: instruments */
+.inst{display:flex;flex-direction:column;gap:0;margin-bottom:44px}
+.ihead,.irow{display:grid;grid-template-columns:420px 1fr 1fr;column-gap:28px}
+.ihead div{font-family:'JetBrains Mono',monospace;font-size:22px;color:var(--ink3);padding-bottom:12px;border-bottom:2px solid var(--rule)}
+.irow{padding:34px 0 32px;border-bottom:2px solid var(--rule);align-items:center;row-gap:8px}
+.iname b{display:block;font-size:31px;font-weight:600;line-height:1.2}
+.iname span{display:block;font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--ink3);margin-top:6px;line-height:1.35}
+.bar{position:relative;height:56px;display:flex;align-items:center}
+.bar .fill{height:56px;background:var(--green);border-radius:0 4px 4px 0;min-width:4px}
+.bar em{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;margin-left:12px;white-space:nowrap}
+.inote{grid-column:2 / 4;font-family:'JetBrains Mono',monospace;font-size:21px;color:var(--ink);font-weight:600}
+.irow.hi .iname b::before{content:'';display:inline-block;width:14px;height:14px;background:var(--orange);border-radius:3px;margin-right:12px;vertical-align:middle;position:relative;top:-3px}
+.kelly{font-size:36px;font-weight:600;line-height:1.25;letter-spacing:-.4px;margin-bottom:14px}
+.kelly span{display:block;color:var(--orange)}
+.fine{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--ink3);line-height:1.4;margin-bottom:24px}
+
+/* slide 7: how it's built */
+.pipe{position:relative;display:flex;flex-direction:column;gap:30px;margin:10px 0 34px}
+.pipe::before{content:'';position:absolute;left:27px;top:30px;bottom:30px;width:3px;background:var(--rule)}
+.pstep{position:relative;display:grid;grid-template-columns:56px 1fr;gap:24px;align-items:start}
+.dot{width:56px;height:56px;border-radius:50%;background:var(--green);color:#fff;font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.pt{font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.12em;text-transform:uppercase;color:var(--kick);margin:4px 0 6px}
+.pd{font-size:30px;line-height:1.32}
+.pair{font-size:30px;line-height:1.35;color:var(--ink2);border-left:6px solid var(--orange);padding:4px 0 4px 22px;margin-bottom:34px}
+.cta{background:var(--ink);color:var(--bg);border-radius:14px;padding:30px 36px;margin-bottom:28px}
+.cta b{display:block;font-size:44px;font-weight:600;letter-spacing:-.8px;line-height:1.15;margin-bottom:10px}
+.cta span{display:block;font-size:28px;line-height:1.35;color:#d8d8d2}
+
+/* the 10-K slide: hidden-debt check */
+.tenk{display:flex;flex-direction:column;margin-bottom:24px}
+.trow{display:grid;grid-template-columns:1fr 300px;gap:28px;padding:17px 0 15px;border-bottom:2px solid var(--rule);align-items:start}
+.trow:first-child{border-top:2px solid var(--rule)}
+.titem b{display:block;font-size:31px;font-weight:600;line-height:1.2}
+.titem span{display:block;font-size:24px;line-height:1.32;color:var(--ink2);margin-top:4px}
+.tfx{text-align:right}
+.tfx em{display:block;font-style:normal;font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:600;color:var(--ink3)}
+.trow.cnt .tfx em{color:var(--ink)}
+.tfx span{display:block;font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--ink3);margin-top:4px;line-height:1.35}
+.ttot{display:flex;justify-content:space-between;align-items:baseline;background:var(--ink);color:var(--bg);border-radius:12px;padding:20px 28px;margin-bottom:16px}
+.ttot div:first-child{font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.06em;text-transform:uppercase;color:#d8d8d2}
+.ttot div:last-child{font-size:44px;font-weight:600;letter-spacing:-.8px}
+.ttot s{color:#a8a8a1;text-decoration-thickness:3px}
+.tnote{font-size:28px;line-height:1.35;color:var(--ink2);margin-bottom:24px}

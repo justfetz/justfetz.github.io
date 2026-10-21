@@ -176,6 +176,11 @@ F = {
     "med_me10": usd(AT[round(mc["p_down"] + 0.1, 2)]["median"]), "med_me20": usd(AT[round(mc["p_down"] + 0.2, 2)]["median"]),
     "step1": usd(me["median"] - AT[round(mc["p_down"] + 0.1, 2)]["median"]),
     "step2": usd(AT[round(mc["p_down"] + 0.1, 2)]["median"] - AT[round(mc["p_down"] + 0.2, 2)]["median"]),
+    # the same ladder to one decimal, for the slide's tiles, so tile-to-tile differences match the steps
+    "median_at_me_1": usd(me["median"], 1), "med_me10_1": usd(AT[round(mc["p_down"] + 0.1, 2)]["median"], 1),
+    "med_me20_1": usd(AT[round(mc["p_down"] + 0.2, 2)]["median"], 1),
+    "step1_1": usd(round(me["median"], 1) - round(AT[round(mc["p_down"] + 0.1, 2)]["median"], 1), 1),
+    "step2_1": usd(round(AT[round(mc["p_down"] + 0.1, 2)]["median"], 1) - round(AT[round(mc["p_down"] + 0.2, 2)]["median"], 1), 1),
     "median_down": usd(mc["median_down"]), "median_base": usd(mc["median_base"]), "share_down": pc(mc["share_down"]), "share_base": pc(1 - mc["share_down"]), "market_odds": pc(cross), "fair_odds": pc(fair), "kelly": f"{mc['kelly']:.2f}",
     "half_kelly": f"{mc['half_kelly']:.2f}", "half_kelly_about": f"{math.floor(mc['half_kelly'] * 10) * 10}%",
     "convergence": pc(bet["convergence"]), "mkt_noise": pc(bet["noise"]),
