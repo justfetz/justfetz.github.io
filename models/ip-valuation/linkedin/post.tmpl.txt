@@ -2,7 +2,7 @@ Before I bet on International Paper's Q3, I went back to the 10-K for the debt t
 
 Pensions: clean. The U.S. plan holds {{tk_us_q_assets}} against {{tk_us_q_pbo}} owed.
 Leases: clean too. {{tk_op_leases}}, but the rent is already inside EBITDA. Counting it as debt would count it twice.
-Then a footnote: a {{tk_dtl}} tax bill from a 2007 timberland sale, due in 2027, the same year {{tk_debt_2027}} of IP's debt matures.
+Then the footnotes: a {{tk_dtl}} tax bill from a 2007 timberland sale, due in 2027, the same year {{tk_debt_2027}} of IP's debt matures. And {{tk_env_asb}} of reserves for old mill cleanups and asbestos claims.
 
 All in, the 10-K takes {{ps_total_abs}} a share off my DCF: {{was_dcf_ps2}} → {{dcf_ps2}}. The discount isn't hidden debt. It's the cycle.
 
@@ -30,3 +30,5 @@ The model, the spreadsheet and the code are in the first comment. What's your nu
 Not investment advice. I may hold or trade IP.
 
 #containerboard #valuation #DCF #MonteCarlo #packaging #AI
+
+I like to build cool sh*t.

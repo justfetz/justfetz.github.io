@@ -1,6 +1,6 @@
-100 shares at $32                        capital $ 3,200  E[P&L] $    451  P(profit) 65.7%  10th $   -896  90th $  1,747  worst $ -2,085  on capital +14.1%
-1 call, Jan-2028 $35 (~$3.50)            capital $   350  E[P&L] $     45  P(profit) 35.8%  10th $   -350  90th $    912  worst $   -350  on capital +12.7%
-1 cash-secured put, $28 6-mo (~$1.75)    capital $ 2,800  E[P&L] $     42  P(profit) 78.5%  10th $   -416  90th $    175  worst $ -1,602  on capital +1.5%
-1 call spread 35/45 (~$2.25)             capital $   225  E[P&L] $     84  P(profit) 40.6%  10th $   -225  90th $    775  worst $   -225  on capital +37.4%
+100 shares at $32                        capital $ 3,200  E[P&L] $    414  P(profit) 64.7%  10th $   -932  90th $  1,705  worst $ -2,109  on capital +12.9%
+1 call, Jan-2028 $35 (~$3.50)            capital $   350  E[P&L] $     26  P(profit) 34.4%  10th $   -350  90th $    870  worst $   -350  on capital +7.3%
+1 cash-secured put, $28 6-mo (~$1.75)    capital $ 2,800  E[P&L] $     32  P(profit) 77.2%  10th $   -453  90th $    175  worst $ -1,627  on capital +1.1%
+1 call spread 35/45 (~$2.25)             capital $   225  E[P&L] $     71  P(profit) 39.1%  10th $   -225  90th $    775  worst $   -225  on capital +31.7%
 
-horizon price (c=0.6): 10th $22  median $35  90th $48
+horizon price (c=0.6): 10th $22  median $34  90th $47

@@ -4,7 +4,7 @@ IP's 10-K: the debt net debt leaves out
 CAPTION
 Before I bet on International Paper's Q3, I went back to the 10-K for the debt that "net debt" leaves out: pensions and leases.
 
-Pensions: clean. Leases: clean, because the rent is already inside EBITDA. Then a footnote: a {{tk_dtl}} tax bill from a 2007 timberland sale, due in 2027.
+Pensions: clean. Leases: clean, because the rent is already inside EBITDA. Then the footnotes: a {{tk_dtl}} tax bill from a 2007 timberland sale, due in 2027, and {{tk_env_asb}} of reserves for old mill cleanups and asbestos claims.
 
 All in, {{ps_total_abs}} a share off my DCF ({{was_dcf_ps2}} → {{dcf_ps2}}). The discount isn't hidden debt. It's the cycle. At {{price}} the market is pricing {{market_odds}} odds of a containerboard down-cycle. I put it at {{p_down}}, after 11 years next to the corrugators that run on this company's paper.
 
@@ -17,6 +17,8 @@ What's your number for a down-cycle? Tell me and I'll price it.
 The model, the spreadsheet and the code are in the first comment. Not investment advice. I may hold or trade IP.
 
 #containerboard #valuation #DCF #MonteCarlo #packaging #AI
+
+I like to build cool sh*t.
 
 FIRST COMMENT
 The model, the {{n_formulas}}-formula workbook, the Python and the {{n_checks}} tie-out checks, with the 10-K section that changed the number: https://justfetz.github.io/posts/valuing-international-paper.html#debt

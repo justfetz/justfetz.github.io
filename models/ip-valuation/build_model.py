@@ -96,27 +96,33 @@ inp("pen_us_q_pbo", "Pension, U.S. qualified plan: obligation (PBO)", 8116, USD,
 inp("pen_uk_surplus", "Pension, UK qualified plan (DS Smith): surplus", 112, USD, "REPORTED", "10-K MD&A: 'an overfunded UK qualified pension with a surplus of $112 million.'")
 inp("pen_us_nq", "Pension, U.S. nonqualified plans: obligation, no assets", 218, USD, "REPORTED", "10-K MD&A: 'U.S. nonqualified pension 218 —'. Paid as benefits come due ($49M in 2025).")
 inp("pen_net", "Pensions, all plans: assets above obligations (the filing's net)", 144, USD, "REPORTED",
-    "10-K MD&A: 'the projected benefit obligation ... was approximately $144 million lower than the fair value of plan assets.' (Risk Factors says $148M; the plan table gives 144.)")
-inp("pen_surplus", "Pension plans in surplus, total (not counted by default)", 486, USD, "REPORTED", "10-K balance sheet: Overfunded Pension Plan Assets $486M.")
+    "10-K MD&A: 'the projected benefit obligation ... was approximately $144 million lower than the fair value of plan assets.' Note 19: U.S. plans +$148M, non-U.S. −$4M.")
+inp("pen_surplus", "Pension plans in surplus, total (not counted by default)", 486, USD, "REPORTED", "10-K Note 19, noncurrent assets: U.S. $367M + non-U.S. $119M = $486M (balance sheet: Overfunded Pension Plan Assets $486M).")
 inp("pen_deficit", "Pension plans in deficit, total (counted, after tax)", 342, USD, "REPORTED",
-    "Surplus plans $486M less the $144M net = $342M owed by plans in deficit (balance sheet: Underfunded Pension Benefit Obligations $316M long-term, the rest current).")
-inp("opeb", "Retiree medical and postemployment benefits (counted, after tax)", 133, USD, "REPORTED", "10-K balance sheet: Postretirement and Postemployment Benefit Obligation $133M (long-term).")
+    "10-K Note 19, liabilities: U.S. $21M current + $198M noncurrent, non-U.S. $5M current + $118M noncurrent = $342M (balance sheet: Underfunded Pension Benefit Obligations $316M long-term).")
+inp("opeb", "Retiree medical and postemployment benefits (counted, after tax)", 133, USD, "REPORTED", "10-K balance sheet: Postretirement and Postemployment Benefit Obligation $133M. Note 19 calls the other postretirement plans 'not considered material' and gives no table.")
 inp("op_leases", "Operating lease liabilities (not counted: the lease cost is already inside EBITDA)", 707, USD, "REPORTED",
-    "Dec 31, 2025: $221M current + $486M long-term (Q1 2026 10-Q lease table, December 31, 2025 column; the 10-K balance sheet shows Long-Term Lease Obligations $486M and Right of Use Assets $697M). Under U.S. GAAP operating lease cost is an operating expense, so EBITDA is after rent; adding the liability too would count it twice.")
-inp("fin_leases", "Finance lease liabilities (not counted again: already inside gross debt)", 71, USD, "REPORTED", "Dec 31, 2025: $17M in current maturities of debt + $54M in long-term debt (Q1 2026 10-Q lease table, December 31, 2025 column); the 10-K's debt maturities 'include financing lease obligations'.")
+    "10-K Note 10: operating lease liabilities $221M current (other current liabilities) + $486M noncurrent (long-term lease obligations); 2025 operating lease cost $258M. Under U.S. GAAP operating lease cost is an operating expense, so EBITDA is after rent; adding the liability too would count it twice.")
+inp("fin_leases", "Finance lease liabilities (not counted again: already inside gross debt)", 71, USD, "REPORTED", "10-K Note 10: finance lease liabilities $17M in notes payable and current maturities of long-term debt + $54M in long-term debt.")
+inp("env_reserve", "Environmental remediation reserves, old mill sites (counted, after tax)", 270, USD, "REPORTED",
+    "10-K Note 14: 'International Paper's estimated probable liability for these environmental matters, totaled approximately $270 million' at Dec 31, 2025 (Cass Lake, Kalamazoo River, San Jacinto, Versailles Pond among them). Remediation is a special item, outside adjusted EBITDA.")
+inp("asbestos", "Asbestos claims, net of insurance (counted, after tax)", 103, USD, "REPORTED",
+    "10-K Note 14: 'total recorded liability with respect to pending and future asbestos-related claims was $103 million ... net of insurance recoveries'.")
+inp("brazil_booked", "Brazil tax guarantee to Sylvamo, already booked (counted in full)", 48, USD, "REPORTED",
+    "10-K Note 14: 'The initial fair value estimate and recorded liability as of December 31, 2021 was $48 million and remains this amount at December 31, 2025.'")
 inp("timber_dtl", "Deferred tax on the Temple-Inland timber notes, due 2027 (counted)", 487, USD, "REPORTED",
     "10-K, contractual obligations: '$487 million deferred tax liability related to the Temple-Inland timber monetization, which will be settled with the maturity of the notes in 2027.'")
-inp("vie_assets", "Timber notes held by the special purpose entities (counted, net of the loans)", 2349, USD, "REPORTED", "10-K balance sheet: Long-Term Financial Assets of Variable Interest Entities $2,349M.")
+inp("vie_assets", "Timber notes held by the special purpose entities (counted, net of the loans)", 2349, USD, "REPORTED", "10-K balance sheet: Long-Term Financial Assets of Variable Interest Entities $2,349M. Note 15: $2.4B face, due 2027, backed by letters of credit from three banks.")
 inp("vie_liab", "Nonrecourse loans against those notes", 2127, USD, "REPORTED",
     "10-K balance sheet: Long-Term Nonrecourse Financial Liabilities of Variable Interest Entities $2,127M. Not in gross debt above; the notes repay them in 2027.")
 inp("debt_2027", "Regular debt maturing in 2027 (context, not added)", 2584, USD, "REPORTED", "10-K contractual obligations: debt maturities 2026 $992M, 2027 $2,584M, 2028 $739M.")
 inp("utb", "Unrecognized tax benefits (not counted: timing and amount uncertain)", 344, USD, "REPORTED", "10-K contractual obligations footnote: 'approximately $344 million of unrecognized tax benefits'.")
-inp("brazil_tax", "Brazil tax matter via the Sylvamo agreement, IP's share (not counted: contingent, not booked)", 274, USD, "REPORTED",
+inp("brazil_tax", "Brazil tax matter via the Sylvamo agreement, IP's potential share (counted only the $48M booked)", 274, USD, "REPORTED",
     "10-K Risk Factors: 'our potential liability for such assessments would currently be approximately $274 million' (assessments total about $394M, 2007–2015 tax years).")
 inp("count_surplus", "Count the pension surplus too? (1 = yes, 0 = no)", 0, None, "JUDGMENT",
     "Default no: a surplus can't be spent without an excise tax or years of contribution holidays. Set 1 to net it against the deficits.", judgment=True)
 inp("pension_other", "Debt-like items, after tax (from the 10-K lines above)", None, USD, "DERIVED",
-    "Pension deficits + retiree medical, after tax; minus the surplus if counted; plus the 2027 timber tax; minus the equity in the timber structure (notes less loans). Operating leases excluded.")
+    "Pension deficits, retiree medical, environmental and asbestos reserves, after tax; the booked Brazil guarantee; the 2027 timber tax less the equity in the timber structure (notes less loans); minus the pension surplus only if counted. Operating leases excluded.")
 blank()
 
 header(ws, row, "Latest reported and guided financials", 5); row += 1
@@ -180,8 +186,9 @@ header(ws, row, "Scenario switch", 5); row += 1
 inp("scenario", "Active scenario (1 = Bear, 2 = Mid-cycle, 3 = Bull) — drives the Scenarios sheet overrides", 2, '0', "JUDGMENT", "The Model sheet uses the Inputs above directly; the Scenarios sheet runs all three side by side.", judgment=True)
 # the debt-like total is a formula over the 10-K lines, written once the tax rate's cell exists
 c = ws.cell(row=int(INP["pension_other"].split("$")[-1]), column=2,
-            value=f"=({INP['pen_deficit']}+{INP['opeb']})*(1-{INP['tax_rate']})-{INP['pen_surplus']}*(1-{INP['tax_rate']})*{INP['count_surplus']}"
-                  f"+{INP['timber_dtl']}-({INP['vie_assets']}-{INP['vie_liab']})")
+            value=f"=({INP['pen_deficit']}+{INP['opeb']}+{INP['env_reserve']}+{INP['asbestos']})*(1-{INP['tax_rate']})"
+                  f"-{INP['pen_surplus']}*(1-{INP['tax_rate']})*{INP['count_surplus']}"
+                  f"+{INP['brazil_booked']}+{INP['timber_dtl']}-({INP['vie_assets']}-{INP['vie_liab']})")
 c.font = BLACK; c.number_format = USD
 # notes that quote other inputs are rewritten once every input exists, so they can't go stale
 _rev_na_26 = INV["rev_2026_h1"] * 2 * INV["rev_2025_na"] / (INV["rev_2025_na"] + INV["rev_2025_emea"])

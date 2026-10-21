@@ -201,7 +201,8 @@ F = {
 # --- the 10-K pass: each line that behaves like debt, in value per share, and what the post said before it
 t = V["tax_rate"]
 TK = {"deficit": -V["pen_deficit"] * (1 - t), "opeb": -V["opeb"] * (1 - t), "dtl": -V["timber_dtl"], "vie": V["vie_assets"] - V["vie_liab"],
-      "surplus": V["pen_surplus"] * (1 - t) * V["count_surplus"]}
+      "surplus": V["pen_surplus"] * (1 - t) * V["count_surplus"], "env": -V["env_reserve"] * (1 - t), "asb": -V["asbestos"] * (1 - t),
+      "brazil": -V["brazil_booked"]}
 assert abs(sum(TK.values()) + debt_like) < 0.5, "the 10-K lines no longer add up to the workbook's debt-like total"
 
 
@@ -221,7 +222,12 @@ F.update({
     "ps_deficit": ps(TK["deficit"]), "ps_opeb": ps(TK["opeb"]), "ps_dtl": ps(TK["dtl"]), "ps_vie": ps(TK["vie"]),
     "ps_timber": ps(TK["dtl"] + TK["vie"]), "ps_surplus": ps(TK["surplus"]), "ps_surplus_if": ps(V["pen_surplus"] * (1 - t)),
     "ps_pensions": ps(TK["deficit"] + TK["opeb"] + TK["surplus"]), "ps_total": ps(-debt_like),
-    "ps_utb": ps(-V["utb"]), "ps_brazil": ps(-V["brazil_tax"]), "ps_zero": "$0.00", "ps_total_abs": f"${debt_like / shares:.2f}",
+    "tk_env": usd_m(V["env_reserve"]), "tk_asb": usd_m(V["asbestos"]), "tk_brazil_booked": usd_m(V["brazil_booked"]),
+    "tk_reserves": usd_m(V["env_reserve"] + V["asbestos"] + V["brazil_booked"]), "tk_env_asb": usd_m(V["env_reserve"] + V["asbestos"]),
+    "tk_brazil_rest": usd_m(V["brazil_tax"] - V["brazil_booked"]),
+    "ps_env": ps(TK["env"]), "ps_asb": ps(TK["asb"]), "ps_brazil_booked": ps(TK["brazil"]), "ps_reserves": ps(TK["env"] + TK["asb"] + TK["brazil"]),
+    "ps_pen_opeb": ps(TK["deficit"] + TK["opeb"]), "tk_pen_opeb": usd_m(V["pen_deficit"] + V["opeb"]),
+    "ps_utb": ps(-V["utb"]), "ps_brazil": ps(-V["brazil_tax"]), "ps_brazil_rest": ps(-(V["brazil_tax"] - V["brazil_booked"])), "ps_zero": "$0.00", "ps_total_abs": f"${debt_like / shares:.2f}",
     "edge": f"{round((cross - mc['p_down']) * 100)} points",
     **{f"was_{k}": v for k, v in json.load(open("published.json"))["before_10k"]["fmt"].items()},
 })

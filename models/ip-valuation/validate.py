@@ -30,7 +30,8 @@ surplus, deficit = L("Pension plans in surplus"), L("Pension plans in deficit")
 check("10-K pension lines tie out: surplus plans − deficit plans = the filing's net, and the U.S. plan's table = its stated surplus",
       abs((surplus - deficit) - L("Pensions, all plans")) < 1 and abs(L("Pension, U.S. qualified plan: assets") - L("Pension, U.S. qualified plan: obligation") - 366) < 1,
       f"${surplus:,.0f}M − ${deficit:,.0f}M = ${surplus - deficit:,.0f}M (10-K: ${L('Pensions, all plans'):,.0f}M); U.S. qualified ${L('Pension, U.S. qualified plan: assets'):,.0f}M − ${L('Pension, U.S. qualified plan: obligation'):,.0f}M = $366M")
-dl = ((deficit + L("Retiree medical")) * (1 - inp["Cash tax rate"]) - surplus * (1 - inp["Cash tax rate"]) * L("Count the pension surplus")
+dl = ((deficit + L("Retiree medical") + L("Environmental remediation") + L("Asbestos claims")) * (1 - inp["Cash tax rate"])
+      - surplus * (1 - inp["Cash tax rate"]) * L("Count the pension surplus") + L("Brazil tax guarantee")
       + L("Deferred tax on the Temple-Inland") - (L("Timber notes held") - L("Nonrecourse loans")))
 check("debt-like items rebuild from the 10-K lines and come off the equity, not the WACC", abs(dl - debtlike) < 1 and abs(
       DCF["Equity value = EV − net debt − debt-like"] - (DCF["Enterprise value"] - netdebt - debtlike)) < 1,

@@ -64,7 +64,7 @@ svg text{font-family:'JetBrains Mono',monospace}
 
 /* the 10-K slide: hidden-debt check */
 .tenk{display:flex;flex-direction:column;margin-bottom:24px}
-.trow{display:grid;grid-template-columns:1fr 300px;gap:28px;padding:17px 0 15px;border-bottom:2px solid var(--rule);align-items:start}
+.trow{display:grid;grid-template-columns:1fr 300px;gap:28px;padding:15px 0 13px;border-bottom:2px solid var(--rule);align-items:start}
 .trow:first-child{border-top:2px solid var(--rule)}
 .titem b{display:block;font-size:31px;font-weight:600;line-height:1.2}
 .titem span{display:block;font-size:24px;line-height:1.32;color:var(--ink2);margin-top:4px}

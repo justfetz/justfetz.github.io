@@ -1,7 +1,7 @@
 PASS  market cap = price × shares: $16,944M vs $16,944M
 PASS  net debt = gross debt − cash: $8,491M
 PASS  10-K pension lines tie out: surplus plans − deficit plans = the filing's net, and the U.S. plan's table = its stated surplus: $486M − $342M = $144M (10-K: $144M); U.S. qualified $8,482M − $8,116M = $366M
-PASS  debt-like items rebuild from the 10-K lines and come off the equity, not the WACC: $626M after tax = $626M from the lines; equity = EV − $8,491M − $626M
+PASS  debt-like items rebuild from the 10-K lines and come off the equity, not the WACC: $957M after tax = $957M from the lines; equity = EV − $8,491M − $957M
 PASS  2026E EBITDA = guidance midpoint: $3,300M vs $3,300M guide midpoint
 PASS  2026E levered FCF inside the company's Jan guide ($300–500M): $303M (guide given before the April cut; the low end is the honest reading)
 PASS  dividend cost ≈ $980M: $980M = $1.85 × 529.5M
@@ -10,14 +10,14 @@ PASS  Gordon TV implies an exit multiple between SW and PKG: 8.2x (SW 7.2x, PKG 
 PASS  Exit-multiple TV implies a sane perpetual growth (0–4%): 1.89%
 PASS  WACC > terminal growth: 7.36% > 2.0%
 PASS  terminal value share of EV disclosed and in the mature-company band (60–90%): 82%
-PASS  DCF sheet ≈ Scenarios mid-cycle column (same chain, two layouts): $39.07 vs $39.31
-PASS  Sensitivity grid (17% × 8.5x) ≈ DCF within the interpolation error: $40.73 vs $39.07
-PASS  Bear < Mid < Bull: $11 < $39 < $70
+PASS  DCF sheet ≈ Scenarios mid-cycle column (same chain, two layouts): $38.44 vs $38.69
+PASS  Sensitivity grid (17% × 8.5x) ≈ DCF within the interpolation error: $40.11 vs $38.44
+PASS  Bear < Mid < Bull: $11 < $39 < $69
 PASS  25% of $170/ton moves 2027E EBITDA by 42.5 × $9M: $382.5M vs $382.5M (CFO: $10/ton ≈ $90M)
 PASS  Python chain reproduces Scenarios!C21 (2027E EBITDA): $4,136M vs $4,136M
-PASS  P(value > price) falls monotonically as P(down-cycle) rises: 81% → 72% → 63% → 54% → 46% → 37% → 29%
-PASS  breakeven P(down-cycle) ≈ 50% (market price = expected value): mean at p=0.5: $31.6
-PASS  MC mean sits between the Bear and Bull point estimates: $36.5
-PASS  regime split is real: P(>price | down) ≪ P(>price | base): 3% vs 89%
+PASS  P(value > price) falls monotonically as P(down-cycle) rises: 79% → 71% → 62% → 53% → 45% → 37% → 28%
+PASS  breakeven P(down-cycle) ≈ 50% (market price = expected value): mean at p=0.5: $30.9
+PASS  MC mean sits between the Bear and Bull point estimates: $35.9
+PASS  regime split is real: P(>price | down) ≪ P(>price | base): 3% vs 87%
 
 0 failure(s)

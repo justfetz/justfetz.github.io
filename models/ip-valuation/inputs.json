@@ -116,7 +116,7 @@
   "value": 144,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
-  "source": "10-K MD&A: 'the projected benefit obligation ... was approximately $144 million lower than the fair value of plan assets.' (Risk Factors says $148M; the plan table gives 144.)",
+  "source": "10-K MD&A: 'the projected benefit obligation ... was approximately $144 million lower than the fair value of plan assets.' Note 19: U.S. plans +$148M, non-U.S. −$4M.",
   "judgment": false
  },
  "pen_surplus": {
@@ -124,7 +124,7 @@
   "value": 486,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
-  "source": "10-K balance sheet: Overfunded Pension Plan Assets $486M.",
+  "source": "10-K Note 19, noncurrent assets: U.S. $367M + non-U.S. $119M = $486M (balance sheet: Overfunded Pension Plan Assets $486M).",
   "judgment": false
  },
  "pen_deficit": {
@@ -132,7 +132,7 @@
   "value": 342,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
-  "source": "Surplus plans $486M less the $144M net = $342M owed by plans in deficit (balance sheet: Underfunded Pension Benefit Obligations $316M long-term, the rest current).",
+  "source": "10-K Note 19, liabilities: U.S. $21M current + $198M noncurrent, non-U.S. $5M current + $118M noncurrent = $342M (balance sheet: Underfunded Pension Benefit Obligations $316M long-term).",
   "judgment": false
  },
  "opeb": {
@@ -140,7 +140,7 @@
   "value": 133,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
-  "source": "10-K balance sheet: Postretirement and Postemployment Benefit Obligation $133M (long-term).",
+  "source": "10-K balance sheet: Postretirement and Postemployment Benefit Obligation $133M. Note 19 calls the other postretirement plans 'not considered material' and gives no table.",
   "judgment": false
  },
  "op_leases": {
@@ -148,7 +148,7 @@
   "value": 707,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
-  "source": "Dec 31, 2025: $221M current + $486M long-term (Q1 2026 10-Q lease table, December 31, 2025 column; the 10-K balance sheet shows Long-Term Lease Obligations $486M and Right of Use Assets $697M). Under U.S. GAAP operating lease cost is an operating expense, so EBITDA is after rent; adding the liability too would count it twice.",
+  "source": "10-K Note 10: operating lease liabilities $221M current (other current liabilities) + $486M noncurrent (long-term lease obligations); 2025 operating lease cost $258M. Under U.S. GAAP operating lease cost is an operating expense, so EBITDA is after rent; adding the liability too would count it twice.",
   "judgment": false
  },
  "fin_leases": {
@@ -156,7 +156,31 @@
   "value": 71,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
-  "source": "Dec 31, 2025: $17M in current maturities of debt + $54M in long-term debt (Q1 2026 10-Q lease table, December 31, 2025 column); the 10-K's debt maturities 'include financing lease obligations'.",
+  "source": "10-K Note 10: finance lease liabilities $17M in notes payable and current maturities of long-term debt + $54M in long-term debt.",
+  "judgment": false
+ },
+ "env_reserve": {
+  "label": "Environmental remediation reserves, old mill sites (counted, after tax)",
+  "value": 270,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K Note 14: 'International Paper's estimated probable liability for these environmental matters, totaled approximately $270 million' at Dec 31, 2025 (Cass Lake, Kalamazoo River, San Jacinto, Versailles Pond among them). Remediation is a special item, outside adjusted EBITDA.",
+  "judgment": false
+ },
+ "asbestos": {
+  "label": "Asbestos claims, net of insurance (counted, after tax)",
+  "value": 103,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K Note 14: 'total recorded liability with respect to pending and future asbestos-related claims was $103 million ... net of insurance recoveries'.",
+  "judgment": false
+ },
+ "brazil_booked": {
+  "label": "Brazil tax guarantee to Sylvamo, already booked (counted in full)",
+  "value": 48,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "10-K Note 14: 'The initial fair value estimate and recorded liability as of December 31, 2021 was $48 million and remains this amount at December 31, 2025.'",
   "judgment": false
  },
  "timber_dtl": {
@@ -172,7 +196,7 @@
   "value": 2349,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
-  "source": "10-K balance sheet: Long-Term Financial Assets of Variable Interest Entities $2,349M.",
+  "source": "10-K balance sheet: Long-Term Financial Assets of Variable Interest Entities $2,349M. Note 15: $2.4B face, due 2027, backed by letters of credit from three banks.",
   "judgment": false
  },
  "vie_liab": {
@@ -200,7 +224,7 @@
   "judgment": false
  },
  "brazil_tax": {
-  "label": "Brazil tax matter via the Sylvamo agreement, IP's share (not counted: contingent, not booked)",
+  "label": "Brazil tax matter via the Sylvamo agreement, IP's potential share (counted only the $48M booked)",
   "value": 274,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "REPORTED",
@@ -220,7 +244,7 @@
   "value": null,
   "fmt": "$#,##0;($#,##0);-",
   "prov": "DERIVED",
-  "source": "Pension deficits + retiree medical, after tax; minus the surplus if counted; plus the 2027 timber tax; minus the equity in the timber structure (notes less loans). Operating leases excluded.",
+  "source": "Pension deficits, retiree medical, environmental and asbestos reserves, after tax; the booked Brazil guarantee; the 2027 timber tax less the equity in the timber structure (notes less loans); minus the pension surplus only if counted. Operating leases excluded.",
   "judgment": false
  },
  "rev_2025_na": {
