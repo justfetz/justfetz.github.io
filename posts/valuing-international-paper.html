@@ -181,7 +181,7 @@ table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-spac
 <div class="note"><strong>What to watch, in order of how fast it would change my mind</strong> (kept current in the <a href="ip-thesis-log.html">thesis log</a>): Fibre Box Association shipments for Q4 (demand); the Fastmarkets index in October and November (does the third round hold); the Q3 call's price realization number against the $175M that was in guidance; the November 3 DS Smith day and any sale price (the SOTP); OCC above $120 (the cost side). Each one is a row in the model.</div>
 
 <div class="sect">what drives it</div>
-<p>Before sizing anything, which assumption actually moves the answer? Rank correlation between each simulated input and the value per share, across the twenty thousand runs. The regime dominates, then the mid-cycle margin, then the exit multiple — the pricing guess matters, but less than the cycle it sits inside.</p>
+<p>Before sizing anything, which assumption actually moves the answer? Rank correlation between each simulated input and the value per share, across the twenty thousand runs. The cycle dominates: the mid-cycle margin and the exit multiple top the list, and both are drawn from the cycle regime, which ranks third on its own. The pricing guess matters, but less than the cycle it sits inside.</p>
 <div class="viz" id="tornado"><div class="cap">Spearman rank correlation of each input with value per share. Negative means a higher input lowers the value.</div></div>
 
 <div class="sect">my bet, as instruments</div>
@@ -557,7 +557,7 @@ viz('dist', function () {
   };
   mark(MC.price, 'price $32', '4 3', 10);
   mark(MC.pct['10'], '10th pct ' + money(MC.pct['10']), '1 3', 10, 'end');
-  mark(MC.pct['90'], '90th pct ' + money(MC.pct['90']), '1 3', 24);
+  mark(MC.pct['90'], '90th pct ' + money(MC.pct['90']), '1 3', 44);   // below the legend lines on the right
   svg.append('text').attr('x', W - m.r).attr('y', m.t + 10).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', css('--ink-2')).text(`P(value > price) = ${d3.format('.0%')(MC.p_above)}`);
   svg.append('text').attr('x', W - m.r).attr('y', m.t + 24).attr('text-anchor', 'end').attr('font-size', 10).attr('fill', css('--ink-3')).text('red: below the price · n = 20,000');
 });
