@@ -1,0 +1,458 @@
+{
+ "price": {
+  "label": "Share price ($)",
+  "value": 32.0,
+  "fmt": "$#,##0.00;($#,##0.00);-",
+  "prov": "MARKET",
+  "source": "Benzinga quote page, last updated Oct 15, 2026 (header shows $31.90; FAQ shows $32.12).",
+  "judgment": false
+ },
+ "shares": {
+  "label": "Diluted shares (millions)",
+  "value": 529.5,
+  "fmt": "#,##0.0;(#,##0.0);-",
+  "prov": "REPORTED",
+  "source": "Q2 2026 earnings release: diluted average shares 529.5M.",
+  "judgment": false
+ },
+ "dps": {
+  "label": "Dividend per share ($/yr)",
+  "value": 1.85,
+  "fmt": "$#,##0.00;($#,##0.00);-",
+  "prov": "MARKET",
+  "source": "Benzinga: 5.80% yield at $31.90 → $1.85/share; policy maintained through 2026 per Q4 2025 call.",
+  "judgment": false
+ },
+ "price_date": {
+  "label": "Price date",
+  "value": "Oct 15, 2026",
+  "fmt": null,
+  "prov": "MARKET",
+  "source": "Benzinga quote page.",
+  "judgment": false
+ },
+ "wk52_lo": {
+  "label": "52-week low ($)",
+  "value": 29,
+  "fmt": "$#,##0.00;($#,##0.00);-",
+  "prov": "MARKET",
+  "source": "Benzinga, Oct 15, 2026 (rounded to the dollar).",
+  "judgment": false
+ },
+ "wk52_hi": {
+  "label": "52-week high ($)",
+  "value": 50,
+  "fmt": "$#,##0.00;($#,##0.00);-",
+  "prov": "MARKET",
+  "source": "Benzinga, Oct 15, 2026 (rounded to the dollar).",
+  "judgment": false
+ },
+ "chg_ytd": {
+  "label": "Share price change, year to date",
+  "value": -0.2,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "MARKET",
+  "source": "Benzinga, Oct 15, 2026 (rounded).",
+  "judgment": false
+ },
+ "chg_12m": {
+  "label": "Share price change, last 12 months",
+  "value": -0.23,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "MARKET",
+  "source": "Benzinga, Oct 15, 2026 (rounded).",
+  "judgment": false
+ },
+ "gross_debt": {
+  "label": "Gross debt",
+  "value": 9217,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q2 2026 balance sheet: notes payable/current maturities $1,002M + long-term debt $8,215M. Excludes $2,131M nonrecourse VIE liabilities.",
+  "judgment": false
+ },
+ "cash": {
+  "label": "Cash and temporary investments",
+  "value": 726,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q2 2026 balance sheet.",
+  "judgment": false
+ },
+ "pension_other": {
+  "label": "Other debt-like items (pension deficit, leases) — placeholder",
+  "value": 0,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "JUDGMENT",
+  "source": "Set to 0 pending the 10-K pension note; the Q2 release shows non-operating pension INCOME, so the plan may be near fully funded. Check before publishing.",
+  "judgment": true
+ },
+ "rev_2025_na": {
+  "label": "2025 pro forma net sales — Packaging Solutions NA",
+  "value": 15000,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q4 2025 call: 'over $15B' pro forma for the North American business (rounded).",
+  "judgment": false
+ },
+ "rev_2025_emea": {
+  "label": "2025 pro forma net sales — Packaging Solutions EMEA",
+  "value": 8500,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q4 2025 call: about $8.5B pro forma for EMEA (DS Smith full year).",
+  "judgment": false
+ },
+ "ebitda_2025_na": {
+  "label": "2025 pro forma adj. EBITDA — NA",
+  "value": 2300,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q4 2025 call: about $2.3B NA.",
+  "judgment": false
+ },
+ "ebitda_2025_emea": {
+  "label": "2025 pro forma adj. EBITDA — EMEA",
+  "value": 800,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q4 2025 call: about $800M EMEA.",
+  "judgment": false
+ },
+ "fcf_2025": {
+  "label": "2025 free cash flow",
+  "value": -159,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q4 2025 call: free cash flow of negative $159M, reflecting transformation investment.",
+  "judgment": false
+ },
+ "rev_2026_h1": {
+  "label": "H1 2026 net sales",
+  "value": 11975,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q2 2026 release: six-month net sales $11,975M.",
+  "judgment": false
+ },
+ "ebitda_2026_h1": {
+  "label": "H1 2026 adj. EBITDA",
+  "value": 1264,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q2 2026 release: six-month adjusted EBITDA $1,264M (Q1 $677M, Q2 $587M).",
+  "judgment": false
+ },
+ "capex_2026_h1": {
+  "label": "H1 2026 capital expenditures",
+  "value": 1050,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "REPORTED",
+  "source": "Q2 2026 release: six-month capex $1,050M.",
+  "judgment": false
+ },
+ "ebitda_2026_guide_lo": {
+  "label": "2026 adj. EBITDA guidance — low",
+  "value": 3200,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q2 2026 release: $3.2–3.4B. (January: $3.5–3.7B; cut in April on demand, inflation, Middle East freight.)",
+  "judgment": false
+ },
+ "ebitda_2026_guide_hi": {
+  "label": "2026 adj. EBITDA guidance — high",
+  "value": 3400,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q2 2026 release.",
+  "judgment": false
+ },
+ "ebitda_2026_guide_jan_lo": {
+  "label": "2026 adj. EBITDA guidance in January — low",
+  "value": 3500,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q4 2025 call (Jan 29, 2026): $3.5–3.7B, cut to $3.2–3.4B in April.",
+  "judgment": false
+ },
+ "ebitda_2026_guide_jan_hi": {
+  "label": "2026 adj. EBITDA guidance in January — high",
+  "value": 3700,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q4 2025 call (Jan 29, 2026).",
+  "judgment": false
+ },
+ "ebitda_2026_na_guide": {
+  "label": "2026 adj. EBITDA guidance — NA (midpoint)",
+  "value": 2425,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "April 2026: NA $2.35–2.5B (from $2.5–2.6B).",
+  "judgment": false
+ },
+ "ebitda_2026_emea_guide": {
+  "label": "2026 adj. EBITDA guidance — EMEA (midpoint)",
+  "value": 950,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "April 2026: EMEA $0.9–1.0B (from $1.0–1.1B).",
+  "judgment": false
+ },
+ "da_2026": {
+  "label": "2026 depreciation & amortization",
+  "value": 1965,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q2 2026 release outlook reconciliation: D&A $1,965M.",
+  "judgment": false
+ },
+ "interest_2026": {
+  "label": "2026 interest expense",
+  "value": 370,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q2 2026 release outlook reconciliation.",
+  "judgment": false
+ },
+ "fcf_2026_guide_mid": {
+  "label": "2026 free cash flow guidance (Jan, midpoint)",
+  "value": 400,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q4 2025 call: $300–500M FCF for 2026 (pre-April cut; not updated in the Q2 release).",
+  "judgment": false
+ },
+ "sep_costs_2026": {
+  "label": "Separation / transaction costs expected 2026–27",
+  "value": 250,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "JUDGMENT",
+  "source": "Q2 2026 alone: $43M separation costs + $5M NORPAC costs + $9M 80/20 severance. Annualized run-rate ~$250M through the spin; your call.",
+  "judgment": true
+ },
+ "price_index_ytd": {
+  "label": "2026 containerboard index increase recognized YTD ($/ton, linerboard)",
+  "value": 170,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "MARKET",
+  "source": "Fastmarkets RISI via Packaging Dive (Sept 18, 2026): −20 Feb, +40 Mar, +30 Apr, +50 Jun, +70 Sep ≈ +$170/ton linerboard; medium +$100 in Sept alone.",
+  "judgment": false
+ },
+ "price_sens": {
+  "label": "EBITDA per $1/ton of price (annualized, NA)",
+  "value": 9,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "CFO Lance Loeffler, Q4 2025 call: each $10/ton ≈ $90M annualized adjusted EBITDA.",
+  "judgment": false
+ },
+ "price_in_2026": {
+  "label": "Price benefit already inside 2026 NA guidance",
+  "value": 175,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "GUIDANCE",
+  "source": "Q1 2026 call: IP expects pricing to add ~$175M to NA in 2026, mostly in H2.",
+  "judgment": false
+ },
+ "stick_pct": {
+  "label": "Share of the YTD index gain that STICKS through 2027 (floor judgment)",
+  "value": 0.5,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "Q1 for Jason: of the $170/ton announced, what holds at the box level in 12 months? Green Markets found no evidence the third round reached the open market (Sept). Default 50%.",
+  "judgment": true
+ },
+ "vol_2027_na": {
+  "label": "NA box volume growth 2027",
+  "value": 0.01,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "Market flat in 2026 (TTOBMA cut containerboard to −2%); IP claims +3–4 pts vs market. Default +1%.",
+  "judgment": true
+ },
+ "contrib_margin": {
+  "label": "Contribution margin on incremental NA volume",
+  "value": 0.3,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "Incremental box volume through existing mills/plants; typical converter contribution 25–35%.",
+  "judgment": true
+ },
+ "costout_2027": {
+  "label": "Incremental 80/20 cost-out 2027 (NA + EMEA)",
+  "value": 300,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "JUDGMENT",
+  "source": "~$510M run-rate benefits in 2025, 'similar' expected in 2026 (Q4 2025 call); EMEA >$200M run-rate from 31 closures. Default $300M for 2027, fading.",
+  "judgment": true
+ },
+ "inflation_2027": {
+  "label": "Cost inflation 2027 (OCC, energy, labor, freight)",
+  "value": 250,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "JUDGMENT",
+  "source": "OCC back to ~$80–100/ton from 2025 lows (5-yr avg $140); freight up on Middle East; EMEA inflation ~$100M in 2026 guide. Default $250M.",
+  "judgment": true
+ },
+ "emea_2027_delta": {
+  "label": "EMEA EBITDA change 2027 (box-price catch-up + cost-out, net)",
+  "value": 150,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "JUDGMENT",
+  "source": "Q2 2026: EMEA lost money because paper prices rose faster than box prices. Catch-up + cost-out vs soft demand. Default +$150M.",
+  "judgment": true
+ },
+ "midcycle_na_margin": {
+  "label": "Mid-cycle NA adj. EBITDA margin (2028+)",
+  "value": 0.17,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "SW 15% LTM, PKG 21% LTM, IP NA 2026E ~15.9%. Bull = toward PKG after 80/20; bear = below SW. Default 17%.",
+  "judgment": true
+ },
+ "midcycle_emea_margin": {
+  "label": "Mid-cycle EMEA adj. EBITDA margin (2028+)",
+  "value": 0.11,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "DS Smith historically ~12–13%; 2026E ~10%. Default 11%.",
+  "judgment": true
+ },
+ "rev_growth_lt": {
+  "label": "Revenue growth 2028–2030 (nominal)",
+  "value": 0.025,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "Box demand ≈ GDP-ish plus price; 2.5% nominal.",
+  "judgment": true
+ },
+ "capex_2027": {
+  "label": "Capex 2027",
+  "value": 1900,
+  "fmt": "$#,##0;($#,##0);-",
+  "prov": "JUDGMENT",
+  "source": "2026 run-rate ~$2.1B incl. Riverdale conversion ($250M project) and $225M Mississippi greenfield (opens Q4 2027). Default $1.9B.",
+  "judgment": true
+ },
+ "capex_pct_lt": {
+  "label": "Capex as % of revenue 2028+ (maintenance + modest growth)",
+  "value": 0.065,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "Paper is capex-heavy: D&A ≈ 8% of sales today. 6.5% assumes the transformation capex rolls off. Your 'assets in the ground are expensive to run' point lives here.",
+  "judgment": true
+ },
+ "da_pct_lt": {
+  "label": "D&A as % of revenue 2027+",
+  "value": 0.08,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "2026: $1,965M on ~$24B = 8.2%.",
+  "judgment": true
+ },
+ "nwc_pct": {
+  "label": "Net working capital investment, % of incremental revenue",
+  "value": 0.1,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "Packaging converters typically carry 8–12% of sales in NWC.",
+  "judgment": true
+ },
+ "tax_rate": {
+  "label": "Cash tax rate",
+  "value": 0.24,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "US 21% federal + state, blended with EMEA. Check against the 10-K effective rate.",
+  "judgment": true
+ },
+ "rf": {
+  "label": "Risk-free rate (10-yr US Treasury)",
+  "value": 0.04,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "MARKET",
+  "source": "Placeholder near the Oct 2026 10-yr yield — refresh before publishing.",
+  "judgment": true
+ },
+ "beta": {
+  "label": "Equity beta",
+  "value": 1.1,
+  "fmt": "0.00",
+  "prov": "JUDGMENT",
+  "source": "IP 5-yr regression beta has run ~1.0–1.2; Damodaran paper/forest products industry beta ~1.0. Default 1.10.",
+  "judgment": true
+ },
+ "erp": {
+  "label": "Equity risk premium",
+  "value": 0.045,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "Damodaran implied ERP has run 4–5% in 2025–26.",
+  "judgment": true
+ },
+ "kd": {
+  "label": "Pre-tax cost of debt",
+  "value": 0.055,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "MARKET",
+  "source": "IP senior unsecured notes have traded ~5–6% yield (BBB-range credit). Refresh.",
+  "judgment": true
+ },
+ "g": {
+  "label": "Terminal growth rate",
+  "value": 0.02,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "JUDGMENT",
+  "source": "At or below long-run nominal GDP for a mature, capex-heavy business.",
+  "judgment": true
+ },
+ "exit_mult": {
+  "label": "Exit EV/EBITDA multiple (cross-check)",
+  "value": 8.0,
+  "fmt": "0.0\"x\"",
+  "prov": "JUDGMENT",
+  "source": "IP's own 10-yr average ~8–9x; SW 7.2x and PKG 12.2x today.",
+  "judgment": true
+ },
+ "pkg_ev_ebitda": {
+  "label": "PKG EV/EBITDA (LTM)",
+  "value": 12.2,
+  "fmt": "0.0\"x\"",
+  "prov": "MARKET",
+  "source": "Multiples.vc Oct 17, 2026; EV $25B, LTM revenue $9.8B, EBITDA margin 21%.",
+  "judgment": false
+ },
+ "pkg_margin": {
+  "label": "PKG EBITDA margin (LTM)",
+  "value": 0.21,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "MARKET",
+  "source": "Multiples.vc.",
+  "judgment": false
+ },
+ "sw_ev_ebitda": {
+  "label": "Smurfit Westrock EV/EBITDA (LTM)",
+  "value": 7.2,
+  "fmt": "0.0\"x\"",
+  "prov": "MARKET",
+  "source": "Multiples.vc Oct 15, 2026; EV $35B, LTM revenue $32B, EBITDA margin 15%.",
+  "judgment": false
+ },
+ "sw_margin": {
+  "label": "Smurfit Westrock EBITDA margin (LTM)",
+  "value": 0.15,
+  "fmt": "0.0%;(0.0%);-",
+  "prov": "MARKET",
+  "source": "Multiples.vc.",
+  "judgment": false
+ },
+ "scenario": {
+  "label": "Active scenario (1 = Bear, 2 = Mid-cycle, 3 = Bull) — drives the Scenarios sheet overrides",
+  "value": 2,
+  "fmt": "0",
+  "prov": "JUDGMENT",
+  "source": "The Model sheet uses the Inputs above directly; the Scenarios sheet runs all three side by side.",
+  "judgment": true
+ }
+}

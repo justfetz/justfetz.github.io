@@ -22,7 +22,8 @@ rng = np.random.default_rng(7)
 # ---- horizon price: partial convergence toward value, plus noise the model can't see
 c = 0.6                                              # 60% of the gap closes over ~12–15 months
 price_T = price + c * (value - price)
-price_T = price_T * np.exp(rng.normal(0, 0.12, len(value)))   # 12% lognormal market noise
+MKT_NOISE = 0.12                                     # lognormal market noise the model can't see
+price_T = price_T * np.exp(rng.normal(0, MKT_NOISE, len(value)))
 price_T = np.maximum(price_T, 3)
 
 # ---- dividend over the horizon: $1.85 held in the base regime, halved in a down-cycle (cut)
@@ -57,7 +58,7 @@ curves = {
     "spread": (100 * (np.minimum(SPR_K2 - SPR_K1, np.maximum(0, grid - SPR_K1)) - SPR_NET)).tolist(),
 }
 hist, edges = np.histogram(price_T, bins=np.arange(0, 100, 2.5))
-json.dump(dict(convergence=c, price=price, grid=grid.tolist(), curves=curves, rows=rows,
+json.dump(dict(convergence=c, noise=MKT_NOISE, spread_wipeout=float((price_T <= SPR_K1).mean()), price=price, grid=grid.tolist(), curves=curves, rows=rows,
                priceT=dict(edges=edges.tolist(), counts=hist.tolist(), p10=float(np.percentile(price_T, 10)), p50=float(np.percentile(price_T, 50)), p90=float(np.percentile(price_T, 90))),
                premiums=dict(call=CALL_PREM, put=PUT_PREM, spread=SPR_NET)), open("bet.json", "w"))
 print(f"\nhorizon price (c={c}): 10th ${np.percentile(price_T,10):.0f}  median ${np.percentile(price_T,50):.0f}  90th ${np.percentile(price_T,90):.0f}")

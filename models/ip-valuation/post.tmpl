@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A corrugator engineer values International Paper — Jason Fetzer</title>
+<meta name="description" content="Narrative to numbers: a DCF of International Paper built from the plant floor — capacity out, price in, assets that are expensive to run — with the bet priced as a probability, not a target.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.page{max-width:720px}
+.sect{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:44px 0 14px;display:flex;align-items:center;gap:12px}
+.sect::after{content:'';flex:1;height:1px;background:var(--rule)}
+.pull{border-left:2px solid var(--accent);padding:4px 0 4px 18px;margin:24px 0;font-size:19px;line-height:1.45;color:var(--ink)}
+.viz{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.viz svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.viz .cap{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:0 0 24px}
+.kpi{border:1px solid var(--rule);border-radius:8px;padding:10px 12px}
+.kpi b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.kpi em{font-style:normal;font-family:var(--mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.kpi i{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+table.sens{font-family:var(--mono);font-size:12.5px;border-collapse:collapse;width:100%;margin:0 0 8px}
+table.sens th,table.sens td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+table.sens th:first-child,table.sens td:first-child{text-align:left;color:var(--ink-3)}
+table.sens td.lo{color:var(--ink-3)} table.sens td.n{text-align:right;white-space:nowrap} table.xl{font-size:11.5px} table.xl td{max-width:420px} table.sens td.mkt{font-weight:600;color:var(--accent)}
+.story{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px}
+@media (max-width:600px){.story{grid-template-columns:1fr}}
+.story div{border:1px solid var(--rule);border-radius:8px;padding:12px 14px;font-size:15px}
+.story b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px;font-weight:500}
+.story ul{margin:0;padding-left:18px}
+.src{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.src a{color:var(--ink-2)}
+.bet{border:1px solid var(--rule);border-radius:10px;padding:16px;margin:0 0 24px;background:var(--bg)}
+.bet .knobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px;margin-bottom:12px}
+.bet label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.bet input[type=range]{width:100%;accent-color:var(--accent)}
+.bet .v{font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+.bet .out{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:6px 0 10px}
+.bet .out div{border:1px solid var(--rule);border-radius:8px;padding:8px 10px;background:var(--code-bg)}
+.bet .out b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.bet .out em{font-style:normal;font-family:var(--mono);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.bet .verdict{font-size:15px;color:var(--ink);margin:4px 0 0}
+.bet svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.note{border:1px solid var(--rule);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--ink-2);margin:0 0 24px}
+</style>
+</head>
+<body>
+<main class="page">
+<nav class="top">
+  <a href="../">← jason fetzer</a>
+  <a href="../#writing">writing</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    theme
+  </button>
+</nav>
+
+
+<p class="meta">2026-10-17 · money · manufacturing</p>
+<h1>A corrugator engineer values International Paper</h1>
+<p class="lede">I've stood next to the machine that makes this company's product for eleven years. I'd never valued the company. The stock is down {{chg_ytd_words}} this year, so I did it properly — Wall Street Prep's mechanics, Damodaran's discipline, and the one thing neither of them has: what the numbers look like from the floor.</p>
+
+<div class="kpis">
+  <div class="kpi"><b>price</b><em>{{price}}</em><i>{{price_date}} · 52-wk {{wk52}}</i></div>
+  <div class="kpi"><b>YTD</b><em>{{chg_ytd}}</em><i>{{chg_12m}} over 12 months</i></div>
+  <div class="kpi"><b>yield</b><em>{{yield}}</em><i>{{dps}}/share · ~{{div_cost}}/yr</i></div>
+  <div class="kpi"><b>net debt</b><em>{{net_debt_b}}</em><i>EV ≈ {{ev_mkt_b}}</i></div>
+  <div class="kpi"><b>2026 EBITDA guide</b><em>{{guide}}</em><i>was {{guide_jan}} in January</i></div>
+  <div class="kpi"><b>2025 free cash flow</b><em>{{fcf25}}</em><i>the dividend wasn't covered</i></div>
+</div>
+
+<div class="sect">the story first</div>
+<p>Damodaran's rule is that every valuation is a story with numbers attached, and the story comes first, because the numbers are only as good as the story they're consistent with. Here's the story as I see it from the plant, before I open a spreadsheet.</p>
+
+<div class="story">
+  <div><b>the bull case: capacity out, price in</b>
+  <ul>
+    <li>IP closed Savannah (1.0 million tons a year) and Riceboro (430k) in September 2025, after Red River and Orange. The industry took out <strong>3.9 million tons in 2025 — nearly 10% of North American containerboard capacity</strong>.</li>
+    <li>Three price increases in 2026. The index has recognized about <strong>{{idx}} a ton on linerboard</strong>. The CFO's own sensitivity: <strong>every $10 a ton is {{sens10}} of EBITDA</strong> a year.</li>
+    <li>80/20 found ~$510M of run-rate cost in 2025 and expects the same in 2026. Thirty-one EMEA closures, 2,800 positions.</li>
+    <li>They bought the NORPAC mill in Washington for $360M because, in the CEO's words, they were "significantly short paper on the West Coast and shipping it there uneconomically." Anyone who's watched a truck of linerboard cross three states knows what that costs.</li>
+  </ul></div>
+  <div><b>the bear case: expensive assets, soft demand</b>
+  <ul>
+    <li>Demand is flat. The trade forecast for 2026 containerboard went from +2% to <strong>−2%</strong> after February. The bank analysts are "mostly worried about demand."</li>
+    <li>EMEA (the DS Smith business) lost $80M in Q2 because paper prices rose faster than box prices. That lag is real; I've lived it from the other side.</li>
+    <li>The 10% capacity cut was cost economics — low performers out — not a demand squeeze. Those mills aren't coming back, which supports price, but the tightness is thinner than the headline.</li>
+    <li>Paper is capital-hungry. D&A is {{da_pct}} of sales; capex is running {{capex26_b}} a year. The dividend costs {{div_cost}} and 2025 free cash flow was negative. The {{yield}} yield is the market telling you it doesn't believe the dividend is safe.</li>
+  </ul></div>
+</div>
+
+<p>And one thing that isn't in either column because it happened this week: IP announced in January it would spin off EMEA, and on October 15 it said it had unsolicited bids and was running a sale process in parallel. The DS Smith capital markets day is November 3. So the question "what is the sum of the parts worth" is no longer academic.</p>
+
+<div class="sect">narrative to numbers</div>
+<p>A DCF is a machine that turns operating assumptions into a price. The machine is standard; the assumptions are everything. So here is 2027 built as a bridge from 2026 guidance, with each piece tied to the story, and with my own judgments marked as judgments.</p>
+
+<div class="viz" id="bridge"><div class="cap">The 2027 bridge for the North American business, $ millions. Grey is company guidance; orange are my judgments (the model's yellow cells); green is what falls out — and the deliberate step down to mid-cycle.</div></div>
+
+<p>The judgments, stated plainly so you can disagree with them:</p>
+<ul>
+  <li><strong>{{stick_Word}} the price sticks.</strong> Of the {{idx}} a ton the index has recognized, I assume {{stick}} holds at the box level through 2027. Index-linked contracts lag by months; the third round hasn't reached the open market yet; a soft year gives some of it back. {{stick_Word}}, net of the {{in_guide}} already in 2026 guidance, is about {{price_bridge}} of 2027 EBITDA.</li>
+  <li><strong>Volume up {{vol}}.</strong> The market is flat-to-down; IP says it's outperforming by three or four points. I split the difference and assume a {{contrib}} contribution margin on the increment, which is what a box plant running through existing mills earns on the next ton.</li>
+  <li><strong>{{costout}} of cost-out against {{infl}} of inflation.</strong> OCC is back to $80–100 a ton from the 2025 lows, freight is up, and 80/20 keeps finding money. Net of each other, it's roughly a wash — which is what a transformation looks like from the P&L two years in.</li>
+  <li><strong>Then it comes back down.</strong> This is the Damodaran part people skip. 2027 is a price-increase year, and a price-increase year is a <em>peak</em>. A cyclical gets valued at mid-cycle, not at the peak. So 2028 onward I use a mid-cycle NA margin of {{na_margin}} — between Smurfit Westrock's {{sw_margin}} and Packaging Corp's {{pkg_margin}} — and the model deliberately shows EBITDA stepping <em>down</em> from 2027 to 2028. If that looks wrong to you, that's the assumption to argue with.</li>
+</ul>
+
+<div class="sect">what the machine says</div>
+<p>Three independent routes, same inputs, and they land in the same place, which is the first thing worth knowing.</p>
+<div class="kpis">
+  <div class="kpi"><b>DCF, mid-cycle</b><em>{{dcf_ps}}</em><i>WACC {{wacc}} · TV is {{tv_share}} of EV</i></div>
+  <div class="kpi"><b>sum of the parts</b><em>{{sotp_ps}}</em><i>NA at {{sotp_na_mult}} · DS Smith at {{sotp_emea_mult}}</i></div>
+  <div class="kpi"><b>bear / mid / bull</b><em>{{bear_ps}} / {{mid_ps}} / {{bull_ps}}</em><i>weighted {{weights}}: {{pw_ps}}</i></div>
+</div>
+<p>Two honesty checks the model prints on purpose. The terminal value is {{tv_share}} of the enterprise value — normal for a mature company, and it means the answer <em>is</em> the terminal assumptions, which is why the next section exists. And the Gordon-growth terminal value implies an exit multiple of {{tv_mult}}, right between Smurfit Westrock and Packaging Corp, so the growth-and-discount-rate pair isn't quietly telling a story the comps don't.</p>
+
+<p>The two assumptions that decide the number, with the market price for scale:</p>
+{{table:grid}}
+<p class="src">Grey cells are at or below the {{price}} market price. Read it as a map of what you'd have to believe.</p>
+
+<div class="pull">At {{price}}, the market is paying a Smurfit Westrock multiple for the North American business and giving DS Smith almost nothing.</div>
+
+<p>That's the thing the model made me see. Back out what the price implies and the stock trades at {{mkt_ev_26}} 2026 guidance and about {{mkt_ev_27}} the 2027 bridge. The market isn't disagreeing with the arithmetic; it's disagreeing with the story. It assumes 80/20 doesn't earn IP a multiple above SW's, that most of the {{idx}} doesn't stick, and that the dividend gets cut. Those are three versions of one belief: that the cycle turns down before the transformation shows up.</p>
+
+<div class="sect">the bet, priced</div>
+<p>A point estimate of {{dcf_ps}} is not a bet; it's a sentence. A bet needs a distribution. So I ran the same chain {{n_runs_words}} times with the decisive assumptions drawn from ranges instead of set to values — how much price sticks, the mid-cycle margin, the exit multiple, the discount rate, volume, capex intensity — plus a {{noise}} noise term on the terminal value for the possibility that the model's structure is simply wrong.</p>
+<p>The first version said 90% of outcomes were above {{price}}. That was a lie, and a common one: I'd drawn the assumptions independently, and in a downturn they move together — price doesn't stick, demand falls, margins compress and the multiple shrinks all at once. So the second version draws the <em>cycle</em> first, with a {{p_down}} chance of a down-cycle over the horizon, and draws everything else conditional on it.</p>
+
+<div class="viz" id="dist"><div class="cap">{{n_runs_Words}} values per share. The dashed line is the {{price}} price; the tails are what the point estimate hides.</div></div>
+
+<div class="kpis">
+  <div class="kpi"><b>P(worth more than {{price}})</b><em>{{p_above}}</em><i>given a down-cycle: {{p_above_down}} · given not: {{p_above_base}}</i></div>
+  <div class="kpi"><b>median / mean</b><em>{{median}} / {{mean}}</em><i>10th pct {{p10}} · 90th pct {{p90}}</i></div>
+  <div class="kpi"><b>P(worth less than {{half_price}})</b><em>{{p_half}}</em><i>P(worth more than {{double_price}}): {{p_double}}</i></div>
+</div>
+
+<p>Then the question that matters: what does the probability of a down-cycle have to be for the bet to be fair?</p>
+
+<div class="viz" id="cycle"><div class="cap">The whole bet is one number. P(value &gt; {{price}}) as the probability of a containerboard down-cycle over the next three years goes from {{sweep_lo}} to {{sweep_hi}}.</div></div>
+
+<div class="pull">At {{price}} the market is pricing a coin flip on a down-cycle. If you think it's {{p_down}}, the shares are worth about {{median_at_me}} and you have an edge. If you think it's {{market_odds}}, you're being paid nothing.</div>
+
+<p>Everything else — the DCF, the comps, the sum of the parts — collapses into that one judgment. Which is the useful thing about doing this properly: it tells you what you're actually betting on, and it isn't the dividend or the spin-off or the price increase. It's the cycle. And the cycle is the thing you can watch: box shipments, the index in October and November, OCC, and what the DS Smith buyers are willing to pay on November 3.</p>
+
+<div class="sect">price your own bet</div>
+<p>Everything above is my guess. Here is the same machine with the guesses exposed. Set what <em>you</em> believe — how much of the {{idx}} sticks, the mid-cycle margin, what a buyer pays in 2030, the discount rate, and the odds of a down-cycle — and the page prices the bet the way the spreadsheet and the Monte Carlo do, live.</p>
+<div class="bet" id="bet">
+  <div class="knobs">
+    <label>price that sticks<input type="range" id="bStick" min="0" max="100" value="{{stick_pts}}"><span class="v" id="vStick">{{stick}} of {{idx}}/t</span></label>
+    <label>NA mid-cycle margin<input type="range" id="bMargin" min="12" max="21" step="0.5" value="{{na_margin_pts}}"><span class="v" id="vMargin">{{na_margin_1}}</span></label>
+    <label>exit multiple (2030)<input type="range" id="bMult" min="6" max="12" step="0.25" value="{{exit_mult_val}}"><span class="v" id="vMult">{{exit_mult}}</span></label>
+    <label>WACC<input type="range" id="bWacc" min="6" max="9" step="0.1" value="{{wacc_pts}}"><span class="v" id="vWacc">{{wacc}}</span></label>
+    <label>P(down-cycle, 3 yrs)<input type="range" id="bDown" min="5" max="80" value="{{p_down_pts}}"><span class="v" id="vDown">{{p_down}}</span></label>
+  </div>
+  <div class="out">
+    <div><b>your value / share</b><em id="oVal">—</em></div>
+    <div><b>vs {{price}}</b><em id="oUp">—</em></div>
+    <div><b>P(value &gt; {{price}})</b><em id="oP">—</em></div>
+    <div><b>10th / 90th pct</b><em id="oPct">—</em></div>
+    <div><b>2027 EBITDA</b><em id="oE">—</em></div>
+  </div>
+  <svg id="bHist" viewBox="0 0 680 120" role="img" aria-label="Distribution of value under your beliefs"></svg>
+  <p class="verdict" id="oVerdict"></p>
+</div>
+
+<p>On sizing: Kelly on this distribution says a half-Kelly position of about {{half_kelly_about}} of a portfolio, which is absurd, and the absurdity is the lesson. Kelly assumes you know the distribution. The distribution is the thing you're least sure of — I assigned that {{p_down}} myself. Treat Kelly as an upper bound, then divide by the number of things you could be wrong about. For one stock in one cyclical industry, that's a small position or none.</p>
+
+<div class="sect">would I</div>
+<p>Here's where I've landed, as a person and not as advice. The honest version of this stock is a bet on the containerboard cycle, with a {{yield}} yield that may or may not survive, a separation that may or may not unlock value, and a management that has been doing the hard, expensive, unpopular work of closing the mills everyone knew should close. If I want the quality, I'd own Packaging Corp at {{pkg_mult0}} and sleep. If I want the same multiple with less drama, Smurfit Westrock is right there at {{sw_mult0}}. IP is the one where my information is worth something — because the cycle call is the whole bet, and the cycle is what I read every week in box plants.</p>
+<p>That's an argument for a small position and a watch list, not for conviction. The model is the thing I'm confident in. The {{p_down}} is the thing I'm not.</p>
+
+<div class="note"><strong>What to watch, in order of how fast it would change my mind</strong> (kept current in the <a href="ip-thesis-log.html">thesis log</a>): Fibre Box Association shipments for Q4 (demand); the Fastmarkets index in October and November (does the third round hold); the Q3 call's price realization number against the {{in_guide}} that was in guidance; the November 3 DS Smith day and any sale price (the SOTP); OCC above $120 (the cost side). Each one is a row in the model.</div>
+
+<div class="sect">what drives it</div>
+<p>Before sizing anything, which assumption actually moves the answer? Rank correlation between each simulated input and the value per share, across the twenty thousand runs. The cycle dominates: the mid-cycle margin and the exit multiple top the list, and both are drawn from the cycle regime, which ranks third on its own. The pricing guess matters, but less than the cycle it sits inside.</p>
+<div class="viz" id="tornado"><div class="cap">Spearman rank correlation of each input with value per share. Negative means a higher input lowers the value.</div></div>
+
+<div class="sect">my bet, as instruments</div>
+<p>The model values the business; a position pays on the <em>price</em>, and the two can disagree for a long time. So this adds one more assumption — over about a year the price closes {{convergence}} of the gap toward the simulated value, with {{mkt_noise}} of market noise on top — and maps that onto the four ways I could actually express the view, per 100 shares. Option premiums are placeholders from a reasonable chain; check the live one before doing anything.</p>
+<div class="viz" id="payoff"><div class="cap">Payoff at the horizon for each instrument (lines) over the distribution of the horizon price (bars). The dashed line is today's {{price}}.</div></div>
+{{table:instruments}}
+<p>The table is the "win rate is a proxy" lesson on my own bet. The cash-secured put wins <strong>{{put_win}} of the time</strong> and has the <em>lowest</em> expected return on capital, because the {{put_lose}} is where it loses {{put_worst_round}} against {{put_premium}} of premium. The call spread has the best return on capital and loses money {{spread_lose}} of the time; in {{spread_wipe}} of runs it loses the whole {{spread_cost}}. Shares are the boring middle: {{shares_odds}} odds, {{shares_roc}} expected, and they pay the dividend while I wait, if it survives. None of this is advice; it's the distribution, priced four ways.</p>
+<details class="code"><summary>show the code (bet.py, as run)</summary><pre>{{include:bet.py}}</pre></details>
+
+<div class="sect">does it tie out</div>
+<p>A model that evaluates is not a model that's right. So the numbers are checked the way a reviewer would check them — every identity, every cross-check between methods, every claim against what the company itself said — and the checks run as a script that fails loudly. {{n_checks_Word}} checks; all pass. The ones that matter most: the 2026 cash flow lands inside the company's own guide, the Gordon terminal value implies an exit multiple the comps support, the Python reproduces the spreadsheet to the dollar, and the Monte Carlo's breakeven is where the arithmetic says it should be.</p>
+<details class="code" open><summary>validation output</summary><pre>{{include:validate_out.txt}}</pre></details>
+<details class="code"><summary>show the checks (validate.py)</summary><pre>{{include:validate.py}}</pre></details>
+<p>What a green run proves and what it doesn't: the arithmetic is consistent and tied to its sources. It cannot prove the {{p_down}}, the {{na_margin}}, or the {{exit_mult0}}. Those are the judgment, and the log is where they get tested against time.</p>
+
+<div class="sect">the workbook, rendered</div>
+<p>The same spreadsheet, so you don't have to open it. Blue is a hardcoded input, yellow is a judgment of mine, everything else is a formula. The provenance column is the point: every number says where it came from.</p>
+<details class="code" open><summary>Inputs — every assumption with its source</summary><div style="overflow-x:auto">{{table:inputs}}</div></details>
+<details class="code"><summary>Model — 2025A to 2030E, the bridge and the cash flow</summary><div style="overflow-x:auto">{{table:model}}</div></details>
+<details class="code"><summary>DCF — WACC, terminal value two ways, value per share</summary><div style="overflow-x:auto">{{table:dcf}}</div></details>
+<details class="code"><summary>Comps and sum of the parts</summary><div style="overflow-x:auto">{{table:comps}}</div></details>
+
+<div class="sect">the model, line by line</div>
+<p>This is the Scenarios sheet of the workbook, values as computed, so the whole argument fits on one screen: ten levers on top (the yellow cells), everything below them a formula. The DCF sheet does the same chain year by year; the Monte Carlo draws the levers from distributions and runs it {{n_runs_words}} times.</p>
+{{table:scenarios}}
+<p class="src">From IP_valuation_model.xlsx → Scenarios. Levers are judgments; derived rows are arithmetic. The Dictionary sheet in the workbook defines every term.</p>
+<details class="code"><summary>show the Monte Carlo (montecarlo.py, as run)</summary><pre>{{include:montecarlo.py}}</pre></details>
+<p class="src" style="margin-top:10px">The browser panel above uses the same chain with a 3,000-draw simulation, so its percentages differ from the Python run by a point or two.</p>
+
+<div class="sect">the model and the code</div>
+<p>The spreadsheet is <a href="../models/ip-valuation/IP_valuation_model.xlsx">IP_valuation_model.xlsx</a>: {{n_formulas}} live formulas, a Dictionary sheet that explains every term in plant language, every input tagged with its source (Q2 2026 release, the Q1 and Q4 calls, Fastmarkets via Packaging Dive, Multiples.vc), and every judgment of mine in yellow so you can overwrite it. The Monte Carlo is <a href="../models/ip-valuation/montecarlo.py">montecarlo.py</a>, which mirrors the sheet's scenario chain line for line; <a href="../models/ip-valuation/build_model.py">build_model.py</a> generates the workbook, <a href="../models/ip-valuation/validate.py">validate.py</a> runs the {{n_checks_word}} tie-out checks, and <a href="../models/ip-valuation/bet.py">bet.py</a> maps the distribution onto the instruments. Public information only. Not investment advice; I'm an engineer who builds solvers, not a financial advisor, and I may hold or trade any of these names.</p>
+<p>The mechanics are the ones Wall Street Prep teaches — unlevered free cash flow, WACC, a terminal value two ways, comps and sum-of-the-parts. The discipline is Damodaran's: story first, mid-cycle for a cyclical, show what the terminal value carries, and treat the answer as a distribution because that's what it is. The floor is mine.</p>
+
+<p class="src">Written by Jason Fetzer, edited with Claude. Sources: IP Q2 2026 earnings release; Packaging Dive on the Q1 2026 call (Apr 30), the Savannah/Riceboro closures (Aug 2025) and Fastmarkets RISI pricing (Sept 18, 2026); MarketBeat Q4 2025 call summary (Jan 29, 2026); Investing.com on the EMEA sale process (Oct 15, 2026); Multiples.vc for PKG and SW; Benzinga quote (Oct 15, 2026).</p>
+
+<footer>
+  <span>© 2026 Jason Fetzer</span>
+  <a href="../">justfetz.github.io</a>
+</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/theme.js"></script>
+<script src="../assets/viz.js"></script>
+<script>
+const MC = {{json:MC}};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const money = d3.format('$,.0f');
+
+viz('bridge', function () {
+  // The 2027 NA EBITDA bridge, exactly as the model builds it.
+  const steps = [
+    { k: 'base', label: '2026\nguidance', v: {{bridge_0}}, kind: 'in' },
+    { k: 'price', label: 'price that sticks\n{{stick}} of {{idx}}/t', v: {{bridge_1}}, kind: 'judg' },
+    { k: 'vol', label: 'volume\n{{vol_signed}}', v: {{bridge_2}}, kind: 'judg' },
+    { k: 'cost', label: '80/20\ncost-out', v: {{bridge_3}}, kind: 'judg' },
+    { k: 'infl', label: 'inflation\nOCC, freight', v: {{bridge_4}}, kind: 'judg' },
+    { k: 'end', label: '2027\nbridge', v: {{bridge_5}}, kind: 'total' },
+    { k: 'mid', label: '2028\nmid-cycle {{na_margin}}', v: {{bridge_6}}, kind: 'total2' },
+  ];
+  const W = 680, H = 290, m = { t: 16, r: 16, b: 50, l: 54 };
+  const el = document.getElementById('bridge');
+  const svg = d3.select(el).insert('svg', ':first-child').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', '2027 NA EBITDA bridge');
+  const x = d3.scaleBand().domain(steps.map(d => d.k)).range([m.l, W - m.r]).padding(0.3);
+  const y = d3.scaleLinear().domain([2000, 3300]).range([H - m.b, m.t]);
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat(money).tickSize(-(W - m.l - m.r)))
+    .call(g => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10); });
+  let run = 0;
+  const color = d => d.kind === 'in' ? css('--ink-3') : d.kind === 'judg' ? (d.v >= 0 ? '#c86a2a' : '#b94a3c') : css('--accent');
+  steps.forEach(d => {
+    let y0, y1;
+    if (d.kind === 'in' || d.kind === 'total' || d.kind === 'total2') { y0 = 2000; y1 = d.v; run = d.v; }
+    else { y0 = run; y1 = run + d.v; run = y1; }
+    svg.append('rect').attr('x', x(d.k)).attr('y', y(Math.max(y0, y1))).attr('width', x.bandwidth()).attr('height', Math.abs(y(y0) - y(y1))).attr('fill', color(d)).attr('rx', 2);
+    svg.append('text').attr('x', x(d.k) + x.bandwidth() / 2).attr('y', y(Math.max(y0, y1)) - 5).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--ink')).text((d.kind === 'judg' ? (d.v > 0 ? '+' : '') : '') + money(d.v));
+    const lines = d.label.split('\n');
+    lines.forEach((t, i) => svg.append('text').attr('x', x(d.k) + x.bandwidth() / 2).attr('y', H - m.b + 16 + i * 12).attr('text-anchor', 'middle').attr('font-size', 9.5).attr('fill', css('--ink-3')).text(t));
+  });
+  svg.append('line').attr('x1', x('end') + x.bandwidth()).attr('x2', x('mid')).attr('y1', y({{bridge_5}})).attr('y2', y({{bridge_6}})).attr('stroke', css('--ink-3')).attr('stroke-dasharray', '3 3');
+  svg.append('text').attr('x', (x('end') + x.bandwidth() + x('mid')) / 2).attr('y', y({{bridge_mid}}) - 4).attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', css('--ink-3')).text('the cyclical haircut');
+});
+
+viz('dist', function () {
+  // Histogram of simulated value per share, with the price and the 10th/90th percentiles.
+  const W = 680, H = 280, m = { t: 20, r: 16, b: 36, l: 44 };
+  const el = document.getElementById('dist');
+  const svg = d3.select(el).insert('svg', ':first-child').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Distribution of value per share');
+  const edges = MC.hist.edges, counts = MC.hist.counts, n = d3.sum(counts);
+  const x = d3.scaleLinear().domain([0, 90]).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([0, d3.max(counts) / n]).nice().range([H - m.b, m.t]);
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(9).tickFormat(d => '$' + d).tickSize(0))
+    .call(g => { g.select('.domain').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10).attr('dy', '1.2em'); });
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4).tickFormat(d3.format('.0%')).tickSize(-(W - m.l - m.r)))
+    .call(g => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10); });
+  svg.append('g').selectAll('rect').data(counts).join('rect')
+    .attr('x', (d, i) => x(edges[i]) + 1).attr('width', (d, i) => Math.max(1, x(edges[i + 1]) - x(edges[i]) - 2))
+    .attr('y', d => y(d / n)).attr('height', d => y(0) - y(d / n))
+    .attr('fill', (d, i) => edges[i + 1] <= MC.price ? '#b94a3c' : css('--accent')).attr('opacity', (d, i) => edges[i + 1] <= MC.price ? 0.85 : 0.9);
+  const mark = (v, label, dash, dy, anchor) => {
+    svg.append('line').attr('x1', x(v)).attr('x2', x(v)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', css('--ink')).attr('stroke-dasharray', dash);
+    svg.append('text').attr('x', x(v) + (anchor === 'end' ? -4 : 4)).attr('y', m.t + dy).attr('text-anchor', anchor || 'start').attr('font-size', 10.5).attr('fill', css('--ink')).text(label);
+  };
+  mark(MC.price, 'price ' + money(MC.price), '4 3', 10);
+  mark(MC.pct['10'], '10th pct ' + money(MC.pct['10']), '1 3', 10, 'end');
+  mark(MC.pct['90'], '90th pct ' + money(MC.pct['90']), '1 3', 44);   // below the legend lines on the right
+  svg.append('text').attr('x', W - m.r).attr('y', m.t + 10).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', css('--ink-2')).text(`P(value > price) = ${d3.format('.0%')(MC.p_above)}`);
+  svg.append('text').attr('x', W - m.r).attr('y', m.t + 24).attr('text-anchor', 'end').attr('font-size', 10).attr('fill', css('--ink-3')).text('red: below the price · n = 20,000');
+});
+
+viz('cycle', function () {
+  // P(value > price) and the median value as a function of the down-cycle probability.
+  const rows = MC.pdown;
+  const W = 680, H = 260, m = { t: 20, r: 16, b: 40, l: 44 };
+  const el = document.getElementById('cycle');
+  const svg = d3.select(el).insert('svg', ':first-child').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Probability the shares are worth more than the price, versus the probability of a down-cycle');
+  const x = d3.scaleLinear().domain([0.1, 0.7]).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([0, 1]).range([H - m.b, m.t]);
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(7).tickFormat(d3.format('.0%')).tickSize(0))
+    .call(g => { g.select('.domain').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10).attr('dy', '1.2em'); });
+  svg.append('text').attr('x', (m.l + W - m.r) / 2).attr('y', H - 4).attr('text-anchor', 'middle').attr('font-size', 10.5).attr('fill', css('--ink-3')).text('probability of a containerboard down-cycle over the horizon');
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')).tickSize(-(W - m.l - m.r)))
+    .call(g => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10); });
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0.5)).attr('y2', y(0.5)).attr('stroke', css('--ink-3')).attr('stroke-dasharray', '4 3');
+  svg.append('text').attr('x', W - m.r).attr('y', y(0.5) - 5).attr('text-anchor', 'end').attr('font-size', 10.5).attr('fill', css('--ink-3')).text('fair: 50/50');
+  svg.append('path').datum(rows).attr('fill', 'none').attr('stroke', css('--accent')).attr('stroke-width', 2.5).attr('d', d3.line().x(d => x(d.p_down)).y(d => y(d.p_above)).curve(d3.curveMonotoneX));
+  svg.append('g').selectAll('circle').data(rows).join('circle').attr('cx', d => x(d.p_down)).attr('cy', d => y(d.p_above)).attr('r', 4).attr('fill', css('--accent'));
+  rows.forEach(d => svg.append('text').attr('x', x(d.p_down) - (d.p_down >= 0.7 ? 6 : 0)).attr('y', y(d.p_above) - 9).attr('text-anchor', d.p_down >= 0.7 ? 'end' : 'middle').attr('font-size', 10).attr('fill', css('--ink')).text(d3.format('.0%')(d.p_above) + ' · ' + money(d.median)));
+  const me = rows.find(d => Math.abs(d.p_down - MC.p_down) < 1e-6);
+  svg.append('circle').attr('cx', x(MC.p_down)).attr('cy', y(me.p_above)).attr('r', 8).attr('fill', 'none').attr('stroke', '#c86a2a').attr('stroke-width', 2);
+  svg.append('text').attr('x', x(MC.p_down) + 12).attr('y', y(me.p_above) + 18).attr('font-size', 10.5).attr('fill', '#c86a2a').text('my ' + d3.format('.0%')(MC.p_down));
+  svg.append('text').attr('x', x(0.5)).attr('y', y(rows.find(d => Math.abs(d.p_down - 0.5) < 1e-6).p_above) + 20).attr('text-anchor', 'middle').attr('font-size', 10.5).attr('fill', css('--ink-2')).text("the market's price");
+});
+
+
+const DRV = {{json:DRV}};
+const BET = {{json:BET}};
+viz('tornado', function () {
+  const rows = Object.entries(DRV).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  const W = 680, bh = 22, H = rows.length * bh + 24, lw = 170;
+  const el = document.getElementById('tornado');
+  const svg = d3.select(el).insert('svg', ':first-child').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'What drives the value');
+  const x = d3.scaleLinear().domain([-1, 1]).range([lw, W - 16]);
+  svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', 6).attr('y2', H - 18).attr('stroke', css('--ink-3'));
+  const g = svg.selectAll('g').data(rows).join('g').attr('transform', (d, i) => `translate(0,${i * bh + 8})`);
+  g.append('text').attr('x', lw - 8).attr('y', 14).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', css('--ink-2')).text(d => d[0]);
+  g.append('rect').attr('x', d => Math.min(x(0), x(d[1]))).attr('y', 3).attr('height', bh - 8).attr('width', d => Math.abs(x(d[1]) - x(0))).attr('fill', d => d[1] >= 0 ? css('--accent') : '#b94a3c').attr('rx', 2);
+  g.append('text').attr('x', d => d[1] >= 0 ? x(d[1]) + 5 : x(d[1]) - 5).attr('y', 14).attr('text-anchor', d => d[1] >= 0 ? 'start' : 'end').attr('font-size', 10.5).attr('fill', css('--ink')).text(d => d3.format('+.2f')(d[1]));
+});
+viz('payoff', function () {
+  const W = 680, H = 320, m = { t: 16, r: 16, b: 34, l: 54 };
+  const el = document.getElementById('payoff');
+  const svg = d3.select(el).insert('svg', ':first-child').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Instrument payoffs over the horizon price distribution');
+  const x = d3.scaleLinear().domain([10, 70]).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([-2500, 3800]).range([H - m.b, m.t]);
+  const n = d3.sum(BET.priceT.counts), yh = d3.scaleLinear().domain([0, d3.max(BET.priceT.counts) / n]).range([H - m.b, H - m.b - 110]);
+  svg.append('g').selectAll('rect').data(BET.priceT.counts).join('rect').attr('x', (d, i) => x(BET.priceT.edges[i]) + 1).attr('width', (d, i) => Math.max(0, x(BET.priceT.edges[i + 1]) - x(BET.priceT.edges[i]) - 2)).attr('y', d => yh(d / n)).attr('height', d => yh(0) - yh(d / n)).attr('fill', css('--ink-3')).attr('opacity', 0.25);
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(7).tickFormat(d => '$' + d).tickSize(0)).call(g => { g.select('.domain').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10).attr('dy', '1.2em'); });
+  svg.append('text').attr('x', (m.l + W - m.r) / 2).attr('y', H - 2).attr('text-anchor', 'middle').attr('font-size', 10.5).attr('fill', css('--ink-3')).text('IP price at the horizon');
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6).tickFormat(d3.format('$,.0f')).tickSize(-(W - m.l - m.r))).call(g => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10); });
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', css('--ink-3'));
+  svg.append('line').attr('x1', x(BET.price)).attr('x2', x(BET.price)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', css('--ink')).attr('stroke-dasharray', '4 3');
+  const series = [['shares', '100 shares', css('--accent')], ['call', 'Jan-28 $35 call', '#2a78d6'], ['put', '$28 cash-secured put', '#eb6834'], ['spread', '35/45 call spread', '#8a6ed6']];
+  const line = d3.line().x((d, i) => x(BET.grid[i])).y(d => y(Math.max(-2500, Math.min(3800, d))));
+  series.forEach(([k, label, col]) => {
+    svg.append('path').datum(BET.curves[k]).attr('fill', 'none').attr('stroke', col).attr('stroke-width', 2).attr('d', line);
+    const last = BET.curves[k][BET.curves[k].length - 1];
+    svg.append('text').attr('x', W - m.r - 2).attr('y', y(Math.max(-2500, Math.min(3800, last))) - 5).attr('text-anchor', 'end').attr('font-size', 10.5).attr('fill', col).text(label);
+  });
+  svg.append('text').attr('x', W - m.r).attr('y', H - m.b - 118).attr('text-anchor', 'end').attr('font-size', 10.5).attr('fill', css('--ink-3')).text(`horizon price: 10th $${Math.round(BET.priceT.p10)} · median $${Math.round(BET.priceT.p50)} · 90th $${Math.round(BET.priceT.p90)} · convergence ${Math.round(BET.c * 100)}%`);
+});
+
+viz('bet', function () {
+  // The same chain as the Scenarios sheet and montecarlo.py, in the browser, with the reader's beliefs.
+  const I = {{json:calc}};
+  const revNA26 = I.revH1 * 2 * I.revNA25 / (I.revNA25 + I.revEMEA25), revEMEA26 = I.revH1 * 2 * I.revEMEA25 / (I.revNA25 + I.revEMEA25), rev26 = revNA26 + revEMEA26;
+  function value(a) { // a = {stick, margin, mult, wacc, vol, emeaMargin, emeaDelta, capexLT, noise}
+    const pd = a.stick * I.idx * I.sens - I.inGuide;
+    const revNA27 = revNA26 * (1 + a.vol) + pd, revEMEA27 = revEMEA26 * (1 + I.g), rev27 = revNA27 + revEMEA27;
+    const na27 = I.na26 + pd + revNA26 * a.vol * I.contrib + (I.costout - I.infl) * revNA26 / rev26;
+    const emea27 = I.emea26 + a.emeaDelta + (I.costout - I.infl) * revEMEA26 / rev26;
+    const e27 = na27 + emea27 + I.corp, g3 = Math.pow(1 + I.g, 3), rev30 = rev27 * g3;
+    const e30 = revNA27 * g3 * a.margin + revEMEA27 * g3 * a.emeaMargin + I.corp;
+    const u30 = (e30 - rev30 * I.da) * (1 - I.tax) + rev30 * I.da - rev30 * a.capexLT - rev30 * I.g / (1 + I.g) * I.nwc;
+    const u27 = (e27 - rev27 * I.da) * (1 - I.tax) + rev27 * I.da - I.capex27 - I.sep * 0.5;
+    const w = a.wacc, D = t => Math.pow(1 + w, t);
+    const pv = u27 / D(0.7) + (u27 * 2 / 3 + u30 / 3) / D(1.7) + (u27 / 3 + u30 * 2 / 3) / D(2.7) + u30 / D(3.7);
+    const tv = 0.5 * (u30 * (1 + I.gT) / (w - I.gT) + e30 * a.mult) * a.noise;
+    return { ps: (pv + tv / D(3.7) - I.netDebt) / I.shares, e27 };
+  }
+  // tiny seeded RNG + samplers, so the page is deterministic
+  let seed = 2026; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const tri = (a, m, b) => { const u = rnd(), c = (m - a) / (b - a); return u < c ? a + Math.sqrt(u * (b - a) * (m - a)) : b - Math.sqrt((1 - u) * (b - a) * (b - m)); };
+  const norm = (mu, sd) => mu + sd * Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+  const beta = (p, q) => { const x = -Math.log(rnd() + 1e-12) * p, y = -Math.log(rnd() + 1e-12) * q; return x / (x + y); }; // rough: gamma(k,1)≈exp*k shape proxy
+  const $ = id => document.getElementById(id);
+  const fmt = d3.format('$,.0f'), pct = d3.format('.0%');
+  function run() {
+    const stick = +$('bStick').value / 100, margin = +$('bMargin').value / 100, mult = +$('bMult').value, wacc = +$('bWacc').value / 100, pDown = +$('bDown').value / 100;
+    $('vStick').textContent = pct(stick) + ' of $' + I.idx + '/t'; $('vMargin').textContent = (margin * 100).toFixed(1) + '%'; $('vMult').textContent = mult.toFixed(1) + '×'; $('vWacc').textContent = (wacc * 100).toFixed(1) + '%'; $('vDown').textContent = pct(pDown);
+    const point = value({ stick, margin, mult, wacc, vol: I.vol, emeaMargin: I.emeaMargin, emeaDelta: I.emeaDelta, capexLT: I.capexLT, noise: 1 });
+    // Monte Carlo around the reader's beliefs: base regime centered on their sliders, down-cycle regime pulled toward the bear.
+    seed = 2026; const N = 3000, vals = [];
+    for (let i = 0; i < N; i++) {
+      const down = rnd() < pDown;
+      const a = down
+        ? { stick: Math.min(stick, beta(2, 5)), margin: tri(0.11, Math.min(margin, 0.135), 0.16), mult: tri(6, Math.min(mult, 7), 8.5), wacc: Math.min(0.10, Math.max(0.055, norm(wacc, 0.005))), vol: norm(-0.025, 0.015), emeaMargin: tri(0.08, 0.095, 0.11), emeaDelta: norm(0, 75), capexLT: tri(0.06, 0.065, 0.078), noise: Math.exp(norm(0, 0.15)) }
+        : { stick: Math.max(0, Math.min(1, norm(stick, 0.12))), margin: tri(margin - 0.03, margin, margin + 0.035), mult: tri(mult - 1.5, mult, mult + 2.5), wacc: Math.min(0.10, Math.max(0.055, norm(wacc, 0.005))), vol: norm(0.01, 0.015), emeaMargin: tri(0.10, 0.115, 0.13), emeaDelta: norm(150, 75), capexLT: tri(0.06, 0.065, 0.078), noise: Math.exp(norm(0, 0.15)) };
+      vals.push(value(a).ps);
+    }
+    vals.sort((x, y) => x - y);
+    const p = vals.filter(v => v > I.price).length / N, q = k => vals[Math.floor(k * N)];
+    $('oVal').textContent = fmt(point.ps); $('oUp').textContent = (point.ps / I.price - 1 >= 0 ? '+' : '') + pct(point.ps / I.price - 1);
+    $('oP').textContent = pct(p); $('oPct').textContent = fmt(q(0.1)) + ' / ' + fmt(q(0.9)); $('oE').textContent = fmt(point.e27) + 'M';
+    $('oVerdict').textContent = p > 0.6 ? `Under your beliefs the shares are worth more than ${fmt(I.price)} in ${pct(p)} of outcomes — an edge, if your ${pct(pDown)} on the cycle is right. The 10th percentile (${fmt(q(0.1))}) is the number to size against.`
+      : p > 0.45 ? `Under your beliefs this is close to a fair bet (${pct(p)}). You're not being paid to take it; you'd be taking it for the dividend and the spin-off, which the model doesn't price.`
+      : `Under your beliefs the market is right or generous at ${fmt(I.price)} (${pct(p)} above the price). The bull case needs a belief you don't hold.`;
+    // histogram
+    const svg = d3.select('#bHist'); svg.selectAll('*').remove();
+    const W = 680, H = 120, m = { l: 8, r: 8, t: 8, b: 20 }, x = d3.scaleLinear().domain([0, 90]).range([m.l, W - m.r]);
+    const bins = d3.bin().domain([0, 90]).thresholds(36)(vals), y = d3.scaleLinear().domain([0, d3.max(bins, b => b.length)]).range([H - m.b, m.t]);
+    svg.append('g').selectAll('rect').data(bins).join('rect').attr('x', b => x(b.x0) + 1).attr('width', b => Math.max(1, x(b.x1) - x(b.x0) - 2)).attr('y', b => y(b.length)).attr('height', b => y(0) - y(b.length)).attr('fill', b => b.x1 <= I.price ? '#b94a3c' : css('--accent')).attr('opacity', 0.85);
+    svg.append('line').attr('x1', x(I.price)).attr('x2', x(I.price)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', css('--ink')).attr('stroke-dasharray', '4 3');
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(9).tickFormat(d => '$' + d).tickSize(0)).call(g => { g.select('.domain').attr('stroke', css('--rule')); g.selectAll('text').attr('fill', css('--ink-3')).attr('font-size', 10).attr('dy', '1.2em'); });
+  }
+  ['bStick', 'bMargin', 'bMult', 'bWacc', 'bDown'].forEach(id => $(id).addEventListener('input', run));
+  run();
+});
+</script>
+</body>
+</html>

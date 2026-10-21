@@ -14,20 +14,25 @@ import numpy as np
 rng = np.random.default_rng(2026)
 N = 20000
 
-# ---------------- fixed inputs (Inputs sheet) ----------------
-price, shares = 32.00, 529.5
-net_debt = 9217 - 726
-rev_2025_na, rev_2025_emea = 15000.0, 8500.0
-rev_2026_h1 = 11975.0
-na_26, emea_26, corp = 2425.0, 950.0, -75.0
-price_index_ytd, price_sens, price_in_2026 = 170.0, 9.0, 175.0
-contrib_margin = 0.30
-costout_27, infl_27, emea_27_delta = 300.0, 250.0, 150.0
-rev_growth_lt, da_pct, nwc_pct, tax = 0.025, 0.080, 0.10, 0.24
-capex_2027, sep_costs = 1900.0, 250.0
-g = 0.02
-emea_margin_mid = 0.11
-capex_pct_lt = 0.065
+# ---------------- fixed inputs, read from the workbook's Inputs sheet so the two can't drift ----------------
+from openpyxl import load_workbook
+I = {r[0].value: r[1].value for r in load_workbook("IP_valuation_model.xlsx", data_only=True)["Inputs"].iter_rows(min_row=5)
+     if r[0].value and isinstance(r[1].value, (int, float))}
+price, shares = float(I["Share price ($)"]), float(I["Diluted shares (millions)"])
+net_debt = I["Gross debt"] - I["Cash and temporary investments"] + next(v for k, v in I.items() if "debt-like" in k.lower())
+rev_2025_na, rev_2025_emea = float(I["2025 pro forma net sales — Packaging Solutions NA"]), float(I["2025 pro forma net sales — Packaging Solutions EMEA"])
+rev_2026_h1 = float(I["H1 2026 net sales"])
+na_26, emea_26 = float(I["2026 adj. EBITDA guidance — NA (midpoint)"]), float(I["2026 adj. EBITDA guidance — EMEA (midpoint)"])
+corp = (I["2026 adj. EBITDA guidance — low"] + I["2026 adj. EBITDA guidance — high"]) / 2 - na_26 - emea_26
+price_index_ytd = float(I["2026 containerboard index increase recognized YTD ($/ton, linerboard)"])
+price_sens, price_in_2026 = float(I["EBITDA per $1/ton of price (annualized, NA)"]), float(I["Price benefit already inside 2026 NA guidance"])
+contrib_margin = I["Contribution margin on incremental NA volume"]
+costout_27, infl_27 = float(I["Incremental 80/20 cost-out 2027 (NA + EMEA)"]), float(I["Cost inflation 2027 (OCC, energy, labor, freight)"])
+emea_27_delta = float(I["EMEA EBITDA change 2027 (box-price catch-up + cost-out, net)"])
+rev_growth_lt, da_pct = I["Revenue growth 2028–2030 (nominal)"], I["D&A as % of revenue 2027+"]
+nwc_pct, tax = I["Net working capital investment, % of incremental revenue"], I["Cash tax rate"]
+capex_2027, sep_costs = float(I["Capex 2027"]), float(I["Separation / transaction costs expected 2026–27"])
+g = I["Terminal growth rate"]
 
 rev_na_26 = rev_2026_h1 * 2 * rev_2025_na / (rev_2025_na + rev_2025_emea)
 rev_emea_26 = rev_2026_h1 * 2 * rev_2025_emea / (rev_2025_na + rev_2025_emea)
@@ -56,7 +61,8 @@ emea_27_delta = np.where(down, rng.normal(0.0, 75.0, N), rng.normal(150.0, 75.0,
 capex_pct = rng.triangular(0.060, 0.065, 0.078, N)
 # Model risk: the structure itself is wrong by some amount we cannot see. Lognormal haircut/uplift on
 # the terminal value with 15% sd — Damodaran's margin of safety, made explicit instead of applied at the end.
-model_noise = np.exp(rng.normal(0.0, 0.15, N))
+MODEL_NOISE = 0.15
+model_noise = np.exp(rng.normal(0.0, MODEL_NOISE, N))
 
 # ---------------- the chain (vectorized, same as Scenarios sheet) ----------------
 price_delta = stick * price_index_ytd * price_sens - price_in_2026
@@ -105,7 +111,7 @@ out = {"n": N, "price": price, "p_down": p_down, "p_above_price_given_down": flo
        "mean_down": float(value[down].mean()), "mean_base": float(value[~down].mean()), "p_above_price": p_above, "mean": ev_value, "percentiles": pct,
        "kelly": kelly, "half_kelly": half_kelly, "drivers": drivers,
        "hist": {"edges": edges.tolist(), "counts": hist.tolist()},
-       "p_loss_half": float((value < price * 0.5).mean()), "p_double": float((value > price * 2).mean())}
+       "model_noise_sd": MODEL_NOISE, "p_loss_half": float((value < price * 0.5).mean()), "p_double": float((value > price * 2).mean())}
 json.dump(out, open("mc.json", "w"), indent=1)
 print(f"P(value > ${price}) = {p_above:.1%}   mean ${ev_value:.1f}   median ${pct[50]:.1f}")
 print("percentiles:", {k: round(v, 1) for k, v in pct.items()})

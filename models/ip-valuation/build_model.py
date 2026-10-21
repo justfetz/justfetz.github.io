@@ -2,6 +2,7 @@
 Every assumption lives on Inputs with a provenance tag; all other sheets are formulas.
 Colors: blue = hardcoded input, black = formula, green = cross-sheet link, yellow fill = floor judgment to overwrite.
 """
+import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -53,7 +54,9 @@ ws["A1"] = "International Paper (NYSE: IP) — valuation inputs"; ws["A1"].font 
 ws["A2"] = "All figures $ millions unless noted. Blue = hardcoded input. Yellow = floor judgment: overwrite with your own view. Black = formula."; ws["A2"].font = GREY
 ws["A3"] = "Provenance tags: REPORTED (company filing/release) · GUIDANCE (company outlook) · MARKET (quoted price/index) · JUDGMENT (this model's call — check it)."; ws["A3"].font = GREY
 
+LAB = {}  # name -> (label, value, format, provenance, source, judgment) for inputs.json
 INP = {}  # name -> cell address on Inputs
+INV = {}  # name -> value, so labels and notes can quote the inputs instead of repeating them
 row = 5
 def inp(name, label, value, fmt=None, prov="", source="", judgment=False, comment=None):
     global row
@@ -66,6 +69,8 @@ def inp(name, label, value, fmt=None, prov="", source="", judgment=False, commen
     ws.cell(row=row, column=5, value=source).font = GREY
     if comment: c.comment = Comment(comment, "model")
     INP[name] = f"Inputs!$B${row}"
+    INV[name] = value
+    LAB[name] = (label, value, fmt, prov, source, judgment)
     row += 1
 
 def blank(n=1):
@@ -77,6 +82,11 @@ ws.cell(row=row, column=1, value="Item").font = BOLD; ws.cell(row=row, column=2,
 inp("price", "Share price ($)", 32.00, USD2, "MARKET", "Benzinga quote page, last updated Oct 15, 2026 (header shows $31.90; FAQ shows $32.12).")
 inp("shares", "Diluted shares (millions)", 529.5, NUM1, "REPORTED", "Q2 2026 earnings release: diluted average shares 529.5M.")
 inp("dps", "Dividend per share ($/yr)", 1.85, USD2, "MARKET", "Benzinga: 5.80% yield at $31.90 → $1.85/share; policy maintained through 2026 per Q4 2025 call.")
+inp("price_date", "Price date", "Oct 15, 2026", None, "MARKET", "Benzinga quote page.")
+inp("wk52_lo", "52-week low ($)", 29, USD2, "MARKET", "Benzinga, Oct 15, 2026 (rounded to the dollar).")
+inp("wk52_hi", "52-week high ($)", 50, USD2, "MARKET", "Benzinga, Oct 15, 2026 (rounded to the dollar).")
+inp("chg_ytd", "Share price change, year to date", -0.20, PCT, "MARKET", "Benzinga, Oct 15, 2026 (rounded).")
+inp("chg_12m", "Share price change, last 12 months", -0.23, PCT, "MARKET", "Benzinga, Oct 15, 2026 (rounded).")
 inp("gross_debt", "Gross debt", 9217, USD, "REPORTED", "Q2 2026 balance sheet: notes payable/current maturities $1,002M + long-term debt $8,215M. Excludes $2,131M nonrecourse VIE liabilities.")
 inp("cash", "Cash and temporary investments", 726, USD, "REPORTED", "Q2 2026 balance sheet.")
 inp("pension_other", "Other debt-like items (pension deficit, leases) — placeholder", 0, USD, "JUDGMENT", "Set to 0 pending the 10-K pension note; the Q2 release shows non-operating pension INCOME, so the plan may be near fully funded. Check before publishing.", judgment=True)
@@ -93,6 +103,8 @@ inp("ebitda_2026_h1", "H1 2026 adj. EBITDA", 1264, USD, "REPORTED", "Q2 2026 rel
 inp("capex_2026_h1", "H1 2026 capital expenditures", 1050, USD, "REPORTED", "Q2 2026 release: six-month capex $1,050M.")
 inp("ebitda_2026_guide_lo", "2026 adj. EBITDA guidance — low", 3200, USD, "GUIDANCE", "Q2 2026 release: $3.2–3.4B. (January: $3.5–3.7B; cut in April on demand, inflation, Middle East freight.)")
 inp("ebitda_2026_guide_hi", "2026 adj. EBITDA guidance — high", 3400, USD, "GUIDANCE", "Q2 2026 release.")
+inp("ebitda_2026_guide_jan_lo", "2026 adj. EBITDA guidance in January — low", 3500, USD, "GUIDANCE", "Q4 2025 call (Jan 29, 2026): $3.5–3.7B, cut to $3.2–3.4B in April.")
+inp("ebitda_2026_guide_jan_hi", "2026 adj. EBITDA guidance in January — high", 3700, USD, "GUIDANCE", "Q4 2025 call (Jan 29, 2026).")
 inp("ebitda_2026_na_guide", "2026 adj. EBITDA guidance — NA (midpoint)", 2425, USD, "GUIDANCE", "April 2026: NA $2.35–2.5B (from $2.5–2.6B).")
 inp("ebitda_2026_emea_guide", "2026 adj. EBITDA guidance — EMEA (midpoint)", 950, USD, "GUIDANCE", "April 2026: EMEA $0.9–1.0B (from $1.0–1.1B).")
 inp("da_2026", "2026 depreciation & amortization", 1965, USD, "GUIDANCE", "Q2 2026 release outlook reconciliation: D&A $1,965M.")
@@ -139,6 +151,12 @@ blank()
 
 header(ws, row, "Scenario switch", 5); row += 1
 inp("scenario", "Active scenario (1 = Bear, 2 = Mid-cycle, 3 = Bull) — drives the Scenarios sheet overrides", 2, '0', "JUDGMENT", "The Model sheet uses the Inputs above directly; the Scenarios sheet runs all three side by side.", judgment=True)
+# notes that quote other inputs are rewritten once every input exists, so they can't go stale
+_rev_na_26 = INV["rev_2026_h1"] * 2 * INV["rev_2025_na"] / (INV["rev_2025_na"] + INV["rev_2025_emea"])
+_note = (f"SW {INV['sw_margin']:.0%} LTM, PKG {INV['pkg_margin']:.0%} LTM, IP NA 2026E ~{INV['ebitda_2026_na_guide'] / _rev_na_26:.1%}. "
+         f"Bull = toward PKG after 80/20; bear = below SW. Default {INV['midcycle_na_margin']:.0%}.")
+ws.cell(row=int(INP["midcycle_na_margin"].split("$")[-1]), column=5, value=_note).font = GREY
+LAB["midcycle_na_margin"] = LAB["midcycle_na_margin"][:4] + (_note,) + LAB["midcycle_na_margin"][5:]
 
 # =====================================================================================
 # MODEL  (2025A pro forma, 2026E guidance, 2027E bridge, 2028–2030E mid-cycle)
@@ -251,7 +269,7 @@ mrow("ufcf_m", "  UFCF / revenue", [f"={c}{R['ufcf']}/{c}{R['rev']}" for c in co
 
 sub(m, r + 1, "Sanity checks against what the company says", 8); r += 1
 mrow("chk_fcf", "Levered FCF proxy = UFCF − after-tax interest", [None, f"=C{R['ufcf']}-{I('interest_2026')}*(1-{I('tax_rate')})", f"=D{R['ufcf']}-{I('interest_2026')}*(1-{I('tax_rate')})", None, None, None], note="Compare 2026E to the $300–500M January FCF guide and 2025's −$159M actual.")
-mrow("chk_div", "Dividends paid", [f"=-{I('dps')}*{I('shares')}"] * 6, note="$1.85 × 529.5M ≈ $980M/yr. Covered only when the row above exceeds this.")
+mrow("chk_div", "Dividends paid", [f"=-{I('dps')}*{I('shares')}"] * 6, note=f"${INV['dps']:.2f} × {INV['shares']}M ≈ ${INV['dps'] * INV['shares']:,.0f}M/yr. Covered only when the row above exceeds this.")
 mrow("chk_2025", "2025A reported free cash flow (actual)", [f"={I('fcf_2025')}", None, None, None, None, None], note="The 2025A model column is a pro forma approximation (no DS Smith deal costs, severance cash, pension, or NWC swing) and will not tie to this −$159M; it is there for scale, not for valuation. Nothing is discounted from 2025 or 2026.")
 mrow("chk_cov", "  dividend coverage by levered FCF", [None, f"=-C{R['chk_fcf']}/C{R['chk_div']}", f"=-D{R['chk_fcf']}/D{R['chk_div']}", None, None, None], fmt=MULT)
 
@@ -352,12 +370,12 @@ def srow(key, label, vals, fmt, note="", inputs=True, bold=False):
     if note: s.cell(row=r, column=5, value=note).font = GREY
     S[key] = r; r += 1
 
-srow("stick", "Price that sticks through 2027 (% of $170/ton)", [0.25, 0.50, 0.80], PCT, "Bear: demand −2% and the third round never reaches the box. Bull: capacity cut is real and index-linked contracts catch up.")
+srow("stick", f"Price that sticks through 2027 (% of ${INV['price_index_ytd']}/ton)", [0.25, 0.50, 0.80], PCT, "Bear: demand −2% and the third round never reaches the box. Bull: capacity cut is real and index-linked contracts catch up.")
 srow("vol", "NA volume growth 2027", [-0.02, 0.01, 0.03], PCT, "Bear: TTOBMA's −2%. Bull: IP's '3–4 pts above market'.")
 srow("costout", "Cost-out 2027", [200, 300, 450], USD, "Bull assumes 80/20 keeps finding $500M/yr as it did in 2025.")
 srow("infl", "Inflation 2027", [350, 250, 200], USD, "Bear: OCC back to its $140 five-year average, freight stays up.")
 srow("emea", "EMEA 2027 change", [0, 150, 300], USD, "Bear: box prices never catch paper prices; sale happens at a distressed multiple.")
-srow("na_m", "Mid-cycle NA margin 2028+", [0.13, 0.17, 0.20], PCT, "Bear = SW; Mid = between; Bull = approaching PKG.")
+srow("na_m", "Mid-cycle NA margin 2028+", [0.13, 0.17, 0.20], PCT, "Bear = below SW today; Mid = between SW and PKG; Bull = approaching PKG.")
 srow("emea_m", "Mid-cycle EMEA margin 2028+", [0.09, 0.11, 0.13], PCT, "DS Smith's historical range.")
 srow("capex", "Capex % of revenue 2028+", [0.075, 0.065, 0.060], PCT, "Bear: the old mills keep eating capital ('assets in the ground').")
 srow("wacc", "WACC", [f"=DCF!{D['wacc']}+0.005", f"=DCF!{D['wacc']}", f"=DCF!{D['wacc']}-0.005"], PCT, "±50 bp.")
@@ -384,7 +402,7 @@ srow_f("tv", "Terminal value (avg of Gordon and exit multiple)", lambda c: f"=AV
 srow_f("ev", "Enterprise value", lambda c: f"={c}{S['pv_interim']}+{c}{S['tv']}/(1+{c}{S['wacc']})^3.7", USD, bold=True)
 srow_f("eq", "Equity value", lambda c: f"={c}{S['ev']}-DCF!{D['netdebt']}", USD)
 srow_f("ps", "Value per share ($)", lambda c: f"={c}{S['eq']}/{I('shares')}", USD2, bold=True)
-srow_f("up", "vs. $32 market", lambda c: f"={c}{S['ps']}/{I('price')}-1", PCT)
+srow_f("up", f"vs. ${INV['price']:.0f} market", lambda c: f"={c}{S['ps']}/{I('price')}-1", PCT)
 srow_f("tvs", "Terminal value share of EV", lambda c: f"={c}{S['tv']}/(1+{c}{S['wacc']})^3.7/{c}{S['ev']}", PCT)
 srow_f("impl", "Implied EV / 2027E EBITDA", lambda c: f"={c}{S['ev']}/{c}{S['ebitda27']}", MULT)
 r += 1
@@ -403,7 +421,7 @@ S["pw"] = r
 v = wb.create_sheet("Sensitivity")
 setw(v, [40, 12, 12, 12, 12, 12, 12])
 v["A1"] = "What actually moves the number"; v["A1"].font = H1
-v["A2"] = "Grid 1: value per share vs mid-cycle NA margin (rows) × exit multiple (columns), mid-cycle scenario mechanics. Grid 2: 2027E EBITDA vs how much of the $170/ton sticks."; v["A2"].font = GREY
+v["A2"] = "Grid 1: value per share vs mid-cycle NA margin (rows) × exit multiple (columns), mid-cycle scenario mechanics. Grid 2: 2027E EBITDA vs how much of the $" + str(INV["price_index_ytd"]) + "/ton sticks."; v["A2"].font = GREY
 r = 4
 v.cell(row=r, column=1, value="Value / share: NA mid-cycle margin ↓  ×  exit multiple →").font = BOLD
 mults = [6.5, 7.5, 8.5, 9.5, 11.0, 12.0]
@@ -429,14 +447,14 @@ for i, mg in enumerate(margins):
         f = f"=({pv}+{tv}/(1+{w})^3.7-DCF!{D['netdebt']})/{I('shares')}"
         cell = v.cell(row=r, column=2 + j, value=f); cell.number_format = USD2
     r += 1
-v.cell(row=r, column=1, value="Market: $32. Rows are NA margin; EMEA held at the mid-cycle scenario's margin.").font = GREY
+v.cell(row=r, column=1, value=f"Market: ${INV['price']:.0f}. Rows are NA margin; EMEA held at the mid-cycle scenario's margin.").font = GREY
 r += 3
 v.cell(row=r, column=1, value="2027E enterprise EBITDA vs price that sticks (mid-cycle levers otherwise)").font = BOLD; r += 1
-v.cell(row=r, column=1, value="Share of $170/ton that sticks").font = BOLD
+v.cell(row=r, column=1, value=f"Share of ${INV['price_index_ytd']}/ton that sticks").font = BOLD
 v.cell(row=r, column=2, value="$/ton").font = BOLD
 v.cell(row=r, column=3, value="2027E EBITDA").font = BOLD
 v.cell(row=r, column=4, value="vs 2026 guide mid").font = BOLD
-v.cell(row=r, column=5, value="EV/EBITDA at $32").font = BOLD
+v.cell(row=r, column=5, value=f"EV/EBITDA at ${INV['price']:.0f}").font = BOLD
 r += 1
 for pct in [0.0, 0.25, 0.5, 0.75, 1.0]:
     v.cell(row=r, column=1, value=pct).font = BLUE; v.cell(row=r, column=1).number_format = PCT
@@ -445,7 +463,7 @@ for pct in [0.0, 0.25, 0.5, 0.75, 1.0]:
     v.cell(row=r, column=4, value=f"=C{r}/(({I('ebitda_2026_guide_lo')}+{I('ebitda_2026_guide_hi')})/2)-1").number_format = PCT
     v.cell(row=r, column=5, value=f"=(DCF!{D['mcap']}+DCF!{D['netdebt']})/C{r}").number_format = MULT
     r += 1
-v.cell(row=r, column=1, value="Each $10/ton ≈ $90M annualized EBITDA (CFO). This is the single assumption the stock argues about.").font = GREY
+v.cell(row=r, column=1, value=f"Each $10/ton ≈ ${INV['price_sens'] * 10:.0f}M annualized EBITDA (CFO). This is the single assumption the stock argues about.").font = GREY
 
 # =====================================================================================
 # COMPS + SOTP
@@ -459,7 +477,7 @@ cps.cell(row=r, column=1, value="Company").font = BOLD; cps.cell(row=r, column=2
 for nm, mu, mg in [("Packaging Corp of America (PKG)", I('pkg_ev_ebitda'), I('pkg_margin')), ("Smurfit Westrock (SW)", I('sw_ev_ebitda'), I('sw_margin'))]:
     cps.cell(row=r, column=1, value=nm); cps.cell(row=r, column=2, value=f"={mu}").number_format = MULT; cps.cell(row=r, column=3, value=f"={mg}").number_format = PCT
     cps.cell(row=r, column=2).font = GREEN; cps.cell(row=r, column=3).font = GREEN; r += 1
-cps.cell(row=r, column=1, value="International Paper (IP) — 2026E, at $32"); cps.cell(row=r, column=2, value=f"=DCF!{D['mkt_mult26']}").number_format = MULT; cps.cell(row=r, column=3, value=f"=Model!C{R['ebitda_m']}").number_format = PCT; r += 1
+cps.cell(row=r, column=1, value=f"International Paper (IP) — 2026E, at ${INV['price']:.0f}"); cps.cell(row=r, column=2, value=f"=DCF!{D['mkt_mult26']}").number_format = MULT; cps.cell(row=r, column=3, value=f"=Model!C{R['ebitda_m']}").number_format = PCT; r += 1
 cps.cell(row=r, column=1, value="IP NA segment margin 2026E"); cps.cell(row=r, column=3, value=f"=Model!C{R['ebitda_na_m']}").number_format = PCT; r += 2
 
 header(cps, r, "Sum of the parts — 2028E mid-cycle EBITDA × segment multiple (not the 2027 price-spike year)", 5); r += 1
@@ -468,7 +486,7 @@ C = {}
 cps.cell(row=r, column=1, value="Packaging Solutions NA"); cps.cell(row=r, column=2, value=f"=Model!E{R['ebitda_na']}").number_format = USD
 cps.cell(row=r, column=3, value=9.0).font = BLUE; cps.cell(row=r, column=3).fill = YELLOW; cps.cell(row=r, column=3).number_format = MULT
 cps.cell(row=r, column=4, value=f"=B{r}*C{r}").number_format = USD
-cps.cell(row=r, column=5, value="Between SW (7.2x) and PKG (12.2x): a pure-NA box business with 80/20 margins not yet proven.").font = GREY; C["na"] = r; r += 1
+cps.cell(row=r, column=5, value=f"Between SW ({INV['sw_ev_ebitda']}x) and PKG ({INV['pkg_ev_ebitda']}x): a pure-NA box business with 80/20 margins not yet proven.").font = GREY; C["na"] = r; r += 1
 cps.cell(row=r, column=1, value="Packaging Solutions EMEA (DS Smith)"); cps.cell(row=r, column=2, value=f"=Model!E{R['ebitda_emea']}").number_format = USD
 cps.cell(row=r, column=3, value=6.5).font = BLUE; cps.cell(row=r, column=3).fill = YELLOW; cps.cell(row=r, column=3).number_format = MULT
 cps.cell(row=r, column=4, value=f"=B{r}*C{r}").number_format = USD
@@ -481,7 +499,7 @@ cps.cell(row=r, column=1, value="Less: net debt + debt-like"); cps.cell(row=r, c
 cps.cell(row=r, column=1, value="Less: separation costs and dis-synergies (one-time)"); cps.cell(row=r, column=4, value=f"=-{I('sep_costs_2026')}*1.5").number_format = USD; cps.cell(row=r, column=5, value="1.5 years of the Inputs run-rate; two public companies cost more to run than one.").font = GREY; C["sep"] = r; r += 1
 cps.cell(row=r, column=1, value="Equity value").font = BOLD; cps.cell(row=r, column=4, value=f"=D{C['ev']}+D{C['nd']}+D{C['sep']}").number_format = USD; cps.cell(row=r, column=4).font = BOLD; C["eq"] = r; r += 1
 cps.cell(row=r, column=1, value="Per share ($)").font = BOLD; cps.cell(row=r, column=4, value=f"=D{C['eq']}/{I('shares')}").number_format = USD2; cps.cell(row=r, column=4).font = BOLD; C["ps"] = r; r += 1
-cps.cell(row=r, column=1, value="vs. $32 market"); cps.cell(row=r, column=4, value=f"=D{C['ps']}/{I('price')}-1").number_format = PCT; r += 2
+cps.cell(row=r, column=1, value=f"vs. ${INV['price']:.0f} market"); cps.cell(row=r, column=4, value=f"=D{C['ps']}/{I('price')}-1").number_format = PCT; r += 2
 cps.cell(row=r, column=1, value="Breakeven: EMEA multiple at which SOTP = market price").font = BLACK
 cps.cell(row=r, column=4, value=f"=((DCF!{D['mcap']}-D{C['sep']}-D{C['nd']})-D{C['na']}-D{C['corp']})/B{C['emea']}").number_format = MULT
 cps.cell(row=r, column=5, value="If a buyer pays more than this for DS Smith, the market is underpricing the sum.").font = GREY
@@ -514,12 +532,39 @@ for i, (txt, f) in enumerate(lines, 1):
     if f: c.font = f
     c.alignment = Alignment(wrap_text=True, vertical="top")
 
+# =====================================================================================
+# DICTIONARY (second sheet): every term in plant language, quoting the model's own numbers.
+# The numbers come from numbers.json, so run_all.py builds twice: once to compute, once to quote.
+# =====================================================================================
+_here = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(_here, "numbers.json")):
+    import json
+    from dictionary import TITLE, INTRO, rows as dictionary_rows
+    dw = wb.create_sheet("Dictionary", 1)
+    setw(dw, [26, 44, 44, 40])
+    dw["A1"] = TITLE; dw["A1"].font = H1
+    dw["A2"] = INTRO; dw["A2"].font = GREY
+    rr = 4
+    for kind, cells in dictionary_rows(json.load(open(os.path.join(_here, "numbers.json")))["fmt"]):
+        if kind == "section":
+            header(dw, rr, cells[0], 4)
+        else:
+            for j, t in enumerate(cells, 1):
+                c = dw.cell(row=rr, column=j, value=t)
+                c.font = BOLD if (kind == "head" or j == 1) else BLACK
+                c.alignment = Alignment(wrap_text=kind == "term", vertical="top")
+        rr += 1
+
 for sh in wb.worksheets:
     sh.sheet_view.showGridLines = False
     sh.freeze_panes = "B5" if sh.title in ("Model",) else None
 
-out = "/tmp/claude-0/-home-claude/f4c4c077-f107-5981-9b6c-f977070ddcc3/scratchpad/ipval/IP_valuation_model.xlsx"
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "IP_valuation_model.xlsx")
 wb.save(out)
+# every input with its label, format, provenance and source, for post_numbers.py and the post's Inputs table
+import json
+json.dump({k: dict(label=l, value=v, fmt=f, prov=p, source=src, judgment=j) for k, (l, v, f, p, src, j) in LAB.items()},
+          open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "inputs.json"), "w"), indent=1, ensure_ascii=False)
 print("saved", out)
 print("Inputs rows:", {k: v for k, v in list(INP.items())[:3]}, "...")
 print("Model rows:", R)
