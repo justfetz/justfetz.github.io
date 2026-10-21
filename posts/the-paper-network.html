@@ -128,22 +128,22 @@ details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(-
 </div>
 
 <div class="kv">
-  <div><span>Freight bill, Oct 2026</span><b>$2.10B</b><small>32.2 Mt domestic + 3.6 Mt export</small></div>
-  <div><span>Average haul</span><b>513 mi</b><small>42% of tons by rail</small></div>
-  <div><span>Freight per ton</span><b>$59.95</b><small>$58.76 at $3 diesel, $63.61 at $6.20</small></div>
-  <div><span>Mill utilization</span><b>98%</b><small>60 of 63 US mills at capacity</small></div>
-  <div><span>Scarcity, West vs East</span><b>$62 vs $35</b><small>per ton of capacity</small></div>
-  <div><span>Switching gap, median</span><b>$5.20/t</b><small>49% of markets within $5</small></div>
-  <div><span>Costliest outage</span><b>Mansfield, LA</b><small>$171M a year, 201 kt unserved</small></div>
-  <div><span>Maintenance calendar</span><b>$276M → $122M</b><small>staggered vs priced by duals</small></div>
+  <div><span>Freight bill, Oct 2026</span><b>$2.08B</b><small>32.2 Mt domestic + 3.6 Mt export</small></div>
+  <div><span>Average haul</span><b>509 mi</b><small>42% of tons by rail</small></div>
+  <div><span>Freight per ton</span><b>$59.56</b><small>$58.35 at $3 diesel, $63.16 at $6.20</small></div>
+  <div><span>Mill utilization</span><b>95%</b><small>53 of 64 US mills at capacity</small></div>
+  <div><span>Scarcity, West vs East</span><b>$49 vs $20</b><small>per ton of capacity</small></div>
+  <div><span>Switching gap, median</span><b>$5.30/t</b><small>49% of markets within $5</small></div>
+  <div><span>Costliest outage</span><b>Monticello, MS</b><small>$98M a year; Mansfield $78M</small></div>
+  <div><span>Maintenance calendar</span><b>$180M → $30M</b><small>staggered vs priced by duals</small></div>
 </div>
 
 <div class="text">
 <p>Some of the findings, in the order they surprised me.</p>
 <ul>
-  <li><strong>A unilateral price increase does not survive the model.</strong> Raise one producer's open-market price by $70 a ton with everyone else unchanged and the open-market tons leave: International Paper loses all 355 kt across 54 market-grade accounts for $4.4 million a year of extra cost to the rest of the network; Pratt loses 517 kt across 73. Increases hold in practice because everyone announces together and because the index covers only about 5% of consumption. The app turns each shock into a call sheet: which market, how many tons, from which mill to which.</li>
-  <li><strong>The 2025 closures were not where freight said they would be.</strong> Run 2024's footprint and the mills that actually closed (Cedar Springs, Riceboro, Savannah, Red River, Forney, Niagara Falls) sit 87% to 100% loaded, ranked 20th to 73rd of 77 on the idle list, because they are in the Southeast and on the Gulf next to the demand and the docks. Regional surplus does better: capacity within 300 miles of those mills ran 0.5 to 3.6 times the demand there. What they shared is in no free dataset: age, cash cost per ton, the capital they needed. The model says so on its own Backtest tab.</li>
-  <li><strong>The middle tier is the loose part.</strong> Board does not go from mills to markets; it goes to 458 corrugator plants, 70 sheet feeders and 634 sheet plants. Those counts are public (Fibre Box Association, AICC) and their locations are not, so the app allocates machines to markets statistically and prices the sheet trade at 1.8 times roll freight because sheets cube out a trailer. National corrugator utilization comes out at 71%, and 179 of the 441 markets have no corrugator at all and live on bought sheets. Whoever publishes the real corrugator list changes this tab.</li>
+  <li><strong>A unilateral price increase does not survive the model.</strong> Raise one producer's open-market price by $70 a ton with everyone else unchanged and the open-market tons leave: International Paper loses all 534 kt across 82 market-grade accounts for $6.4 million a year of extra cost to the rest of the network; Pratt loses 522 kt across 74. Increases hold in practice because everyone announces together and because the index covers only about 5% of consumption. The app turns each shock into a call sheet: which market, how many tons, from which mill to which.</li>
+  <li><strong>The 2025 closures were not where freight said they would be.</strong> Run 2024's footprint and the mills that actually closed (Cedar Springs, Riceboro, Savannah, Red River, Forney, Niagara Falls) sit 85% to 100% loaded, ranked 22nd to 75th of 79 on the idle list, because they are in the Southeast and on the Gulf next to the demand and the docks. Regional surplus does better: capacity within 300 miles of those mills ran 0.5 to 3.6 times the demand there. What they shared is in no free dataset: age, cash cost per ton, the capital they needed. The model says so on its own Backtest tab.</li>
+  <li><strong>The middle tier is the loose part.</strong> Board does not go from mills to markets; it goes to 458 corrugator plants, 70 sheet feeders and 634 sheet plants. Those counts are public (Fibre Box Association, AICC) and their locations are not, so the app allocates machines to markets statistically and prices the sheet trade at 1.8 times roll freight because sheets cube out a trailer. National corrugator utilization comes out at 71%, and 180 of the 441 markets have no corrugator at all and live on bought sheets. Whoever publishes the real corrugator list changes this tab.</li>
   <li><strong>Diesel is a bigger lever on mode than on cost.</strong> From $3 to $6.20 a gallon the freight bill rises 8%; the rail share rises from 39% to 48%. The live weekly EIA price is a scenario in the app.</li>
 </ul>
 </div>
@@ -221,7 +221,7 @@ details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(-
 <h2>6. Cleaning, and how far off it still is</h2>
 <p>Transparency means the misses are on the page next to the hits. In order of effort:</p>
 <ul>
-  <li><strong>The mill table.</strong> Ninety mills in the US and Canada, from the 10-K property lists and capacity appendices, the Smurfit Westrock mill table, PCA's capacity disclosures, company sites for the privates (Pratt, Green Bay Packaging, New-Indy, Cascades) and the closure notices for everything that changed in 2025 and 2026. Each row carries its source and a confidence grade. Mexican mills were dropped after the first run showed them feeding Texas with a fan of arcs that no one in Texas would recognize; Canadian mills serve the US at 35% of capacity. Geocoding ran through a free ZIP database with a dozen manual fixes (Solvay, Gladstone, the Ontario towns) that would otherwise have silently dropped 770 kt from the model.</li>
+  <li><strong>The mill table.</strong> Eighty-seven mills in the US and Canada, from the 10-K property lists and capacity appendices, the Smurfit Westrock mill table, PCA's capacity disclosures, company sites for the privates (Pratt, Green Bay Packaging, New-Indy, Cascades) and the closure notices for everything that changed in 2025 and 2026. Each row carries its source and a confidence grade. Mexican mills were dropped after the first run showed them feeding Texas with a fan of arcs that no one in Texas would recognize; Canadian mills serve the US at 35% of capacity. Geocoding ran through a free ZIP database with a dozen manual fixes (Solvay, Gladstone, the Ontario towns) that would otherwise have silently dropped 770 kt from the model.</li>
   <li><strong>Demand.</strong> The first version put box demand where people live, scaled by state manufacturing shares. Against the EPA plant registry that proxy had an RMS log error of 0.45 by state: Florida at twice its real weight, Illinois and New Jersey at half. The second version replaced it: Census employment for 322211 sets each state's share exactly, the EPA plant counts place 70% of it within the state and population 30%. Moving the demand shortened the average haul from 568 to 514 miles and cut freight from $64 to $60 a ton; the switching gaps barely moved, which is the kind of stability you want from a finding.</li>
   <li><strong>The EPA list.</strong> 1,796 records collapse to 1,605 sites once duplicate registrations at the same coordinates are merged. The registry has no operating-status field, so the list is a superset of the roughly 1,100 plants the FBA and the Census count: about a third are closed, mis-coded or an office. The Claude verification pass exists to retire those one by one, with a URL on each verdict.</li>
   <li><strong>The sheet tier.</strong> Counts are public; locations are not. The corrugator layer is statistical and the tab says "allocated" wherever it is.</li>
@@ -232,16 +232,17 @@ details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(-
 <table class="cmd">
 <thead><tr><th>Check</th><th>Model</th><th>Reported</th></tr></thead>
 <tbody>
-<tr><td>US containerboard capacity, 2024</td><td>39.6 Mt</td><td>~41.4 Mt (AF&amp;PA), −4%; most of the gap is Canadian imports the LP under-pulls</td></tr>
-<tr><td>International Paper US capacity</td><td>12.8 Mt</td><td>12.98 Mt (10-K), −1%</td></tr>
-<tr><td>Packaging Corp of America</td><td>5.59 Mt</td><td>5.8 Mt</td></tr>
-<tr><td>Smurfit Westrock</td><td>7.23 Mt</td><td>the 10-K mill table, by construction</td></tr>
-<tr><td>2024 tons shipped</td><td>38.8 Mt</td><td>37.7 Mt produced; demand was set from box shipments and trade, so landing on production is a check, not a fit</td></tr>
-<tr><td>Operating rate</td><td>98%</td><td>~95%</td></tr>
-<tr><td>IP board to own plants</td><td>88% own + 9% exported</td><td>~80% own (10-K)</td></tr>
-<tr><td>Smurfit Westrock integration</td><td>86%</td><td>~81% implied</td></tr>
+<tr><td>US containerboard capacity, 2024</td><td>40.8 Mt</td><td>~41.4 Mt (AF&amp;PA), −1.6%</td></tr>
+<tr><td>Capacity retired, Feb 2025 to Mar 2026</td><td>4.03 Mt</td><td>~3.9 Mt (Fastmarkets), +3.4%</td></tr>
+<tr><td>International Paper US capacity, 2024</td><td>12.98 Mt</td><td>12.98 Mt (10-K); the public per-mill figures alone sum to 12.42 Mt (−4.4%) and are scaled to IP's own total</td></tr>
+<tr><td>Packaging Corp of America, year-end 2025</td><td>5.80 Mt</td><td>5.8 Mt (10-K); PCA's last per-mill disclosures sum to 5.55 Mt (−4.3%) and are scaled to it; 5.55 Mt after Wallula W2 in 2026</td></tr>
+<tr><td>Smurfit Westrock, US</td><td>7.55 Mt</td><td>the 10-K mill table, row by row (the audit added Roanoke Rapids, which the first version missed)</td></tr>
+<tr><td>2024 tons shipped</td><td>38.8 Mt</td><td>37.7 Mt produced; the +1.06 Mt is exactly the Canadian board the LP under-pulls (1.40 Mt imported, 0.34 Mt in the model)</td></tr>
+<tr><td>Operating rate, 2026</td><td>95%</td><td>~95%</td></tr>
+<tr><td>IP board to own plants</td><td>85% own + 11% exported</td><td>~80% own (10-K)</td></tr>
+<tr><td>Smurfit Westrock integration</td><td>83%</td><td>~81% implied</td></tr>
 <tr><td>Demand by state</td><td>exact</td><td>by construction, from Census employment; what remains is within-state placement</td></tr>
-<tr><td>Fourteen Monte Carlo draws on the inputs</td><td colspan="2">average haul 544 ± 26 mi, rail share 0.43 ± 0.02, freight $62 ± 2/t, IP integration 0.87 ± 0.04; the capacity duals are the unstable part, because the network runs within 3% of sold out and a small demand shift flips which mill is marginal</td></tr>
+<tr><td>Sensitivity re-solves</td><td colspan="2">truck or rail costs ±20%: freight $55.0 to $63.2 a ton, average haul 494 to 523 mi; open-market premium $80 to $200 a ton: the Monticello outage from +$32M to +$142M a year. The capacity duals are the unstable part, because the network runs within about 5% of sold out and a small shift flips which mill is marginal</td></tr>
 </tbody>
 </table>
 
@@ -280,7 +281,7 @@ details.src{margin:0 0 20px}details.src summary{cursor:pointer;font-family:var(-
 <figure><img src="../models/the-paper-network/shots/method.png" alt="The Method tab: the model's assumptions, the calibration table and the source list." loading="lazy"><figcaption>The assumptions, the calibration table above, the error bars, and a source for every anchor. If a number on another tab looks wrong, this is where to check what it was built from.</figcaption></figure>
 
 <div class="text"><h3>Ask the network</h3></div>
-<figure><img src="../models/the-paper-network/shots/chat.png" alt="The chat drawer open over the Flows tab, answering what happens if the Mansfield mill goes down, with a line underneath listing the page lookups the answer was built from." loading="lazy"><figcaption>The chat drawer answers from the model: it calls page functions (find a mill, find a market, the knockouts, a price shock, the scenario KPIs) and under every answer lists exactly which lookups it made, with the raw data one click away. An answer about the network with no lookup under it reads as unsupported, and says so.</figcaption></figure>
+<figure><img src="../models/the-paper-network/shots/chat.png" alt="The chat drawer open over the Flows tab, answering what happens if the Monticello mill goes down, with a line underneath listing the page lookups the answer was built from." loading="lazy"><figcaption>The chat drawer answers from the model: it calls page functions (find a mill, find a market, the knockouts, a price shock, the scenario KPIs) and under every answer lists exactly which lookups it made, with the raw data one click away. An answer about the network with no lookup under it reads as unsupported, and says so.</figcaption></figure>
 <div class="text">
 <p>That provenance line is my answer to the obvious question about putting a language model in front of a model: how do you know it is not making the numbers up? You do not trust it; you check it. The chat cannot browse, has no memory between questions, and sees nothing about the network except what the page functions return. The functions run in your browser, on the same JSON the map is drawn from, and the trail shows the call and the result. On the public page it runs through a small proxy that holds the key and meters the budget (section 8); on the claude.ai copy it runs on the viewer's own account. Either way there is no key in the page and nothing is sent to me.</p>
 
@@ -335,15 +336,20 @@ browser renders the answer and the trail of lookups</pre>
 <ul>
   <li><strong>Optimality is certified, not hoped for.</strong> HiGHS returns a status with every solve, and the export aborts on anything but optimal. For a linear program "optimal" is a proof: a primal solution and a dual solution with zero gap. The duals the app shows are that certificate.</li>
   <li><strong>Conservation is built in.</strong> Every market's demand constraint is an equality with an explicit unmet arc, so tons cannot vanish or appear; each scenario reports shipped, exported and unmet tons, and they must add to the demand that was asked for. Integrality comes free from the network structure, so no rounding step exists to introduce error.</li>
-  <li><strong>Twelve-month and knockout scenarios are differences of two solves</strong> with the same inputs, so a bug in an input would cancel out of the comparisons and show up in the levels. The outage calendar is checked the same way: the assignment problem's estimate is re-solved month by month and the realized penalty ($122M) is reported next to the estimate ($48M), not instead of it.</li>
+  <li><strong>Twelve-month and knockout scenarios are differences of two solves</strong> with the same inputs, so a bug in an input would cancel out of the comparisons and show up in the levels. The outage calendar is checked the same way: the assignment problem's estimate is re-solved month by month and the realized penalty ($30M) is reported next to the estimate ($18M), not instead of it.</li>
 </ul>
 <h3>The inputs</h3>
 <ul>
-  <li><strong>Calibration against published totals</strong>, the table in section 6: national capacity within 4%, the named companies within 1–5%, shipments landing on production, integration shares near disclosures. These are checks, not fits, because the demand side was set from box shipments and trade rather than from mill output.</li>
-  <li><strong>Measured error, not assumed error.</strong> The population proxy was scored against the EPA plant registry before it was replaced (0.45 RMS log error by state), and fourteen Monte Carlo draws on the inputs give the spread of every headline figure. The capacity duals are the fragile ones, and the page says so.</li>
+  <li><strong>Calibration against published totals</strong>, the table in section 6: national capacity within 2%, closures within 4% of the trade press's count, company totals matched to IP's and PCA's own filings, shipments landing on production plus the import gap, integration shares near disclosures. These are checks, not fits, because the demand side was set from box shipments and trade rather than from mill output.</li>
+  <li><strong>Measured error, not assumed error.</strong> The population proxy was scored against the EPA plant registry before it was replaced (0.45 RMS log error by state), and sensitivity re-solves give the spread of every headline figure. The capacity duals are the fragile ones, and the page says so.</li>
   <li><strong>A backtest that is allowed to fail.</strong> The 2025 closures are run against the 2024 footprint on their own tab; the model misses them, the surplus column does better, and the missing variable is named.</li>
   <li><strong>Reproducibility.</strong> One command rebuilds every number from the committed inputs; every refresh re-solves and commits, so the history is the audit trail; each figure in the data folder carries its URL.</li>
 </ul>
+<h3 id="receipts">The receipts</h3>
+<p>When someone says the numbers look wrong, the answer should be a page of receipts, not a defense. On 21 October 2026 the mill list was audited row by row against the 10-Ks, company releases and the trade press, and the audit is a script anyone can run: <code>audit/recompute.py</code> recomputes every headline number from the committed data, checks it against its public anchor, re-solves the network under perturbed assumptions and writes <a href="https://github.com/justfetz/the-paper-network/blob/main/audit/RECEIPTS.md">the receipts page</a>.</p>
+<p>It found real errors, and they are fixed in the open. Smurfit Westrock's Roanoke Rapids, North Carolina mill (322 kt of containerboard in SW's own 10-K table) and its La Tuque, Quebec mill (341 kt) were missing. Riceboro was counted in International Paper's 2024 total although DS Smith owned it until January 2025. Forney and Big Island carried start-up-era figures where the companies' own filings give higher ones. And International Paper's and PCA's per-mill numbers, many from 2007 to 2015 filings, summed to about 4% less than each company's disclosed total today, which is what a decade and a half of debottlenecking looks like; those rows are now scaled to the companies' own totals, with the factor written into each row.</p>
+<p>With the corrections, US capacity lands 1.6% under AF&amp;PA's 2024 figure, the closures the model carries add to 4.03 Mt against Fastmarkets' count of about 3.9 Mt, the 2026 operating rate comes out at 95% against the industry's reported 95%, and the 2024 production overshoot is the Canadian board the solver declines to buy: with demand and exports as assumed, every ton it does not buy from Canada it makes at a US mill. The corrections also moved a headline. A network with 1.3 Mt more capacity has more slack, so the costliest single outage is now Georgia-Pacific's Monticello at about $98M a year, and Mansfield, at $171M before, is $78M. The old number was wrong because the mill list was incomplete, and the page now says so.</p>
+<p>Every number can be challenged the same way it was checked: open an issue with the row and a public source, and the next refresh re-solves every scenario and regenerates the receipts.</p>
 <h3>The language model</h3>
 <p>Two parts of the project run on a language model, and they need different kinds of proof. The first paid test is in: twenty EPA sites checked with web search cost $0.95 in total, about five cents a site; it called eighteen operating and two unknown, four corrugators, nine sheet plants, and caught a recycled-paperboard mill mis-coded as a box plant, with every confidence marked medium or low. That is the right kind of humility, and it is what the golden set will score.</p>
 <p><strong>The verification pass</strong> is a classifier with a search engine. The right question is not "is Claude smart" but "what is its accuracy per field against a labeled set, and what does it do when it does not know". The plan, part of which is in the repo under <code>evals/</code>:</p>
@@ -409,7 +415,7 @@ browser renders the answer and the trail of lookups</pre>
   <li>It does not know who ships to whom today. The flows are what a cost minimizer would do, and sales history differs from that everywhere.</li>
   <li>It does not price a contract. The mill prices on the Prices tab are the index points that reached the press, and the index covers a sliver of consumption.</li>
   <li>It does not replace a RISI subscription, an FBA membership or a planning group. It is the map those things are drawn on, with its error bars showing.</li>
-  <li>The sheet tier is allocated, the EPA list is a superset, and the capacity duals move when a demand assumption moves, because the network runs within 3% of sold out.</li>
+  <li>The sheet tier is allocated, the EPA list is a superset, and the capacity duals move when a demand assumption moves, because the network runs within about 5% of sold out.</li>
 </ul>
 <p>The real risk of a public model is not that it is wrong; it is that someone treats a $5.20 median gap as a quote. The page is written against that, and so is this post.</p>
 
@@ -532,7 +538,7 @@ viz('expansion',function(){
 });
 
 // ---------- the twenty knockouts ----------
-const KO=[["Mansfield","International Paper","LA",171,201],["Valliant","International Paper","OK",134,131],["Cedar River","International Paper","IA",116,0],["Monticello","Georgia-Pacific","MS",109,0],["Counce","Packaging Corp of America","TN",91,0],["DeRidder","Packaging Corp of America","LA",90,0]];
+const KO=[["Monticello","Georgia-Pacific","MS",98,0],["Cedar River","International Paper","IA",92,0],["Toledo","Georgia-Pacific","OR",91,0],["Mansfield","International Paper","LA",78,0],["DeRidder","Packaging Corp of America","LA",63,0],["Counce","Packaging Corp of America","TN",59,0]];
 viz('knockouts',function(){
   const root=d3.select('#knockouts'); root.append('div').attr('class','lab').style('font-family','var(--mono)').style('font-size','12px').style('color','var(--ink-3)').style('margin-bottom','8px').text('What a single-mill outage costs the network, $M a year, October 2026 footprint (top six of twenty)');
   const W=760,rowH=26,H=KO.length*rowH+34, svg=root.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Bar chart of the six costliest single-mill outages');
@@ -545,7 +551,7 @@ viz('knockouts',function(){
 });
 
 // ---------- tons by distance band ----------
-const HAUL=[["0–150",6.13,0],["150–300",8.37,0],["300–500",4.21,0.76],["500–800",0,5.17],["800–1200",0,4.84],["1200+",0,2.72]];
+const HAUL=[["0–150",6.39,0.0],["150–300",8.16,0.0],["300–500",4.22,0.8],["500–800",0.0,5.27],["800–1200",0.0,4.66],["1200+",0.0,2.7]];
 viz('haul',function(){
   const root=d3.select('#haul'); root.append('div').style('font-family','var(--mono)').style('font-size','12px').style('color','var(--ink-3)').style('margin-bottom','8px').text('Board moved by distance band, Mt a year, October 2026: truck below the break, rail above it');
   const W=760,H=200,m={l:50,r:20,t:10,b:30}, svg=root.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Stacked bars of million tons by distance band, truck and rail');
@@ -555,7 +561,7 @@ viz('haul',function(){
   g.append('rect').attr('x',d=>x(d[0])).attr('width',x.bandwidth()).attr('y',d=>y(d[1])).attr('height',d=>y(0)-y(d[1])).attr('fill','var(--s1)');
   g.append('rect').attr('x',d=>x(d[0])).attr('width',x.bandwidth()).attr('y',d=>y(d[1]+d[2])).attr('height',d=>y(d[1])-y(d[1]+d[2])).attr('fill','var(--s2)');
   g.append('text').attr('class','val').attr('x',d=>x(d[0])+x.bandwidth()/2).attr('y',d=>y(d[1]+d[2])-4).attr('text-anchor','middle').text(d=>(d[1]+d[2]).toFixed(1));
-  root.append('div').attr('class','legend').html('<span><i style="background:var(--s1)"></i>truck</span><span><i style="background:var(--s2)"></i>rail</span><span>average haul 513 mi · 42% of tons by rail · the truck-to-rail break sits near 450 miles at $3.75 diesel</span>');
+  root.append('div').attr('class','legend').html('<span><i style="background:var(--s1)"></i>truck</span><span><i style="background:var(--s2)"></i>rail</span><span>average haul 509 mi · 42% of tons by rail · the truck-to-rail break sits near 450 miles at $3.75 diesel</span>');
 });
 })();
 </script>

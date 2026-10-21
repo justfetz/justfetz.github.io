@@ -1,32 +1,32 @@
 [
  {
   "band": "0-150",
-  "truck_tons": 6129957,
+  "truck_tons": 6387852,
   "rail_tons": 0
  },
  {
   "band": "150-300",
-  "truck_tons": 8367463,
+  "truck_tons": 8159977,
   "rail_tons": 0
  },
  {
   "band": "300-500",
-  "truck_tons": 4207486,
-  "rail_tons": 763911
+  "truck_tons": 4223846,
+  "rail_tons": 797678
  },
  {
   "band": "500-800",
   "truck_tons": 0,
-  "rail_tons": 5170961
+  "rail_tons": 5268992
  },
  {
   "band": "800-1200",
   "truck_tons": 0,
-  "rail_tons": 4836394
+  "rail_tons": 4664703
  },
  {
   "band": "1200+",
   "truck_tons": 0,
-  "rail_tons": 2723827
+  "rail_tons": 2696951
  }
 ]
