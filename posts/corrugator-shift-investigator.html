@@ -35,10 +35,10 @@
 <p>Repo: <a href="https://github.com/justfetz/corrugator-shift-investigator">justfetz/corrugator-shift-investigator</a>. Python, SQL, synthetic XML data, an optional model adapter, and a workbench UI. Everything below is public and runnable offline.</p>
 
 <h2>Try it</h2>
-<p>This is the actual workbench from the repo, running on Cloud Run with the free offline planner — no model, no key, synthetic September 2026 data. Pick a day and shift, ask <em>"Why was second shift slow? Chart downtime by reason."</em>, then open <em>How the agent got here</em> to see every tool call, its SQL, the bound values, and the rows that produced each number. It scales to zero between visitors, so the first load can take a few seconds.</p>
+<p>This is the actual workbench from the repo, running on Cloud Run on synthetic August–September 2026 data. The offline planner is free and needs no key; pick <em>Anthropic</em> under Agent and Haiku 5.5 chooses the tools on a server-held, rate-limited key — the arithmetic is still the application's. Pick a day and shift, ask <em>"Why was second shift slow? Chart downtime by reason."</em>, or switch Period to Week and ask the same thing, then open <em>Supporting data and how the agent got here</em> to see every tool call, its SQL, the bound values, and the rows that produced each number. It scales to zero between visitors, so the first load can take a few seconds.</p>
 <div class="live">
   <iframe src="https://corrugator-shift-investigator-4s5ogdb7lq-uc.a.run.app/" title="Corrugator shift investigator: live workbench on synthetic data" loading="lazy"></iframe>
-  <div class="cap"><span>live · synthetic data · offline planner · nothing here is a real plant</span><a href="https://corrugator-shift-investigator-4s5ogdb7lq-uc.a.run.app/">open as its own page →</a></div>
+  <div class="cap"><span>live · synthetic data · offline or Anthropic planner · nothing here is a real plant</span><a href="https://corrugator-shift-investigator-4s5ogdb7lq-uc.a.run.app/">open as its own page →</a></div>
 </div>
 
 <h2>The question</h2>
