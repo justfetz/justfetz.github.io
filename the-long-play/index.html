@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Long Play: Eminem's studio albums, 1996 to 2024</title>
+<meta name="description" content="Eminem's twelve studio albums drawn as records: placed by release date and best U.S. sales week, sized by RIAA certification, one groove per track, red where there's a guest. Plus every credited guest, in d3.js.">
+<meta property="og:title" content="The Long Play: Eminem's studio albums, 1996 to 2024">
+<meta property="og:description" content="Eminem's twelve studio albums drawn as records: placed by release date and best U.S. sales week, sized by RIAA certification, one groove per track, red where there's a guest. Plus every credited guest, in d3.js.">
+<meta property="og:image" content="https://justfetz.github.io/the-long-play/poster.jpg">
+<link rel="stylesheet" href="long-play.css">
+</head>
+<body>
+<article class="lp">
+  <div class="lp-page">
+    <nav class="lp-nav" aria-label="Site"><a href="../">← jason fetzer</a></nav>
+    <div class="lp-scroll">
+      <figure class="lp-sleeve" id="lp-figure" aria-label="The Long Play: a chart of Eminem's twelve studio albums by best U.S. sales week and RIAA certification, with a matrix of every credited guest. The same data is in the table below."></figure>
+    </div>
+    <p class="lp-hint">Point at a record to read its grooves, or at a name to see where that guest turns up. On a phone, tap and scroll sideways.</p>
+    <div id="lp-notes"></div>
+    <section class="lp-sec">
+      <h2>Notes and sources</h2>
+      <p class="lp-fine">Certifications come from the <a href="https://www.riaa.com/gold-platinum/">RIAA Gold &amp; Platinum database</a>. Release dates, track listings, credited features, first-week figures (as reported by Billboard and Luminate) and Grammy results come from each album's <a href="https://en.wikipedia.org/wiki/Eminem_albums_discography">Wikipedia entry</a>. Review scores are from <a href="https://www.metacritic.com/">Metacritic</a>, which does not cover the first two albums. Checked November 2026.</p>
+      <p class="lp-fine">A record's area is its RIAA certification, which counts shipments and, for recent awards, streams; it is not the same thing as copies sold. The Death of Slim Shady has no certification yet and is drawn at one million units with a dashed edge. Infinite was a local pressing of about 1,000 copies and is shown through a lens. Curtain Call: The Hits is a compilation, so it appears only as an outline and is left out of every count.</p>
+    </section>
+    <footer class="lp-footer"><span>© 2026 Jason Fetzer</span><a href="../">justfetz.github.io</a></footer>
+  </div>
+</article>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data.js"></script>
+<script src="long-play.js"></script>
+<script>
+  // wait for the fonts so text is measured in the right face
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () {
+    LongPlay.render(document.getElementById("lp-figure"), EM_DATA, { interactive: true, byline: "" });
+    LongPlay.renderNotes(document.getElementById("lp-notes"), EM_DATA);
+  });
+</script>
+<script data-goatcounter="https://justfetz.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
