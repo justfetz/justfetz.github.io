@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Distance: Mike Tyson's 59 fights, 1985 to 2024</title>
+<meta name="description" content="Every professional fight Mike Tyson had, drawn to the second: the rounds on the contract against the time it took. Thirty-nine years of fights add up to less than ten hours in the ring. Built with d3.js.">
+<meta property="og:title" content="The Distance: Mike Tyson's 59 fights, 1985 to 2024">
+<meta property="og:description" content="Every professional fight Mike Tyson had, drawn to the second: the rounds on the contract against the time it took. Thirty-nine years of fights add up to less than ten hours in the ring. Built with d3.js.">
+<meta property="og:image" content="https://justfetz.github.io/the-distance/poster.jpg">
+<link rel="stylesheet" href="distance.css">
+</head>
+<body>
+<article class="td">
+  <div class="td-page">
+    <nav class="td-nav" aria-label="Site">
+      <a href="../">← jason fetzer</a>
+      <div class="td-modes" id="td-modes" role="group" aria-label="How the fights are spaced" hidden>
+        <button type="button" data-mode="sequence" aria-pressed="true">Evenly spaced</button>
+        <button type="button" data-mode="calendar" aria-pressed="false">On the calendar</button>
+      </div>
+    </nav>
+    <div class="td-scroll" id="td-wide" hidden>
+      <figure class="td-bill" id="td-figure"></figure>
+    </div>
+    <div id="td-narrow" hidden></div>
+    <p class="td-hint" id="td-hint" hidden>Point at a column, a line in the fan or a square to read that fight. With the chart focused, the arrow keys step through all 59. “On the calendar” moves every fight to its real date.</p>
+    <section class="td-sec">
+      <h2>Notes and sources</h2>
+      <p class="td-fine">The record, with the round and time each fight ended, comes from the professional boxing record table on <a href="https://en.wikipedia.org/wiki/Mike_Tyson">Wikipedia</a>; results, methods and venues were checked against <a href="https://www.cityam.com/mike-tyson-50-6-career-boxing-record-in-full/">City A.M.’s copy of the record</a>, which agrees on every fight but one (it lists Larry Holmes as a KO, not a TKO). Totals reconcile to the official line: 59 fights, 50 wins (44 by knockout), 7 losses, 2 no contests. Checked November 2026.</p>
+      <p class="td-fine">Ring time is the time fought: completed rounds plus the time of the stoppage, with the minute between rounds left out. Every fight is counted at three-minute rounds except the last, against Jake Paul, which was eight two-minute rounds. Andrew Golota quit on his stool before round three in 2000, as <a href="https://www.espn.com/boxing/news/2000/1023/834208.html">ESPN reported at the time</a>, so that fight is counted as two rounds even though record tables list it as a third-round retirement. A corner retirement counts as a knockout, as it does in the official record. Las Vegas includes venues in Paradise and Winchester, Nevada.</p>
+    </section>
+    <section class="td-sec">
+      <details>
+        <summary class="td-toggle-sum">All 59 fights as a table</summary>
+        <div id="td-table"></div>
+      </details>
+    </section>
+    <footer class="td-footer"><span>© 2026 Jason Fetzer</span><a href="../">justfetz.github.io</a></footer>
+  </div>
+</article>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data.js"></script>
+<script src="distance.js"></script>
+<script>
+  // wait for the fonts so text is measured in the right face
+  Distance.fonts().then(function () {
+    var wide = document.getElementById("td-wide"), narrow = document.getElementById("td-narrow");
+    var modes = document.getElementById("td-modes"), hint = document.getElementById("td-hint");
+    var phone = window.matchMedia("(max-width: 760px)"), chart = null;
+    function draw() {
+      var m = phone.matches;
+      wide.hidden = m; modes.hidden = m; hint.hidden = m; narrow.hidden = !m;
+      if (m) { chart = null; Distance.ledger(narrow, TYSON_DATA, { poster: "poster.jpg" }); }
+      else {
+        chart = Distance.poster(document.getElementById("td-figure"), TYSON_DATA, { interactive: true, byline: "JASON FETZER · JUSTFETZ.GITHUB.IO" });
+        modes.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.mode === "sequence"); });
+      }
+    }
+    modes.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b || !chart) return;
+      chart.setMode(b.dataset.mode);
+      modes.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
+    });
+    phone.addEventListener("change", draw);
+    draw();
+    Distance.table(document.getElementById("td-table"), TYSON_DATA);
+  });
+</script>
+<script data-goatcounter="https://justfetz.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
