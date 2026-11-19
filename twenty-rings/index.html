@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twenty Rings: every game Kobe Bryant played, 1996 to 2016</title>
+<meta name="description" content="A tribute to Kobe Bryant in d3.js. Two discs form a figure eight: ten seasons in No. 8, ten in No. 24. Each ring is a season and each spike is one of his 1,566 NBA games, as long as the points he scored.">
+<meta property="og:title" content="Twenty Rings: every game Kobe Bryant played, 1996 to 2016">
+<meta property="og:description" content="A tribute to Kobe Bryant in d3.js. Two discs form a figure eight: ten seasons in No. 8, ten in No. 24. Each ring is a season and each spike is one of his 1,566 NBA games, as long as the points he scored.">
+<meta property="og:image" content="https://justfetz.github.io/twenty-rings/poster.jpg">
+<link rel="stylesheet" href="rings.css">
+</head>
+<body>
+<article class="rg">
+  <div class="rg-page">
+    <nav class="rg-nav" aria-label="Site">
+      <a href="../">← jason fetzer</a>
+      <div class="rg-modes" id="rg-modes" role="group" aria-label="What each spike measures" hidden>
+        <button type="button" data-metric="pts" aria-pressed="true">Points</button>
+        <button type="button" data-metric="fga" aria-pressed="false">Shots</button>
+        <button type="button" data-metric="min" aria-pressed="false">Minutes</button>
+      </div>
+    </nav>
+    <div class="rg-scroll" id="rg-wide" hidden>
+      <figure class="rg-bill" id="rg-figure"></figure>
+    </div>
+    <div id="rg-narrow" hidden></div>
+    <p class="rg-hint" id="rg-hint" hidden></p>
+    <section class="rg-sec">
+      <h2>Notes and sources</h2>
+      <p class="rg-fine">Every regular-season and playoff game Kobe Bryant played for the Lakers is here: 1,346 and 220. The box scores, including the points by quarter, come from the open <a href="https://github.com/gonzalo-gigena/nba-datasets">nba-datasets</a> collection by Gonzalo Gigena (MIT license), which is compiled from Basketball-Reference. Every season line was checked against the totals on <a href="https://www.basketball-reference.com/players/b/bryanko01.html">his Basketball-Reference page</a> for games, points, shots, free throws, rebounds, assists, steals, blocks and turnovers, and they match. Minutes differ by eight in one season (2000–01), and one 1997 game has quarter scores that add up to a point more than its total. Checked November 2026.</p>
+      <p class="rg-fine">Each ring runs from October 25 to June 20, so a spike’s position is its date; the summer gap is narrower than the calendar would make it. The split by number is computed from the games: 16,866 points in No. 8 and 16,777 in No. 24. Some published accounts give those two figures the other way round. The stories come from <a href="https://www.espn.com/nba/story/_/id/31999002/the-magical-day-kobe-bryant-became-lord-rings-rucker-park">ESPN’s account of the day at Rucker Park</a>, <a href="https://www.nba.com/lakers/tdikh/0412">the Lakers’ note on April 12, 2013</a>, NBC Los Angeles on the 1997 airballs, and <a href="https://en.wikipedia.org/wiki/Kobe_Bryant">Wikipedia</a> for honors and dates.</p>
+    </section>
+    <section class="rg-sec">
+      <details>
+        <summary class="rg-toggle-sum">The twenty seasons as a table</summary>
+        <div id="rg-table"></div>
+      </details>
+    </section>
+    <footer class="rg-footer"><span>© 2026 Jason Fetzer</span><a href="../">justfetz.github.io</a></footer>
+  </div>
+</article>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data.js"></script>
+<script src="rings.js"></script>
+<script>
+  // wait for the fonts so text is measured in the right face
+  Rings.fonts().then(function () {
+    var wide = document.getElementById("rg-wide"), narrow = document.getElementById("rg-narrow");
+    var modes = document.getElementById("rg-modes"), hint = document.getElementById("rg-hint");
+    var phone = window.matchMedia("(max-width: 760px)"), chart = null;
+    var HINT = {
+      pts: "Point at a spike to read that game. With a disc focused, the arrow keys step through the games and up and down change season. Spikes show points; the bright tip is the fourth quarter and overtime.",
+      fga: "Spikes now show shots taken. The bright tip is the shots he missed: 16,966 of 30,699 over twenty years.",
+      min: "Spikes now show minutes played. A full ring of tall spikes is a season in which he barely sat down."
+    };
+    function press(m) { modes.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.metric === m); }); hint.textContent = HINT[m]; }
+    function draw() {
+      var m = phone.matches;
+      wide.hidden = m; modes.hidden = m; hint.hidden = m; narrow.hidden = !m;
+      if (m) { chart = null; Rings.ledger(narrow, KOBE_DATA, { poster: "poster.jpg" }); }
+      else { chart = Rings.poster(document.getElementById("rg-figure"), KOBE_DATA, { interactive: true, byline: "JASON FETZER · JUSTFETZ.GITHUB.IO" }); press("pts"); }
+    }
+    modes.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b || !chart) return;
+      chart.setMetric(b.dataset.metric); press(b.dataset.metric);
+    });
+    phone.addEventListener("change", draw);
+    draw();
+    Rings.table(document.getElementById("rg-table"), KOBE_DATA);
+  });
+</script>
+<script data-goatcounter="https://justfetz.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
